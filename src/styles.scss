@@ -1,5 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
+// CSS Reset - Tailwind-style preflight reset for consistent cross-browser baseline
+@import './styles/reset.scss';
+
 // Import form themes - these need to be global to work across component boundaries
 @import './styles/form-themes/minimal.scss';
 @import './styles/form-themes/modern.scss';
