@@ -114,7 +114,7 @@
               [class.selected]="selectedFieldIndex() === i"
               (click)="selectField(i)">
               <div class="field-info">
-                <strong>{{ field.label }}</strong>
+                <strong>{{ field.label || field.name }}</strong>
                 <small>({{ field.type }})</small>
               </div>
               <div class="field-actions">
@@ -561,6 +561,360 @@
                         </div>
                       }
                     </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- DataGrid Configuration (for datagrid fields) -->
+          @if (field.type === 'datagrid') {
+            <div class="datagrid-config-section">
+              <h4>DataGrid Configuration</h4>
+
+              <!-- Row Label Header -->
+              <div class="form-group">
+                <label>Row Label Header</label>
+                <input
+                  type="text"
+                  [ngModel]="field.datagridConfig?.rowLabelHeader || ''"
+                  (ngModelChange)="updateDataGridRowLabelHeader(fieldIndex, $event)"
+                  placeholder="e.g., Year Level"
+                />
+                <small class="form-hint">Header text for the row labels column</small>
+              </div>
+
+              <!-- Totals Configuration -->
+              <div class="totals-config">
+                <h5>Totals</h5>
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      [ngModel]="field.datagridConfig?.totals?.showRowTotals"
+                      (ngModelChange)="updateDataGridShowRowTotals(fieldIndex, $event)"
+                    />
+                    Show Row Totals
+                  </label>
+                  @if (field.datagridConfig?.totals?.showRowTotals) {
+                    <input
+                      type="text"
+                      [ngModel]="field.datagridConfig?.totals?.rowTotalLabel || ''"
+                      (ngModelChange)="updateDataGridRowTotalLabel(fieldIndex, $event)"
+                      placeholder="Total"
+                      class="totals-label-input"
+                    />
+                  }
+                </div>
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      [ngModel]="field.datagridConfig?.totals?.showColumnTotals"
+                      (ngModelChange)="updateDataGridShowColumnTotals(fieldIndex, $event)"
+                    />
+                    Show Column Totals
+                  </label>
+                  @if (field.datagridConfig?.totals?.showColumnTotals) {
+                    <input
+                      type="text"
+                      [ngModel]="field.datagridConfig?.totals?.columnTotalLabel || ''"
+                      (ngModelChange)="updateDataGridColumnTotalLabel(fieldIndex, $event)"
+                      placeholder="Total"
+                      class="totals-label-input"
+                    />
+                  }
+                </div>
+              </div>
+
+              <!-- Row Labels -->
+              <div class="row-labels-section">
+                <h5>Row Labels</h5>
+                <button class="btn-sm btn-primary" (click)="addDataGridRowLabel(fieldIndex)">+ Add Row</button>
+
+                @for (rowLabel of field.datagridConfig?.rowLabels; track $index; let ri = $index) {
+                  <div class="row-label-item">
+                    <div class="row-label-header">
+                      <strong>{{ rowLabel.label }}</strong>
+                      <div class="row-label-actions">
+                        <button class="btn-icon" (click)="moveDataGridRowLabelUp(fieldIndex, ri)" title="Move Up">↑</button>
+                        <button class="btn-icon" (click)="moveDataGridRowLabelDown(fieldIndex, ri)" title="Move Down">↓</button>
+                        <button
+                          class="btn-icon btn-danger"
+                          (click)="removeDataGridRowLabel(fieldIndex, ri)"
+                          [disabled]="field.datagridConfig?.rowLabels?.length === 1"
+                          title="Delete">×</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Row ID</label>
+                      <input
+                        type="text"
+                        [ngModel]="rowLabel.id"
+                        (ngModelChange)="updateDataGridRowLabelId(fieldIndex, ri, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Row Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="rowLabel.label"
+                        (ngModelChange)="updateDataGridRowLabelText(fieldIndex, ri, $event)"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Column Groups -->
+              <div class="column-groups-section">
+                <h5>Column Groups (Optional)</h5>
+                <small class="form-hint">Group related columns under a shared header</small>
+                <button class="btn-sm btn-primary" (click)="addDataGridColumnGroup(fieldIndex)">+ Add Group</button>
+
+                @for (group of field.datagridConfig?.columnGroups; track $index; let gi = $index) {
+                  <div class="column-group-item">
+                    <div class="column-group-header">
+                      <strong>{{ group.label }}</strong>
+                      <button
+                        class="btn-icon btn-danger"
+                        (click)="removeDataGridColumnGroup(fieldIndex, gi)"
+                        title="Delete">×</button>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Group ID</label>
+                      <input
+                        type="text"
+                        [ngModel]="group.id"
+                        (ngModelChange)="updateDataGridColumnGroupId(fieldIndex, gi, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Group Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="group.label"
+                        (ngModelChange)="updateDataGridColumnGroupLabel(fieldIndex, gi, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Columns in Group</label>
+                      <div class="column-checkboxes">
+                        @for (column of field.datagridConfig?.columns; track column.name) {
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [checked]="isDataGridColumnInGroup(fieldIndex, gi, column.name)"
+                              (change)="toggleDataGridColumnInGroup(fieldIndex, gi, column.name)"
+                            />
+                            {{ column.label }}
+                          </label>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Columns -->
+              <div class="columns-section">
+                <h5>Columns</h5>
+                <button class="btn-sm btn-primary" (click)="addDataGridColumn(fieldIndex)">+ Add Column</button>
+
+                @for (column of field.datagridConfig?.columns; track $index; let ci = $index) {
+                  <div class="column-item">
+                    <div class="column-header">
+                      <strong>{{ column.label }}</strong>
+                      @if (column.computed) {
+                        <span class="computed-badge">Computed</span>
+                      }
+                      <div class="column-actions">
+                        <button class="btn-icon" (click)="moveDataGridColumnUp(fieldIndex, ci)" title="Move Left">←</button>
+                        <button class="btn-icon" (click)="moveDataGridColumnDown(fieldIndex, ci)" title="Move Right">→</button>
+                        <button
+                          class="btn-icon btn-danger"
+                          (click)="removeDataGridColumn(fieldIndex, ci)"
+                          [disabled]="field.datagridConfig?.columns?.length === 1"
+                          title="Delete">×</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Name (ID)</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.name"
+                        (ngModelChange)="updateDataGridColumnName(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.label"
+                        (ngModelChange)="updateDataGridColumnLabel(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Type</label>
+                      <select
+                        [ngModel]="column.type"
+                        (ngModelChange)="updateDataGridColumnType(fieldIndex, ci, $event)">
+                        @for (type of datagridColumnTypes; track type) {
+                          <option [value]="type">{{ type }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Computed Column -->
+                    <div class="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          [ngModel]="column.computed"
+                          (ngModelChange)="updateDataGridColumnComputed(fieldIndex, ci, $event)"
+                        />
+                        Computed (read-only, calculated)
+                      </label>
+                    </div>
+
+                    @if (column.computed) {
+                      <div class="form-group">
+                        <label>Formula Expression</label>
+                        <input
+                          type="text"
+                          [ngModel]="column.formula?.expression || ''"
+                          (ngModelChange)="updateDataGridColumnFormula(fieldIndex, ci, $event)"
+                          placeholder="e.g., students * 0.5"
+                        />
+                        <small class="form-hint">Use column names as variables (e.g., col1 + col2)</small>
+                      </div>
+                    }
+
+                    @if (!column.computed) {
+                      <div class="form-group">
+                        <label>Placeholder</label>
+                        <input
+                          type="text"
+                          [ngModel]="column.placeholder"
+                          (ngModelChange)="updateDataGridColumnPlaceholder(fieldIndex, ci, $event)"
+                        />
+                      </div>
+                    }
+
+                    <div class="form-group">
+                      <label>Width (1-4)</label>
+                      <select
+                        [ngModel]="column.width || 1"
+                        (ngModelChange)="updateDataGridColumnWidth(fieldIndex, ci, $event)">
+                        <option [value]="1">1 (default)</option>
+                        <option [value]="2">2 (wider)</option>
+                        <option [value]="3">3 (wide)</option>
+                        <option [value]="4">4 (widest)</option>
+                      </select>
+                    </div>
+
+                    <!-- Totals Inclusion -->
+                    @if (column.type === 'number') {
+                      <div class="form-group checkbox-group">
+                        <label>
+                          <input
+                            type="checkbox"
+                            [ngModel]="column.showInColumnTotal !== false"
+                            (ngModelChange)="updateDataGridColumnShowInColumnTotal(fieldIndex, ci, $event)"
+                          />
+                          Include in Column Total
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            [ngModel]="column.showInRowTotal !== false"
+                            (ngModelChange)="updateDataGridColumnShowInRowTotal(fieldIndex, ci, $event)"
+                          />
+                          Include in Row Total
+                        </label>
+                      </div>
+                    }
+
+                    <!-- Column Options (for select type) -->
+                    @if (column.type === 'select') {
+                      <div class="column-options">
+                        <label>Options</label>
+                        <button class="btn-sm btn-secondary" (click)="addDataGridColumnOption(fieldIndex, ci)">+ Add Option</button>
+
+                        @for (option of column.options; track $index; let oi = $index) {
+                          <div class="option-row">
+                            <input
+                              type="text"
+                              [ngModel]="option.label"
+                              (ngModelChange)="updateDataGridColumnOptionLabel(fieldIndex, ci, oi, $event)"
+                              placeholder="Label"
+                            />
+                            <input
+                              type="text"
+                              [ngModel]="option.value"
+                              (ngModelChange)="updateDataGridColumnOptionValue(fieldIndex, ci, oi, $event)"
+                              placeholder="Value"
+                            />
+                            <button class="btn-icon btn-danger" (click)="removeDataGridColumnOption(fieldIndex, ci, oi)">×</button>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Column Validations (not for computed columns) -->
+                    @if (!column.computed) {
+                      <div class="column-validations">
+                        <label>Validations</label>
+                        <button class="btn-sm btn-secondary" (click)="addDataGridColumnValidation(fieldIndex, ci)">+ Add Validation</button>
+
+                        @for (validation of column.validations; track $index; let vi = $index) {
+                          <div class="validation-row">
+                            <select
+                              [ngModel]="validation.type"
+                              (ngModelChange)="updateDataGridColumnValidationType(fieldIndex, ci, vi, $event)">
+                              @for (vType of validationTypes; track vType) {
+                                <option [value]="vType">{{ vType }}</option>
+                              }
+                            </select>
+
+                            @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+                              <input
+                                type="number"
+                                [ngModel]="validation.value"
+                                (ngModelChange)="updateDataGridColumnValidationValue(fieldIndex, ci, vi, $event)"
+                                placeholder="Value"
+                              />
+                            }
+
+                            @if (validation.type === 'pattern') {
+                              <input
+                                type="text"
+                                [ngModel]="validation.value"
+                                (ngModelChange)="updateDataGridColumnValidationValue(fieldIndex, ci, vi, $event)"
+                                placeholder="Regex pattern"
+                              />
+                            }
+
+                            <input
+                              type="text"
+                              [ngModel]="validation.message"
+                              (ngModelChange)="updateDataGridColumnValidationMessage(fieldIndex, ci, vi, $event)"
+                              placeholder="Error message"
+                            />
+
+                            <button class="btn-icon btn-danger" (click)="removeDataGridColumnValidation(fieldIndex, ci, vi)">×</button>
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
                 }
               </div>
