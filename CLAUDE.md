@@ -314,6 +314,7 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - `select`: Dropdown selection with options
 - `radio`: Radio button group (mutually exclusive single selection)
 - `checkbox`: Checkbox group (multiple selection) or single boolean toggle
+- `table`: Repeatable table with configurable columns
 
 #### Radio and Checkbox Groups
 
@@ -366,6 +367,125 @@ For `radio` and `checkbox` field types, use the `options` property to define cho
 - `data-checkbox-single`: Single boolean checkbox (no options)
 - `data-option-value`: The value of the option
 - `data-option-selected`: "true" | "false" for checkbox selection state
+
+#### Table Field Type
+
+The `table` field type creates a repeatable table structure with configurable columns. Each column can have its own field type and validations.
+
+**Table Configuration**:
+```typescript
+{
+  name: 'teachingHistory',
+  label: 'Teaching Experience',
+  type: 'table',
+  sectionId: 'teaching-experience',
+  tableConfig: {
+    columns: [
+      {
+        name: 'school',
+        label: 'School',
+        type: 'text',
+        placeholder: 'Enter school name',
+        width: 2,
+        validations: [{ type: 'required', message: 'School is required' }]
+      },
+      {
+        name: 'startDate',
+        label: 'Start date',
+        type: 'date',
+        validations: [{ type: 'required', message: 'Start date is required' }]
+      },
+      {
+        name: 'endDate',
+        label: 'End date',
+        type: 'date'
+      },
+      {
+        name: 'tenure',
+        label: 'Tenure',
+        type: 'select',
+        options: [
+          { value: 'full-time', label: 'Full-time' },
+          { value: 'part-time', label: 'Part-time' },
+          { value: 'casual', label: 'Casual' }
+        ]
+      }
+    ],
+    rowMode: 'fixed',      // 'fixed' or 'dynamic'
+    fixedRowCount: 3,      // For fixed mode (default: 3)
+    minRows: 0,            // For dynamic mode (default: 0)
+    maxRows: 10,           // For dynamic mode (default: 10)
+    addRowLabel: 'Add row' // Button text for dynamic mode
+  }
+}
+```
+
+**TableConfig Interface**:
+```typescript
+interface TableConfig {
+  columns: TableColumnConfig[];
+  rowMode: 'fixed' | 'dynamic';
+  fixedRowCount?: number;   // For fixed mode
+  minRows?: number;         // For dynamic mode
+  maxRows?: number;         // For dynamic mode
+  addRowLabel?: string;     // Button text
+  removeRowLabel?: string;  // Remove button aria-label
+}
+
+interface TableColumnConfig {
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'date' | 'select';
+  placeholder?: string;
+  validations?: ValidationRule[];
+  options?: { label: string; value: any }[];  // For select columns
+  width?: number;  // Column width (1-4)
+}
+```
+
+**Row Modes**:
+- **fixed**: Displays a set number of empty rows (configurable via `fixedRowCount`)
+- **dynamic**: Users can add/remove rows with buttons (constrained by `minRows`/`maxRows`)
+
+**Validation Behavior**:
+- Empty rows are ignored during validation
+- Only non-empty rows are validated against column rules
+- Cell errors shown as tooltips on hover/focus
+
+**Data Storage Format**:
+```typescript
+// Table value is an array of row objects
+[
+  { school: 'Lincoln High', startDate: '2020-01-15', endDate: '2022-06-30', tenure: 'full-time' },
+  { school: 'Washington Middle', startDate: '2022-08-01', endDate: '', tenure: 'part-time' }
+]
+// Empty rows are filtered out on form submission
+```
+
+**Data Attributes for Table Styling**:
+- `data-table-container`: Container wrapper
+- `data-table-name`: Field name on container
+- `data-row-mode`: "fixed" | "dynamic"
+- `data-table-valid`: "true" | "false" - Overall table validity
+- `data-table`: Table element
+- `data-table-header`: Thead element
+- `data-table-header-row`: Header tr
+- `data-table-header-cell`: Header th
+- `data-column-name`: Column identifier
+- `data-column-type`: Column input type
+- `data-column-width`: Column width (1-4)
+- `data-table-body`: Tbody element
+- `data-table-row`: Row tr element
+- `data-row-index`: Row index (0-based)
+- `data-row-empty`: "true" | "false" - Whether row is empty
+- `data-table-cell`: Cell td element
+- `data-cell-valid`: "true" | "false" - Cell validity
+- `data-table-input`: Input within cell
+- `data-cell-error-tooltip`: Error tooltip element
+- `data-table-footer`: Footer container (dynamic mode)
+- `data-table-action`: "add" | "remove" - Button action type
+- `data-table-actions-column`: Actions column header
+- `data-table-actions-cell`: Actions cell (remove button)
 
 ### Validation Types
 - `required`: Field must have a value

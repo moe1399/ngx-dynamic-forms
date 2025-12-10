@@ -7,6 +7,10 @@ import {
   FormSection,
   ValidationRule,
   FieldType,
+  TableColumnType,
+  TableRowMode,
+  TableColumnConfig,
+  TableConfig,
 } from '../../models/form-config.interface';
 import { FormBuilder as FormBuilderService } from '../../services/form-builder';
 
@@ -37,7 +41,10 @@ export class FormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox', 'table'];
+
+  // Table column types for dropdown
+  tableColumnTypes: TableColumnType[] = ['text', 'number', 'date', 'select'];
 
   // Validation types
   validationTypes = ['required', 'email', 'minLength', 'maxLength', 'min', 'max', 'pattern'];
@@ -302,6 +309,21 @@ export class FormBuilder {
 
   updateFieldType(index: number, type: FieldType): void {
     const field = { ...this.currentConfig().fields[index], type };
+
+    // Initialize tableConfig when switching to table type
+    if (type === 'table' && !field.tableConfig) {
+      field.tableConfig = {
+        columns: [{ name: 'column_1', label: 'Column 1', type: 'text' }],
+        rowMode: 'fixed',
+        fixedRowCount: 3,
+      };
+    }
+
+    // Clear tableConfig when switching away from table type
+    if (type !== 'table') {
+      delete field.tableConfig;
+    }
+
     this.updateField(index, field);
   }
 
@@ -526,5 +548,284 @@ export class FormBuilder {
    */
   updateOptionValue(fieldIndex: number, optionIndex: number, value: string): void {
     this.updateOption(fieldIndex, optionIndex, { value });
+  }
+
+  // ============================================
+  // Table Configuration Methods
+  // ============================================
+
+  /**
+   * Update table config property
+   */
+  updateTableConfig(fieldIndex: number, updates: Partial<TableConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const updatedField = {
+      ...field,
+      tableConfig: { ...field.tableConfig, ...updates },
+    };
+    this.updateField(fieldIndex, updatedField);
+  }
+
+  /**
+   * Update row mode
+   */
+  updateTableRowMode(fieldIndex: number, rowMode: TableRowMode): void {
+    this.updateTableConfig(fieldIndex, { rowMode });
+  }
+
+  /**
+   * Update fixed row count
+   */
+  updateTableFixedRowCount(fieldIndex: number, count: number): void {
+    this.updateTableConfig(fieldIndex, { fixedRowCount: Number(count) });
+  }
+
+  /**
+   * Update min rows
+   */
+  updateTableMinRows(fieldIndex: number, minRows: number): void {
+    this.updateTableConfig(fieldIndex, { minRows: Number(minRows) });
+  }
+
+  /**
+   * Update max rows
+   */
+  updateTableMaxRows(fieldIndex: number, maxRows: number): void {
+    this.updateTableConfig(fieldIndex, { maxRows: Number(maxRows) });
+  }
+
+  /**
+   * Update add row label
+   */
+  updateTableAddRowLabel(fieldIndex: number, label: string): void {
+    this.updateTableConfig(fieldIndex, { addRowLabel: label || undefined });
+  }
+
+  /**
+   * Add a column to table
+   */
+  addTableColumn(fieldIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const newColumn: TableColumnConfig = {
+      name: `column_${Date.now()}`,
+      label: 'New Column',
+      type: 'text',
+    };
+
+    const columns = [...field.tableConfig.columns, newColumn];
+    this.updateTableConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Update a column
+   */
+  updateTableColumn(fieldIndex: number, columnIndex: number, updates: Partial<TableColumnConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const columns = [...field.tableConfig.columns];
+    columns[columnIndex] = { ...columns[columnIndex], ...updates };
+    this.updateTableConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Remove a column
+   */
+  removeTableColumn(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig || field.tableConfig.columns.length <= 1) return;
+
+    const columns = field.tableConfig.columns.filter((_, i) => i !== columnIndex);
+    this.updateTableConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Move column up (left)
+   */
+  moveTableColumnUp(fieldIndex: number, columnIndex: number): void {
+    if (columnIndex === 0) return;
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const columns = [...field.tableConfig.columns];
+    [columns[columnIndex - 1], columns[columnIndex]] = [columns[columnIndex], columns[columnIndex - 1]];
+    this.updateTableConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Move column down (right)
+   */
+  moveTableColumnDown(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+    if (columnIndex >= field.tableConfig.columns.length - 1) return;
+
+    const columns = [...field.tableConfig.columns];
+    [columns[columnIndex], columns[columnIndex + 1]] = [columns[columnIndex + 1], columns[columnIndex]];
+    this.updateTableConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Update column helper methods
+   */
+  updateColumnName(fieldIndex: number, columnIndex: number, name: string): void {
+    this.updateTableColumn(fieldIndex, columnIndex, { name });
+  }
+
+  updateColumnLabel(fieldIndex: number, columnIndex: number, label: string): void {
+    this.updateTableColumn(fieldIndex, columnIndex, { label });
+  }
+
+  updateColumnType(fieldIndex: number, columnIndex: number, type: TableColumnType): void {
+    this.updateTableColumn(fieldIndex, columnIndex, { type });
+  }
+
+  updateColumnPlaceholder(fieldIndex: number, columnIndex: number, placeholder: string): void {
+    this.updateTableColumn(fieldIndex, columnIndex, { placeholder: placeholder || undefined });
+  }
+
+  updateColumnWidth(fieldIndex: number, columnIndex: number, width: number): void {
+    this.updateTableColumn(fieldIndex, columnIndex, { width: Number(width) });
+  }
+
+  /**
+   * Add validation to column
+   */
+  addColumnValidation(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const validations = [
+      ...(column.validations || []),
+      { type: 'required', message: 'This field is required' } as ValidationRule,
+    ];
+    this.updateTableColumn(fieldIndex, columnIndex, { validations });
+  }
+
+  /**
+   * Update column validation
+   */
+  updateColumnValidation(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    updates: Partial<ValidationRule>
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const validations = [...(column.validations || [])];
+    validations[validationIndex] = { ...validations[validationIndex], ...updates };
+    this.updateTableColumn(fieldIndex, columnIndex, { validations });
+  }
+
+  /**
+   * Remove column validation
+   */
+  removeColumnValidation(fieldIndex: number, columnIndex: number, validationIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const validations = (column.validations || []).filter((_, i) => i !== validationIndex);
+    this.updateTableColumn(fieldIndex, columnIndex, { validations });
+  }
+
+  /**
+   * Update column validation type
+   */
+  updateColumnValidationType(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    type: string
+  ): void {
+    this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, { type: type as any });
+  }
+
+  /**
+   * Update column validation value
+   */
+  updateColumnValidationValue(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    value: any
+  ): void {
+    this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, { value });
+  }
+
+  /**
+   * Update column validation message
+   */
+  updateColumnValidationMessage(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    message: string
+  ): void {
+    this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, { message });
+  }
+
+  /**
+   * Add option to select column
+   */
+  addColumnOption(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const options = [...(column.options || []), { label: 'New Option', value: '' }];
+    this.updateTableColumn(fieldIndex, columnIndex, { options });
+  }
+
+  /**
+   * Update column option
+   */
+  updateColumnOption(
+    fieldIndex: number,
+    columnIndex: number,
+    optionIndex: number,
+    updates: { label?: string; value?: string }
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const options = [...(column.options || [])];
+    options[optionIndex] = { ...options[optionIndex], ...updates };
+    this.updateTableColumn(fieldIndex, columnIndex, { options });
+  }
+
+  /**
+   * Remove column option
+   */
+  removeColumnOption(fieldIndex: number, columnIndex: number, optionIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const options = (column.options || []).filter((_, i) => i !== optionIndex);
+    this.updateTableColumn(fieldIndex, columnIndex, { options });
+  }
+
+  /**
+   * Update column option label
+   */
+  updateColumnOptionLabel(fieldIndex: number, columnIndex: number, optionIndex: number, label: string): void {
+    this.updateColumnOption(fieldIndex, columnIndex, optionIndex, { label });
+  }
+
+  /**
+   * Update column option value
+   */
+  updateColumnOptionValue(fieldIndex: number, columnIndex: number, optionIndex: number, value: string): void {
+    this.updateColumnOption(fieldIndex, columnIndex, optionIndex, { value });
   }
 }

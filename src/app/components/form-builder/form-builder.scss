@@ -246,6 +246,89 @@ $text-muted: #666;
   }
 }
 
+/* Table Configuration Section */
+.table-config-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border-color;
+
+  h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    background: $purple;
+    color: #fff;
+  }
+
+  h5 {
+    margin: 1rem 0 0.5rem 0;
+    font-size: 0.8125rem;
+    color: $text-muted;
+    text-transform: uppercase;
+  }
+}
+
+.columns-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border-color;
+}
+
+.column-item {
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  background: $lavender-light;
+  border: 1px solid $border-color;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid $border-color;
+}
+
+.column-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.column-options,
+.column-validations {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed $border-color;
+
+  > label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: $text-muted;
+    text-transform: uppercase;
+  }
+}
+
+.option-row,
+.validation-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+
+  input, select {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .btn-icon {
+    flex-shrink: 0;
+  }
+}
+
 .empty-state, .empty-editor {
   text-align: center;
   color: $text-muted;

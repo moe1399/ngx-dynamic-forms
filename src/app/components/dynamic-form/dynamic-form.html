@@ -158,6 +158,136 @@
               />
             }
           }
+          @case ('table') {
+            @if (field.tableConfig) {
+              <div
+                data-table-container
+                [attr.data-table-name]="field.name"
+                [attr.data-row-mode]="field.tableConfig.rowMode"
+                [attr.data-table-valid]="isTableValid(field.name)">
+
+                <table data-table [attr.data-table-for]="field.name">
+                  <thead data-table-header>
+                    <tr data-table-header-row>
+                      @for (column of field.tableConfig.columns; track column.name) {
+                        <th
+                          data-table-header-cell
+                          [attr.data-column-name]="column.name"
+                          [attr.data-column-type]="column.type"
+                          [attr.data-column-width]="column.width || 1">
+                          {{ column.label }}
+                          @if (hasColumnRequiredValidation(column)) {
+                            <span data-required-indicator>*</span>
+                          }
+                        </th>
+                      }
+                      @if (field.tableConfig.rowMode === 'dynamic') {
+                        <th data-table-header-cell data-table-actions-column></th>
+                      }
+                    </tr>
+                  </thead>
+
+                  <tbody data-table-body [formArrayName]="field.name">
+                    @for (rowControl of getTableFormArray(field.name)?.controls; track $index; let rowIndex = $index) {
+                      <tr
+                        data-table-row
+                        [formGroupName]="rowIndex"
+                        [attr.data-row-index]="rowIndex"
+                        [attr.data-row-empty]="isTableRowEmpty(field.name, rowIndex)">
+
+                        @for (column of field.tableConfig.columns; track column.name) {
+                          <td
+                            data-table-cell
+                            [attr.data-column-name]="column.name"
+                            [attr.data-cell-valid]="!hasTableCellError(field.name, rowIndex, column.name)"
+                            [attr.data-cell-row]="rowIndex"
+                            (mouseenter)="hasTableCellError(field.name, rowIndex, column.name) ? showCellTooltip(field.name, rowIndex, column.name) : null"
+                            (mouseleave)="hideCellTooltip()"
+                            (focusin)="hasTableCellError(field.name, rowIndex, column.name) ? showCellTooltip(field.name, rowIndex, column.name) : null"
+                            (focusout)="hideCellTooltip()">
+
+                            @switch (column.type) {
+                              @case ('text') {
+                                <input
+                                  type="text"
+                                  [formControlName]="column.name"
+                                  [placeholder]="column.placeholder || ''"
+                                  data-table-input
+                                  [attr.data-input-type]="column.type"
+                                />
+                              }
+                              @case ('number') {
+                                <input
+                                  type="number"
+                                  [formControlName]="column.name"
+                                  [placeholder]="column.placeholder || ''"
+                                  data-table-input
+                                  [attr.data-input-type]="column.type"
+                                />
+                              }
+                              @case ('date') {
+                                <input
+                                  type="date"
+                                  [formControlName]="column.name"
+                                  data-table-input
+                                  [attr.data-input-type]="column.type"
+                                />
+                              }
+                              @case ('select') {
+                                <select
+                                  [formControlName]="column.name"
+                                  data-table-input
+                                  [attr.data-input-type]="column.type">
+                                  @if (column.placeholder) {
+                                    <option value="" disabled>{{ column.placeholder }}</option>
+                                  }
+                                  <option value="">--</option>
+                                  @for (option of column.options; track option.value) {
+                                    <option [value]="option.value">{{ option.label }}</option>
+                                  }
+                                </select>
+                              }
+                            }
+
+                            @if (hasTableCellError(field.name, rowIndex, column.name) && isCellTooltipActive(field.name, rowIndex, column.name)) {
+                              <div data-cell-error-tooltip>
+                                {{ getTableCellErrorMessage(field, rowIndex, column.name) }}
+                              </div>
+                            }
+                          </td>
+                        }
+
+                        @if (field.tableConfig.rowMode === 'dynamic') {
+                          <td data-table-cell data-table-actions-cell>
+                            <button
+                              type="button"
+                              data-table-action="remove"
+                              [disabled]="!canRemoveTableRow(field)"
+                              (click)="removeTableRow(field, rowIndex)"
+                              [attr.aria-label]="field.tableConfig.removeRowLabel || 'Remove row'">
+                              &times;
+                            </button>
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+
+                @if (field.tableConfig.rowMode === 'dynamic') {
+                  <div data-table-footer>
+                    <button
+                      type="button"
+                      data-table-action="add"
+                      [disabled]="!canAddTableRow(field)"
+                      (click)="addTableRow(field)">
+                      {{ field.tableConfig.addRowLabel || 'Add row' }}
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          }
         }
 
         @if (hasError(field.name)) {

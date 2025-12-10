@@ -1,5 +1,5 @@
 import { Component, input, output, OnInit, OnDestroy, effect } from '@angular/core';
-import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import {
   FormConfig,
@@ -7,6 +7,7 @@ import {
   FormSection,
   ValidationRule,
   FieldError,
+  TableColumnConfig,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage';
 
@@ -29,6 +30,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   form: FormGroup = new FormGroup({});
   errors: FieldError[] = [];
   activePopover: string | null = null;
+  activeCellTooltip: { field: string; row: number; col: string } | null = null;
   private autoSaveTimer?: number;
 
   constructor(private formStorage: FormStorage) {
@@ -55,7 +57,7 @@ export class DynamicForm implements OnInit, OnDestroy {
    * Initialize the form based on configuration
    */
   private initializeForm(): void {
-    const group: { [key: string]: FormControl } = {};
+    const group: { [key: string]: FormControl | FormArray } = {};
     const currentConfig = this.config();
 
     // Sort fields by order if specified
@@ -64,14 +66,19 @@ export class DynamicForm implements OnInit, OnDestroy {
     });
 
     sortedFields.forEach((field) => {
-      const validators = this.buildValidators(field.validations || []);
-      // Initialize checkbox fields with options as arrays
-      const defaultValue =
-        field.type === 'checkbox' && field.options?.length ? field.value ?? [] : field.value ?? '';
-      group[field.name] = new FormControl(
-        { value: defaultValue, disabled: field.disabled ?? false },
-        validators
-      );
+      if (field.type === 'table' && field.tableConfig) {
+        // Create FormArray for table rows
+        group[field.name] = this.createTableFormArray(field);
+      } else {
+        const validators = this.buildValidators(field.validations || []);
+        // Initialize checkbox fields with options as arrays
+        const defaultValue =
+          field.type === 'checkbox' && field.options?.length ? field.value ?? [] : field.value ?? '';
+        group[field.name] = new FormControl(
+          { value: defaultValue, disabled: field.disabled ?? false },
+          validators
+        );
+      }
     });
 
     this.form = new FormGroup(group);
@@ -80,6 +87,48 @@ export class DynamicForm implements OnInit, OnDestroy {
     this.form.valueChanges.subscribe(() => {
       this.updateErrors();
     });
+  }
+
+  /**
+   * Create FormArray for a table field
+   */
+  private createTableFormArray(field: FormFieldConfig): FormArray {
+    const tableConfig = field.tableConfig!;
+    const existingValue = (field.value as any[]) || [];
+
+    let rowCount: number;
+    if (tableConfig.rowMode === 'fixed') {
+      rowCount = tableConfig.fixedRowCount ?? 3;
+    } else {
+      rowCount = Math.max(existingValue.length, tableConfig.minRows ?? 0);
+      if (rowCount === 0) rowCount = 1; // Start with at least one row in dynamic mode
+    }
+
+    const rows: FormGroup[] = [];
+    for (let i = 0; i < rowCount; i++) {
+      const rowData = existingValue[i] || {};
+      rows.push(this.createTableRowFormGroup(field, rowData));
+    }
+
+    return new FormArray(rows);
+  }
+
+  /**
+   * Create FormGroup for a single table row
+   */
+  private createTableRowFormGroup(field: FormFieldConfig, rowData: any = {}): FormGroup {
+    const tableConfig = field.tableConfig!;
+    const controls: { [key: string]: FormControl } = {};
+
+    tableConfig.columns.forEach((column) => {
+      const validators = this.buildValidators(column.validations || []);
+      controls[column.name] = new FormControl(
+        { value: rowData[column.name] ?? '', disabled: field.disabled ?? false },
+        validators
+      );
+    });
+
+    return new FormGroup(controls);
   }
 
   /**
@@ -214,12 +263,34 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.form.get(key)?.markAsTouched();
     });
 
+    // Mark table cells as touched
+    this.markTableFieldsTouched();
+
     this.updateErrors();
 
-    if (this.form.valid) {
-      const currentConfig = this.config();
-      this.formStorage.saveForm(currentConfig.id, this.form.value, true);
-      this.formSubmit.emit(this.form.value);
+    // Check regular form validity AND table validity
+    let isValid = true;
+    const currentConfig = this.config();
+
+    // Check table fields (empty rows are OK)
+    for (const field of currentConfig.fields) {
+      if (field.type === 'table' && !this.isTableValid(field.name)) {
+        isValid = false;
+        break;
+      } else if (field.type !== 'table') {
+        const control = this.form.get(field.name);
+        if (control?.invalid) {
+          isValid = false;
+          break;
+        }
+      }
+    }
+
+    if (isValid) {
+      // Filter out empty rows from table data before submitting
+      const formValue = this.getCleanedFormValue();
+      this.formStorage.saveForm(currentConfig.id, formValue, true);
+      this.formSubmit.emit(formValue);
     }
   }
 
@@ -464,5 +535,237 @@ export class DynamicForm implements OnInit, OnDestroy {
     control.setValue(currentValue);
     control.markAsTouched();
     control.markAsDirty();
+  }
+
+  // ============================================
+  // Table Field Methods
+  // ============================================
+
+  /**
+   * Get FormArray for a table field
+   */
+  getTableFormArray(fieldName: string): FormArray | null {
+    const control = this.form.get(fieldName);
+    return control instanceof FormArray ? control : null;
+  }
+
+  /**
+   * Get row FormGroup from table
+   */
+  getTableRowFormGroup(fieldName: string, rowIndex: number): FormGroup | null {
+    const formArray = this.getTableFormArray(fieldName);
+    if (formArray && rowIndex < formArray.length) {
+      return formArray.at(rowIndex) as FormGroup;
+    }
+    return null;
+  }
+
+  /**
+   * Add row to dynamic table
+   */
+  addTableRow(field: FormFieldConfig): void {
+    const tableConfig = field.tableConfig;
+    if (!tableConfig || tableConfig.rowMode !== 'dynamic') return;
+
+    const formArray = this.getTableFormArray(field.name);
+    if (!formArray) return;
+
+    const maxRows = tableConfig.maxRows ?? 10;
+    if (formArray.length >= maxRows) return;
+
+    formArray.push(this.createTableRowFormGroup(field));
+  }
+
+  /**
+   * Remove row from dynamic table
+   */
+  removeTableRow(field: FormFieldConfig, rowIndex: number): void {
+    const tableConfig = field.tableConfig;
+    if (!tableConfig || tableConfig.rowMode !== 'dynamic') return;
+
+    const formArray = this.getTableFormArray(field.name);
+    if (!formArray) return;
+
+    const minRows = tableConfig.minRows ?? 0;
+    if (formArray.length <= minRows) return;
+
+    formArray.removeAt(rowIndex);
+  }
+
+  /**
+   * Check if a row can be added (for dynamic tables)
+   */
+  canAddTableRow(field: FormFieldConfig): boolean {
+    const tableConfig = field.tableConfig;
+    if (!tableConfig || tableConfig.rowMode !== 'dynamic') return false;
+
+    const formArray = this.getTableFormArray(field.name);
+    if (!formArray) return false;
+
+    const maxRows = tableConfig.maxRows ?? 10;
+    return formArray.length < maxRows;
+  }
+
+  /**
+   * Check if a row can be removed (for dynamic tables)
+   */
+  canRemoveTableRow(field: FormFieldConfig): boolean {
+    const tableConfig = field.tableConfig;
+    if (!tableConfig || tableConfig.rowMode !== 'dynamic') return false;
+
+    const formArray = this.getTableFormArray(field.name);
+    if (!formArray) return false;
+
+    const minRows = tableConfig.minRows ?? 0;
+    return formArray.length > minRows;
+  }
+
+  /**
+   * Check if a table row is empty (all cells empty/falsy)
+   */
+  isTableRowEmpty(fieldName: string, rowIndex: number): boolean {
+    const rowGroup = this.getTableRowFormGroup(fieldName, rowIndex);
+    if (!rowGroup) return true;
+
+    return Object.values(rowGroup.controls).every((control) => {
+      const value = control.value;
+      return value === '' || value === null || value === undefined;
+    });
+  }
+
+  /**
+   * Check if table cell has error
+   */
+  hasTableCellError(fieldName: string, rowIndex: number, columnName: string): boolean {
+    const rowGroup = this.getTableRowFormGroup(fieldName, rowIndex);
+    if (!rowGroup) return false;
+
+    const control = rowGroup.get(columnName);
+    if (!control) return false;
+
+    // Skip validation for empty rows
+    if (this.isTableRowEmpty(fieldName, rowIndex)) return false;
+
+    return control.invalid && control.touched;
+  }
+
+  /**
+   * Get table cell error message
+   */
+  getTableCellErrorMessage(field: FormFieldConfig, rowIndex: number, columnName: string): string {
+    const tableConfig = field.tableConfig;
+    if (!tableConfig) return '';
+
+    const column = tableConfig.columns.find((c) => c.name === columnName);
+    if (!column) return '';
+
+    const rowGroup = this.getTableRowFormGroup(field.name, rowIndex);
+    if (!rowGroup) return '';
+
+    const control = rowGroup.get(columnName);
+    if (!control || !control.errors) return '';
+
+    // Find matching validation message
+    const validations = column.validations || [];
+    for (const validation of validations) {
+      const errorKey = validation.type;
+      if (control.hasError(errorKey) || control.hasError('custom')) {
+        return validation.message;
+      }
+    }
+
+    return 'Invalid value';
+  }
+
+  /**
+   * Show cell error tooltip
+   */
+  showCellTooltip(fieldName: string, rowIndex: number, columnName: string): void {
+    this.activeCellTooltip = { field: fieldName, row: rowIndex, col: columnName };
+  }
+
+  /**
+   * Hide cell error tooltip
+   */
+  hideCellTooltip(): void {
+    this.activeCellTooltip = null;
+  }
+
+  /**
+   * Check if cell tooltip is active
+   */
+  isCellTooltipActive(fieldName: string, rowIndex: number, columnName: string): boolean {
+    return (
+      this.activeCellTooltip?.field === fieldName &&
+      this.activeCellTooltip?.row === rowIndex &&
+      this.activeCellTooltip?.col === columnName
+    );
+  }
+
+  /**
+   * Mark all table cells as touched (for form submission)
+   */
+  private markTableFieldsTouched(): void {
+    const currentConfig = this.config();
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'table') {
+        const formArray = this.getTableFormArray(field.name);
+        if (formArray) {
+          formArray.controls.forEach((rowGroup) => {
+            if (rowGroup instanceof FormGroup) {
+              Object.keys(rowGroup.controls).forEach((key) => {
+                rowGroup.get(key)?.markAsTouched();
+              });
+            }
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * Check if table has any non-empty invalid rows
+   */
+  isTableValid(fieldName: string): boolean {
+    const field = this.getField(fieldName);
+    if (!field || field.type !== 'table') return true;
+
+    const formArray = this.getTableFormArray(fieldName);
+    if (!formArray) return true;
+
+    for (let i = 0; i < formArray.length; i++) {
+      // Skip empty rows
+      if (this.isTableRowEmpty(fieldName, i)) continue;
+
+      const rowGroup = formArray.at(i) as FormGroup;
+      if (rowGroup.invalid) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get form value with empty table rows filtered out
+   */
+  private getCleanedFormValue(): { [key: string]: any } {
+    const value = { ...this.form.value };
+    const currentConfig = this.config();
+
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'table' && Array.isArray(value[field.name])) {
+        value[field.name] = value[field.name].filter((row: any) => {
+          return Object.values(row).some((v) => v !== '' && v !== null && v !== undefined);
+        });
+      }
+    });
+
+    return value;
+  }
+
+  /**
+   * Check if a column has required validation
+   */
+  hasColumnRequiredValidation(column: TableColumnConfig): boolean {
+    return column.validations?.some((v) => v.type === 'required') ?? false;
   }
 }

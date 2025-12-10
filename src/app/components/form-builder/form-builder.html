@@ -334,6 +334,215 @@
             </div>
           }
 
+          <!-- Table Configuration (for table fields) -->
+          @if (field.type === 'table') {
+            <div class="table-config-section">
+              <h4>Table Configuration</h4>
+
+              <!-- Row Mode -->
+              <div class="form-group">
+                <label>Row Mode</label>
+                <select
+                  [ngModel]="field.tableConfig?.rowMode || 'fixed'"
+                  (ngModelChange)="updateTableRowMode(fieldIndex, $event)">
+                  <option value="fixed">Fixed (set number of rows)</option>
+                  <option value="dynamic">Dynamic (add/remove rows)</option>
+                </select>
+              </div>
+
+              <!-- Fixed Mode Settings -->
+              @if (field.tableConfig?.rowMode === 'fixed') {
+                <div class="form-group">
+                  <label>Number of Rows</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    [ngModel]="field.tableConfig?.fixedRowCount || 3"
+                    (ngModelChange)="updateTableFixedRowCount(fieldIndex, $event)"
+                  />
+                </div>
+              }
+
+              <!-- Dynamic Mode Settings -->
+              @if (field.tableConfig?.rowMode === 'dynamic') {
+                <div class="form-group">
+                  <label>Minimum Rows</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    [ngModel]="field.tableConfig?.minRows || 0"
+                    (ngModelChange)="updateTableMinRows(fieldIndex, $event)"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Maximum Rows</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    [ngModel]="field.tableConfig?.maxRows || 10"
+                    (ngModelChange)="updateTableMaxRows(fieldIndex, $event)"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Add Row Button Text</label>
+                  <input
+                    type="text"
+                    [ngModel]="field.tableConfig?.addRowLabel || ''"
+                    (ngModelChange)="updateTableAddRowLabel(fieldIndex, $event)"
+                    placeholder="Add row"
+                  />
+                </div>
+              }
+
+              <!-- Columns -->
+              <div class="columns-section">
+                <h5>Columns</h5>
+                <button class="btn-sm btn-primary" (click)="addTableColumn(fieldIndex)">+ Add Column</button>
+
+                @for (column of field.tableConfig?.columns; track $index; let ci = $index) {
+                  <div class="column-item">
+                    <div class="column-header">
+                      <strong>{{ column.label }}</strong>
+                      <div class="column-actions">
+                        <button class="btn-icon" (click)="moveTableColumnUp(fieldIndex, ci)" title="Move Left">←</button>
+                        <button class="btn-icon" (click)="moveTableColumnDown(fieldIndex, ci)" title="Move Right">→</button>
+                        <button
+                          class="btn-icon btn-danger"
+                          (click)="removeTableColumn(fieldIndex, ci)"
+                          [disabled]="field.tableConfig?.columns?.length === 1"
+                          title="Delete">×</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Name (ID)</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.name"
+                        (ngModelChange)="updateColumnName(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.label"
+                        (ngModelChange)="updateColumnLabel(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Type</label>
+                      <select
+                        [ngModel]="column.type"
+                        (ngModelChange)="updateColumnType(fieldIndex, ci, $event)">
+                        @for (type of tableColumnTypes; track type) {
+                          <option [value]="type">{{ type }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Placeholder</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.placeholder"
+                        (ngModelChange)="updateColumnPlaceholder(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Width (1-4)</label>
+                      <select
+                        [ngModel]="column.width || 1"
+                        (ngModelChange)="updateColumnWidth(fieldIndex, ci, $event)">
+                        <option [value]="1">1 (default)</option>
+                        <option [value]="2">2 (wider)</option>
+                        <option [value]="3">3 (wide)</option>
+                        <option [value]="4">4 (widest)</option>
+                      </select>
+                    </div>
+
+                    <!-- Column Options (for select type) -->
+                    @if (column.type === 'select') {
+                      <div class="column-options">
+                        <label>Options</label>
+                        <button class="btn-sm btn-secondary" (click)="addColumnOption(fieldIndex, ci)">+ Add Option</button>
+
+                        @for (option of column.options; track $index; let oi = $index) {
+                          <div class="option-row">
+                            <input
+                              type="text"
+                              [ngModel]="option.label"
+                              (ngModelChange)="updateColumnOptionLabel(fieldIndex, ci, oi, $event)"
+                              placeholder="Label"
+                            />
+                            <input
+                              type="text"
+                              [ngModel]="option.value"
+                              (ngModelChange)="updateColumnOptionValue(fieldIndex, ci, oi, $event)"
+                              placeholder="Value"
+                            />
+                            <button class="btn-icon btn-danger" (click)="removeColumnOption(fieldIndex, ci, oi)">×</button>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Column Validations -->
+                    <div class="column-validations">
+                      <label>Validations</label>
+                      <button class="btn-sm btn-secondary" (click)="addColumnValidation(fieldIndex, ci)">+ Add Validation</button>
+
+                      @for (validation of column.validations; track $index; let vi = $index) {
+                        <div class="validation-row">
+                          <select
+                            [ngModel]="validation.type"
+                            (ngModelChange)="updateColumnValidationType(fieldIndex, ci, vi, $event)">
+                            @for (vType of validationTypes; track vType) {
+                              <option [value]="vType">{{ vType }}</option>
+                            }
+                          </select>
+
+                          @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+                            <input
+                              type="number"
+                              [ngModel]="validation.value"
+                              (ngModelChange)="updateColumnValidationValue(fieldIndex, ci, vi, $event)"
+                              placeholder="Value"
+                            />
+                          }
+
+                          @if (validation.type === 'pattern') {
+                            <input
+                              type="text"
+                              [ngModel]="validation.value"
+                              (ngModelChange)="updateColumnValidationValue(fieldIndex, ci, vi, $event)"
+                              placeholder="Regex pattern"
+                            />
+                          }
+
+                          <input
+                            type="text"
+                            [ngModel]="validation.message"
+                            (ngModelChange)="updateColumnValidationMessage(fieldIndex, ci, vi, $event)"
+                            placeholder="Error message"
+                          />
+
+                          <button class="btn-icon btn-danger" (click)="removeColumnValidation(fieldIndex, ci, vi)">×</button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Validations -->
           <div class="validations-section">
             <h4>Validations</h4>

@@ -439,6 +439,227 @@ label[data-label-for] {
   position: relative;
 }
 
+/* ========================================
+   Table Field Styles
+   ======================================== */
+
+/* Table field removes standard layout */
+[data-field-type="table"] {
+  display: block;
+  background: transparent;
+}
+
+[data-field-type="table"] label[data-label-for] {
+  display: none; /* Table uses its own header structure */
+}
+
+[data-field-type="table"] [data-input-container] {
+  padding: 0;
+  background: transparent;
+}
+
+/* Table Container */
+[data-table-container] {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Table Element */
+[data-table] {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+/* Table Header */
+[data-table-header] {
+  background: #E8E0ED;
+}
+
+[data-table-header-row] {
+  border-bottom: 1px solid #ccc;
+}
+
+[data-table-header-cell] {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: normal;
+  color: #333;
+  border-right: 1px solid #ccc;
+}
+
+[data-table-header-cell]:last-child {
+  border-right: none;
+}
+
+/* Column width proportions */
+[data-table-header-cell][data-column-width="1"] {
+  width: auto;
+}
+
+[data-table-header-cell][data-column-width="2"] {
+  width: auto;
+  min-width: 150px;
+}
+
+[data-table-header-cell][data-column-width="3"] {
+  width: auto;
+  min-width: 200px;
+}
+
+[data-table-header-cell][data-column-width="4"] {
+  width: auto;
+  min-width: 250px;
+}
+
+/* Actions column (narrow) */
+[data-table-actions-column] {
+  width: 50px;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Table Body */
+[data-table-body] {
+  background: #ffffff;
+}
+
+/* Table Row */
+[data-table-row] {
+  border-bottom: 1px solid #ccc;
+}
+
+[data-table-row]:last-child {
+  border-bottom: none;
+}
+
+/* Empty row styling (lighter) */
+[data-table-row][data-row-empty="true"] {
+  background: #fafafa;
+}
+
+/* Table Cell */
+[data-table-cell] {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-right: 1px solid #ccc;
+  position: relative;
+}
+
+[data-table-cell]:last-child {
+  border-right: none;
+}
+
+/* Actions cell (centered) */
+[data-table-actions-cell] {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Table Inputs */
+[data-table-input] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+}
+
+[data-table-input]:focus {
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+}
+
+/* Invalid cell state */
+[data-cell-valid="false"] [data-table-input] {
+  border-color: #c00;
+  background: #fff8f8;
+}
+
+[data-cell-valid="false"] [data-table-input]:focus {
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+}
+
+/* Cell Error Tooltip */
+[data-cell-error-tooltip] {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  min-width: 150px;
+  max-width: 250px;
+  padding: 6px 10px;
+  margin-top: 2px;
+  background: #c00;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.3;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-cell-error-tooltip]::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 10px;
+  border: 6px solid transparent;
+  border-bottom-color: #c00;
+}
+
+/* Table Footer (Add row button) */
+[data-table-footer] {
+  padding: 10px 12px;
+  background: #E8E0ED;
+  border-top: 1px solid #ccc;
+}
+
+/* Table Action Buttons */
+button[data-table-action] {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: normal;
+  border: 1px solid #999;
+  cursor: pointer;
+  font-family: inherit;
+  background: #f5f5f5;
+  color: #333;
+}
+
+button[data-table-action]:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+button[data-table-action]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button[data-table-action="add"] {
+  background: #512B58;
+  color: #ffffff;
+  border-color: #512B58;
+}
+
+button[data-table-action="add"]:hover:not(:disabled) {
+  background: #3d2042;
+}
+
+button[data-table-action="remove"] {
+  background: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+button[data-table-action="remove"]:hover:not(:disabled) {
+  background: #f5c6cb;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   /* Stack inline groups vertically on mobile */
@@ -473,5 +694,15 @@ label[data-label-for] {
 
   button[data-action] {
     width: 100%;
+  }
+
+  /* Table responsive - horizontal scroll */
+  [data-table-container] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-table] {
+    min-width: 500px;
   }
 }
