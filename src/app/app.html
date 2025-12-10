@@ -19,13 +19,6 @@
       [disabled]="!currentConfig() || currentConfig()!.fields.length === 0">
       Preview & Test
     </button>
-    <button
-      class="share-button"
-      (click)="shareForm()"
-      [disabled]="!currentConfig() || currentConfig()!.fields.length === 0"
-      title="Copy shareable URL to clipboard">
-      Share
-    </button>
   </nav>
 
   @if (shareNotification()) {
@@ -48,7 +41,8 @@
 
       <app-form-builder
         [initialConfig]="currentConfig()"
-        (configChanged)="onConfigChanged($event)" />
+        (configChanged)="onConfigChanged($event)"
+        (shareRequested)="shareForm()" />
     </div>
   }
 

@@ -68,27 +68,6 @@ $text-muted: #666;
   }
 }
 
-.share-button {
-  margin-left: auto;
-  padding: 0.5rem 1rem;
-  background: $purple;
-  border: none;
-  font-size: 0.875rem;
-  font-weight: normal;
-  color: white;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover:not(:disabled) {
-    background: $purple-dark;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
 .share-notification {
   background: #d4edda;
   border-bottom: 1px solid #c3e6cb;

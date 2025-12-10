@@ -26,6 +26,7 @@ export class FormBuilder {
 
   // Outputs
   configChanged = output<FormConfig>();
+  shareRequested = output<void>();
 
   // Current form configuration being edited
   currentConfig!: ReturnType<typeof signal<FormConfig>>;

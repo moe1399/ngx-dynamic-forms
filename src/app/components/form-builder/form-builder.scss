@@ -380,6 +380,16 @@ $text-muted: #666;
   }
 }
 
+.btn-share {
+  background: $purple;
+  color: #fff;
+  border-color: $purple;
+
+  &:hover:not(:disabled) {
+    background: $purple-dark;
+  }
+}
+
 .btn-danger {
   background: #c00;
   color: #fff;

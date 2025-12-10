@@ -35,6 +35,10 @@ export class App implements OnInit {
       const schema = this.urlSchemaService.getSchemaFromUrl();
       if (schema) {
         this.currentConfig.set(schema);
+        // Switch to preview tab when loading a shared form
+        if (schema.fields.length > 0) {
+          this.currentView.set('preview');
+        }
         // Clear the URL parameter to avoid confusion
         this.urlSchemaService.clearSchemaFromUrl();
       }

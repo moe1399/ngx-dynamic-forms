@@ -12,6 +12,13 @@
     <button class="btn btn-secondary" (click)="saveConfiguration()">Save</button>
     <button class="btn btn-secondary" (click)="exportJson()">Export JSON</button>
     <button class="btn btn-secondary" (click)="showJsonEditor.set(true)">Import JSON</button>
+    <button
+      class="btn btn-share"
+      (click)="shareRequested.emit()"
+      [disabled]="currentConfig().fields.length === 0"
+      title="Copy shareable URL to clipboard">
+      Share
+    </button>
   </div>
 
   <div class="builder-layout">
