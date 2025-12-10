@@ -256,22 +256,114 @@ button[data-action="submit"][data-can-submit="false"]:hover {
   background: #512B58;
 }
 
-/* Checkbox fields */
-[data-field-type="checkbox"] {
+/* Single Checkbox fields (boolean toggle without options) */
+[data-field-type="checkbox"]:has([data-checkbox-single]) {
   flex-direction: row;
   align-items: center;
 }
 
-[data-field-type="checkbox"] label[data-label-for] {
+[data-field-type="checkbox"]:has([data-checkbox-single]) label[data-label-for] {
   flex: none;
   min-width: auto;
   max-width: none;
   border-right: none;
 }
 
-[data-field-type="checkbox"] input[type="checkbox"] {
+[data-checkbox-single] {
   width: auto;
   margin-right: 8px;
+}
+
+/* Radio Group */
+[data-radio-group] {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+[data-radio-option] {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  transition: background 0.15s;
+}
+
+[data-radio-option]:last-child {
+  border-bottom: none;
+}
+
+[data-radio-option]:hover {
+  background: #f5f5f5;
+}
+
+[data-radio-input] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #512B58;
+}
+
+[data-radio-label] {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+}
+
+/* Checkbox Group (multiple selection) */
+[data-checkbox-group] {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+[data-checkbox-option] {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  transition: background 0.15s;
+}
+
+[data-checkbox-option]:last-child {
+  border-bottom: none;
+}
+
+[data-checkbox-option]:hover {
+  background: #f5f5f5;
+}
+
+[data-checkbox-option][data-option-selected="true"] {
+  background: #f0ebf2;
+}
+
+[data-checkbox-input] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #512B58;
+}
+
+[data-checkbox-label] {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+}
+
+/* Radio/Checkbox fields - adjust input container */
+[data-field-type="radio"] [data-input-container],
+[data-field-type="checkbox"]:has([data-checkbox-group]) [data-input-container] {
+  padding: 0;
 }
 
 /* Info Icon */

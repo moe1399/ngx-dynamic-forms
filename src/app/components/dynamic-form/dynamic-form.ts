@@ -65,8 +65,11 @@ export class DynamicForm implements OnInit, OnDestroy {
 
     sortedFields.forEach((field) => {
       const validators = this.buildValidators(field.validations || []);
+      // Initialize checkbox fields with options as arrays
+      const defaultValue =
+        field.type === 'checkbox' && field.options?.length ? field.value ?? [] : field.value ?? '';
       group[field.name] = new FormControl(
-        { value: field.value ?? '', disabled: field.disabled ?? false },
+        { value: defaultValue, disabled: field.disabled ?? false },
         validators
       );
     });
@@ -423,5 +426,43 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   closePopover(): void {
     this.activePopover = null;
+  }
+
+  /**
+   * Check if a checkbox option is selected (for checkbox groups)
+   */
+  isCheckboxOptionSelected(fieldName: string, optionValue: any): boolean {
+    const control = this.form.get(fieldName);
+    const value = control?.value;
+    if (Array.isArray(value)) {
+      return value.includes(optionValue);
+    }
+    return false;
+  }
+
+  /**
+   * Toggle a checkbox option (for checkbox groups with multiple options)
+   */
+  toggleCheckboxOption(fieldName: string, optionValue: any): void {
+    const control = this.form.get(fieldName);
+    if (!control) return;
+
+    let currentValue = control.value;
+    if (!Array.isArray(currentValue)) {
+      currentValue = [];
+    }
+
+    const index = currentValue.indexOf(optionValue);
+    if (index === -1) {
+      // Add value
+      currentValue = [...currentValue, optionValue];
+    } else {
+      // Remove value
+      currentValue = currentValue.filter((v: any) => v !== optionValue);
+    }
+
+    control.setValue(currentValue);
+    control.markAsTouched();
+    control.markAsDirty();
   }
 }

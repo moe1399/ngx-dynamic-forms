@@ -190,7 +190,7 @@ Section-level attributes:
 
 Field-level attributes:
 - `data-field-name`: Field identifier (e.g., "email", "firstName")
-- `data-field-type`: Field type ("text", "email", "number", "textarea", "date")
+- `data-field-type`: Field type ("text", "email", "number", "textarea", "date", "select", "radio", "checkbox")
 - `data-field-valid`: "true" | "false" - Field validation state
 - `data-field-touched`: "true" | "false" - Whether field has been focused
 - `data-field-dirty`: "true" | "false" - Whether field value has changed
@@ -311,8 +311,61 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - `number`: Number input
 - `textarea`: Multi-line text area
 - `date`: Date picker
+- `select`: Dropdown selection with options
+- `radio`: Radio button group (mutually exclusive single selection)
+- `checkbox`: Checkbox group (multiple selection) or single boolean toggle
 
-**Note**: Select, checkbox, and radio types are defined in the interface but not yet implemented.
+#### Radio and Checkbox Groups
+
+For `radio` and `checkbox` field types, use the `options` property to define choices:
+
+```typescript
+// Radio - mutually exclusive (single selection)
+{
+  name: 'applicationType',
+  label: 'Application type',
+  type: 'radio',
+  sectionId: 'application-type',
+  options: [
+    { value: 'first-year', label: 'First year (less than 12 months teaching experience)' },
+    { value: 'second-year', label: 'Second year (more than 12 months but less than 24 months)' }
+  ],
+  validations: [{ type: 'required', message: 'Please select an application type' }]
+}
+
+// Checkbox group - multiple selection
+{
+  name: 'additionalInfo',
+  label: 'Additional information',
+  type: 'checkbox',
+  sectionId: 'additional-info',
+  options: [
+    { value: 'part-time', label: 'Part time teacher' },
+    { value: 'term-only', label: 'Term time only' },
+    { value: 'relieving', label: 'Relieving teacher' }
+  ]
+}
+
+// Single checkbox (boolean toggle) - no options
+{
+  name: 'agreeToTerms',
+  label: 'I agree to the terms and conditions',
+  type: 'checkbox'
+}
+```
+
+**Data Attributes for Radio/Checkbox Styling**:
+- `data-radio-group`: Container for radio options
+- `data-radio-option`: Individual radio option label
+- `data-radio-input`: Radio input element
+- `data-radio-label`: Radio option text
+- `data-checkbox-group`: Container for checkbox options
+- `data-checkbox-option`: Individual checkbox option label
+- `data-checkbox-input`: Checkbox input element
+- `data-checkbox-label`: Checkbox option text
+- `data-checkbox-single`: Single boolean checkbox (no options)
+- `data-option-value`: The value of the option
+- `data-option-selected`: "true" | "false" for checkbox selection state
 
 ### Validation Types
 - `required`: Field must have a value

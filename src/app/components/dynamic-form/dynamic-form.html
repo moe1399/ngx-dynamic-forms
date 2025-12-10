@@ -108,6 +108,56 @@
               }
             </select>
           }
+          @case ('radio') {
+            <div
+              data-radio-group
+              role="radiogroup"
+              [attr.aria-labelledby]="field.name + '-label'">
+              @for (option of field.options; track option.value) {
+                <label
+                  data-radio-option
+                  [attr.data-option-value]="option.value">
+                  <input
+                    type="radio"
+                    [formControlName]="field.name"
+                    [value]="option.value"
+                    data-radio-input
+                  />
+                  <span data-radio-label>{{ option.label }}</span>
+                </label>
+              }
+            </div>
+          }
+          @case ('checkbox') {
+            @if (field.options && field.options.length > 0) {
+              <div
+                data-checkbox-group
+                role="group"
+                [attr.aria-labelledby]="field.name + '-label'">
+                @for (option of field.options; track option.value) {
+                  <label
+                    data-checkbox-option
+                    [attr.data-option-value]="option.value"
+                    [attr.data-option-selected]="isCheckboxOptionSelected(field.name, option.value)">
+                    <input
+                      type="checkbox"
+                      [checked]="isCheckboxOptionSelected(field.name, option.value)"
+                      (change)="toggleCheckboxOption(field.name, option.value)"
+                      data-checkbox-input
+                    />
+                    <span data-checkbox-label>{{ option.label }}</span>
+                  </label>
+                }
+              </div>
+            } @else {
+              <input
+                [id]="field.name"
+                [formControlName]="field.name"
+                type="checkbox"
+                data-checkbox-single
+              />
+            }
+          }
         }
 
         @if (hasError(field.name)) {

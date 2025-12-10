@@ -37,7 +37,7 @@ export class FormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox'];
 
   // Validation types
   validationTypes = ['required', 'email', 'minLength', 'maxLength', 'min', 'max', 'pattern'];

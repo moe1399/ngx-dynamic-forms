@@ -292,10 +292,16 @@
             </label>
           </div>
 
-          <!-- Options (for select fields) -->
-          @if (field.type === 'select') {
+          <!-- Options (for select, radio, checkbox fields) -->
+          @if (field.type === 'select' || field.type === 'radio' || field.type === 'checkbox') {
             <div class="options-section">
               <h4>Options</h4>
+              @if (field.type === 'radio') {
+                <small class="form-hint">Radio buttons allow single selection (mutually exclusive)</small>
+              }
+              @if (field.type === 'checkbox') {
+                <small class="form-hint">Checkboxes allow multiple selections</small>
+              }
               <button class="btn-sm btn-primary" (click)="addOption(fieldIndex)">+ Add Option</button>
 
               @for (option of field.options; track $index; let oi = $index) {
@@ -323,7 +329,7 @@
               }
 
               @if (!field.options || field.options.length === 0) {
-                <p class="empty-state">No options. Add at least one option for the select field.</p>
+                <p class="empty-state">No options. Add at least one option.</p>
               }
             </div>
           }
