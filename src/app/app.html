@@ -42,22 +42,6 @@
   <!-- Preview View -->
   @if (currentView() === 'preview' && currentConfig()) {
     <div class="view-content preview-view">
-      <!-- Theme Selector -->
-      <div class="theme-selector">
-        <h3>Select Theme</h3>
-        <div class="theme-buttons">
-          @for (theme of themes; track theme.id) {
-            <button
-              class="theme-button"
-              [class.active]="currentTheme() === theme.id"
-              (click)="switchTheme(theme.id)">
-              <strong>{{ theme.name }}</strong>
-              <small>{{ theme.description }}</small>
-            </button>
-          }
-        </div>
-      </div>
-
       @if (submissionResult()) {
         <div class="submission-result">
           <h4>Submission Result</h4>
@@ -66,11 +50,10 @@
       }
 
       <!-- Form Preview -->
-      <div class="form-preview" [attr.data-theme]="currentTheme()">
+      <div class="form-preview">
         <h3>Form Preview - {{ currentConfig()!.id }}</h3>
         <p class="preview-note">
           This form uses a headless component styled with data-* attributes.
-          The current theme is: <strong>{{ currentTheme() }}</strong>
         </p>
 
         <app-dynamic-form

@@ -21,6 +21,7 @@ export interface FormFieldConfig {
   label: string;
   type: FieldType;
   placeholder?: string;
+  description?: string; // Help text shown via info icon popover
   value?: any;
   validations?: ValidationRule[];
   options?: { label: string; value: any }[]; // For select, radio, checkbox

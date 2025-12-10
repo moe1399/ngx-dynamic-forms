@@ -14,28 +14,14 @@ export class App {
   // Current view: 'builder' or 'preview'
   currentView = signal<'builder' | 'preview'>('builder');
 
-  // Current theme
-  currentTheme = signal<'minimal' | 'modern' | 'classic'>('modern');
-
   // Current form configuration
   currentConfig = signal<FormConfig | null>(null);
 
   // Submission result
   submissionResult = signal<string>('');
 
-  // Available themes
-  themes = [
-    { id: 'minimal' as const, name: 'Minimal', description: 'Clean and simple' },
-    { id: 'modern' as const, name: 'Modern', description: 'Vibrant and rounded' },
-    { id: 'classic' as const, name: 'Classic', description: 'Traditional serif' },
-  ];
-
   onConfigChanged(config: FormConfig): void {
     this.currentConfig.set(config);
-  }
-
-  switchTheme(theme: 'minimal' | 'modern' | 'classic'): void {
-    this.currentTheme.set(theme);
   }
 
   switchView(view: 'builder' | 'preview'): void {

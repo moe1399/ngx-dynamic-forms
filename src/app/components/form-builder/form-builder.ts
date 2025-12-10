@@ -300,6 +300,11 @@ export class FormBuilder {
     this.updateField(index, field);
   }
 
+  updateFieldDescription(index: number, description: string): void {
+    const field = { ...this.currentConfig().fields[index], description };
+    this.updateField(index, field);
+  }
+
   updateValidationType(fieldIndex: number, validationIndex: number, type: string): void {
     const validation = {
       ...this.currentConfig().fields[fieldIndex].validations![validationIndex],

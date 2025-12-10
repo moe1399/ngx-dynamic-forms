@@ -27,6 +27,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   // Component state
   form!: FormGroup;
   errors: FieldError[] = [];
+  activePopover: string | null = null;
   private autoSaveTimer?: number;
 
   constructor(private formStorage: FormStorage) {
@@ -257,5 +258,23 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   isFieldRequired(field: FormFieldConfig): boolean {
     return field.validations?.some((v) => v.type === 'required') ?? false;
+  }
+
+  /**
+   * Toggle description popover for a field
+   */
+  togglePopover(fieldName: string): void {
+    if (this.activePopover === fieldName) {
+      this.activePopover = null;
+    } else {
+      this.activePopover = fieldName;
+    }
+  }
+
+  /**
+   * Close popover when clicking outside
+   */
+  closePopover(): void {
+    this.activePopover = null;
   }
 }

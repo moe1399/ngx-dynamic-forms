@@ -1,0 +1,306 @@
+/**
+ * Default Theme for Dynamic Form
+ * Government/official form style with purple headers and lavender rows
+ * Uses data-* attributes for styling
+ */
+
+/* Form Container */
+form[data-form-id] {
+  max-width: 700px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* Fields Section */
+[data-form-section="fields"] {
+  margin: 0;
+}
+
+/* Section Headers - Purple background */
+[data-section-header] {
+  background: #512B58;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Individual Field - Table row style */
+[data-field-name] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  border-bottom: 1px solid #ccc;
+  background: #E8E0ED;
+  margin: 0;
+}
+
+[data-field-name]:last-child {
+  border-bottom: none;
+}
+
+/* Labels - Left column style */
+label[data-label-for] {
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+  max-width: 200px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: normal;
+  color: #333;
+  background: #E8E0ED;
+  border-right: 1px solid #ccc;
+  margin: 0;
+}
+
+/* Required Indicator */
+[data-required-indicator] {
+  color: #c00;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+/* Input container - Right column style */
+[data-field-name] > div:has(input),
+[data-field-name] > div:has(textarea) {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: #ffffff;
+}
+
+/* Input Fields */
+input[data-input-type],
+textarea[data-input-type] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+}
+
+input[data-input-type]:focus,
+textarea[data-input-type]:focus {
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+}
+
+textarea[data-input-type] {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Invalid Field State */
+[data-field-valid="false"] input,
+[data-field-valid="false"] textarea {
+  border-color: #c00;
+  background: #fff8f8;
+}
+
+[data-field-valid="false"] input:focus,
+[data-field-valid="false"] textarea:focus {
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+}
+
+/* Validation Error Messages */
+[data-validation-error] {
+  color: #c00;
+  font-size: 12px;
+  padding: 4px 10px;
+  background: #fff;
+  width: 100%;
+}
+
+/* Disabled Fields */
+[data-field-disabled="true"] label {
+  color: #888;
+}
+
+[data-field-disabled="true"] input,
+[data-field-disabled="true"] textarea {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* Actions Section */
+[data-form-section="actions"] {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  padding: 15px 12px;
+  background: #E8E0ED;
+  border-top: 1px solid #ccc;
+}
+
+/* Buttons */
+button[data-action] {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: normal;
+  border: 1px solid #999;
+  cursor: pointer;
+  font-family: inherit;
+  background: #f5f5f5;
+  color: #333;
+}
+
+button[data-action]:hover {
+  background: #e8e8e8;
+}
+
+button[data-action]:active {
+  background: #ddd;
+}
+
+button[data-action="save"] {
+  background: #f5f5f5;
+  color: #333;
+}
+
+button[data-action="save"]:hover {
+  background: #e8e8e8;
+}
+
+button[data-action="submit"] {
+  background: #512B58;
+  color: #ffffff;
+  border-color: #512B58;
+}
+
+button[data-action="submit"]:hover {
+  background: #3d2042;
+}
+
+button[data-action="submit"][data-can-submit="false"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button[data-action="submit"][data-can-submit="false"]:hover {
+  background: #512B58;
+}
+
+/* Checkbox fields */
+[data-field-type="checkbox"] {
+  flex-direction: row;
+  align-items: center;
+}
+
+[data-field-type="checkbox"] label[data-label-for] {
+  flex: none;
+  min-width: auto;
+  max-width: none;
+  border-right: none;
+}
+
+[data-field-type="checkbox"] input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+/* Info Icon */
+[data-info-icon] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #512B58;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+
+[data-info-icon]:hover {
+  background: rgba(81, 43, 88, 0.1);
+}
+
+[data-info-icon][data-popover-open="true"] {
+  background: #512B58;
+  color: #fff;
+}
+
+/* Popover */
+[data-popover] {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 10px 12px;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  color: #333;
+}
+
+[data-popover-content] {
+  flex: 1;
+}
+
+[data-popover-close] {
+  flex-shrink: 0;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  color: #666;
+  cursor: pointer;
+}
+
+[data-popover-close]:hover {
+  color: #333;
+}
+
+/* Label needs relative positioning for popover */
+label[data-label-for] {
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  [data-field-name] {
+    flex-direction: column;
+  }
+
+  label[data-label-for] {
+    min-width: 100%;
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    padding: 8px 12px;
+  }
+
+  [data-form-section="actions"] {
+    flex-direction: column;
+  }
+
+  button[data-action] {
+    width: 100%;
+  }
+}

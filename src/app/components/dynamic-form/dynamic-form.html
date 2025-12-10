@@ -25,6 +25,26 @@
           @if (isFieldRequired(field)) {
             <span data-required-indicator>*</span>
           }
+          @if (field.description) {
+            <span
+              data-info-icon
+              (click)="togglePopover(field.name); $event.stopPropagation()"
+              [attr.data-popover-open]="activePopover === field.name"
+              title="Click for more information">
+              &#9432;
+            </span>
+            @if (activePopover === field.name) {
+              <span data-popover>
+                <span data-popover-content>{{ field.description }}</span>
+                <button
+                  type="button"
+                  data-popover-close
+                  (click)="closePopover(); $event.stopPropagation()">
+                  &times;
+                </button>
+              </span>
+            }
+          }
         </label>
 
         @switch (field.type) {
