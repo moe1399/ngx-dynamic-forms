@@ -480,7 +480,10 @@
                         [attr.data-row-label]="rowLabel.label">
 
                         <!-- Row label cell -->
-                        <td data-datagrid-cell data-row-label-cell>
+                        <td
+                          data-datagrid-cell
+                          data-row-label-cell
+                          [attr.data-row-label-header]="field.datagridConfig.rowLabelHeader || ''">
                           {{ rowLabel.label }}
                         </td>
 
@@ -489,6 +492,8 @@
                           <td
                             data-datagrid-cell
                             [attr.data-column-name]="column.name"
+                            [attr.data-column-label]="column.label"
+                            [attr.data-column-group-label]="getDataGridColumnGroupLabel(field, column.name) || null"
                             [attr.data-column-type]="column.type"
                             [attr.data-column-computed]="column.computed || false"
                             [attr.data-cell-valid]="column.computed || !hasDataGridCellError(field.name, rowLabel.id, column.name)">
@@ -545,7 +550,11 @@
 
                         <!-- Row total cell -->
                         @if (hasDataGridRowTotals(field)) {
-                          <td data-datagrid-cell data-row-total-cell data-is-total-column="true">
+                          <td
+                            data-datagrid-cell
+                            data-row-total-cell
+                            data-is-total-column="true"
+                            [attr.data-total-label]="field.datagridConfig.totals?.rowTotalLabel || 'Total'">
                             <span data-datagrid-computed-value>
                               {{ getDataGridRowTotal(field, rowLabel.id) }}
                             </span>
@@ -565,6 +574,7 @@
                             data-datagrid-cell
                             data-column-total-cell
                             [attr.data-column-name]="column.name"
+                            [attr.data-column-label]="column.label"
                             data-is-total-row="true">
                             <span data-datagrid-computed-value>
                               {{ getDataGridColumnTotal(field, column.name) }}

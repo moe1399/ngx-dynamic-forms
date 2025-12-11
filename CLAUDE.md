@@ -774,6 +774,7 @@ interface DataGridTotalsConfig {
 - `data-datagrid-row`: Data row element
 - `data-row-id`: Row identifier
 - `data-row-label-cell`: Row label cell
+- `data-row-label-header`: Row label header text on row label cell (used in mobile card header)
 - `data-datagrid-cell`: Data cell
 - `data-datagrid-input`: Input within cell
 - `data-datagrid-computed-value`: Computed value span
@@ -782,6 +783,19 @@ interface DataGridTotalsConfig {
 - `data-is-total-column`: "true" on row totals column
 - `data-is-grand-total`: "true" on grand total cell
 - `data-datagrid-total-value`: Total value span
+- `data-column-label`: Column label text (used for responsive card labels)
+- `data-column-group-label`: Column group label text (used in mobile card view for grouped columns)
+- `data-total-label`: Total label text for row totals (used in mobile card view)
+
+**Responsive Behavior**:
+DataGrids use a hybrid responsive approach (same as tables):
+- **Desktop (>640px)**: Standard table layout with columns
+- **Mobile (≤640px)**: Card layout where each row becomes a card with:
+  - Row label as card header (purple background) with row label header for context (e.g., "Year Level: Year 1")
+  - Column labels shown as field labels using `::before` pseudo-elements with `attr(data-column-label)`
+  - Grouped columns show group label before column label (e.g., "STP - Students")
+  - Stacked fields vertically within the card
+  - Total rows styled with lavender background
 
 **Styling** (in theme):
 ```scss

@@ -966,6 +966,20 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
+   * Get the column group label for a given column name
+   * Returns empty string if column is not in any group
+   */
+  getDataGridColumnGroupLabel(field: FormFieldConfig, columnName: string): string {
+    const groups = field.datagridConfig?.columnGroups || [];
+    for (const group of groups) {
+      if (group.columnIds.includes(columnName)) {
+        return group.label;
+      }
+    }
+    return '';
+  }
+
+  /**
    * Get columns that are not in any group
    */
   getDataGridUngroupedColumns(field: FormFieldConfig): DataGridColumnConfig[] {

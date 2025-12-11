@@ -1063,7 +1063,9 @@ button[data-table-action="remove"]:hover:not(:disabled) {
 /* Data column widths are set via inline styles on <col> elements in the template */
 /* All data columns have equal widths calculated dynamically */
 
-/* Responsive */
+/* ========================================
+   Responsive Styles
+   ======================================== */
 @media (max-width: 640px) {
   /* Stack inline groups vertically on mobile */
   [data-field-row] {
@@ -1190,5 +1192,158 @@ button[data-table-action="remove"]:hover:not(:disabled) {
   /* Table footer */
   [data-table-footer] {
     margin-top: 12px;
+  }
+
+  /* ========================================
+     DataGrid Responsive - Card layout on mobile
+     ======================================== */
+
+  [data-datagrid-container] {
+    overflow-x: visible;
+  }
+
+  [data-datagrid] {
+    display: block;
+    min-width: 0;
+  }
+
+  /* Hide colgroup on mobile */
+  [data-datagrid] colgroup {
+    display: none;
+  }
+
+  /* Hide table header on mobile - labels shown per cell */
+  [data-datagrid-header] {
+    display: none;
+  }
+
+  [data-datagrid-body] {
+    display: block;
+  }
+
+  /* Each row becomes a card */
+  [data-datagrid-row] {
+    display: block;
+    margin-bottom: 12px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  [data-datagrid-row]:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Row label cell becomes card header */
+  [data-datagrid-row] [data-row-label-cell] {
+    display: block;
+    background: #512B58;
+    color: #fff;
+    font-weight: bold;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  }
+
+  /* Show row label header before the row label for context */
+  [data-datagrid-row] [data-row-label-cell][data-row-label-header]:not([data-row-label-header=""])::before {
+    content: attr(data-row-label-header) ": ";
+    font-weight: normal;
+    opacity: 0.85;
+  }
+
+  /* Each data cell becomes a labeled field */
+  [data-datagrid-cell] {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  [data-datagrid-cell]:last-child {
+    border-bottom: none;
+  }
+
+  /* Show column label before input */
+  [data-datagrid-cell][data-column-label]::before {
+    content: attr(data-column-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+  }
+
+  /* Show column group label before column label when present */
+  [data-datagrid-cell][data-column-label][data-column-group-label]::before {
+    content: attr(data-column-group-label) " - " attr(data-column-label);
+  }
+
+  /* DataGrid inputs full width in card mode */
+  [data-datagrid-input] {
+    width: 100%;
+  }
+
+  /* Computed values in card mode */
+  [data-datagrid-computed-value] {
+    text-align: left;
+    padding: 0;
+  }
+
+  /* Computed column cells in card mode */
+  [data-datagrid-cell][data-column-computed="true"] {
+    background: #f9f9f9;
+  }
+
+  /* Row total cell styling in card mode */
+  [data-row-total-cell] {
+    background: #f0f0f0;
+    border-left: none;
+    font-weight: bold;
+  }
+
+  [data-row-total-cell]::before {
+    content: attr(data-total-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+  }
+
+  /* Total row styling in card mode */
+  [data-datagrid-row][data-is-total-row="true"] {
+    background: #E8E0ED;
+    border-top: none;
+  }
+
+  [data-datagrid-row][data-is-total-row="true"] [data-row-label-cell] {
+    background: #512B58;
+    color: #fff;
+  }
+
+  [data-datagrid-row][data-is-total-row="true"] [data-datagrid-cell] {
+    background: #E8E0ED;
+  }
+
+  /* Grand total cell in card mode */
+  [data-grand-total-cell] {
+    font-weight: bold;
+  }
+
+  [data-grand-total-cell]::before {
+    content: 'Grand Total';
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #512B58;
+  }
+
+  [data-grand-total-cell] [data-datagrid-computed-value] {
+    font-size: 15px;
+    color: #512B58;
   }
 }
