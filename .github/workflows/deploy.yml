@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build library
+        run: npm run build:lib
+
       - name: Build Angular app
         run: |
           # Build for GitHub Pages with correct base-href
