@@ -2,6 +2,8 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DynamicForm, NgxFormBuilder, FormConfig, UrlSchemaService } from 'ngx-dynamic-forms';
 
+type ViewType = 'builder' | 'preview' | 'docs' | 'changelog';
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, DynamicForm, NgxFormBuilder],
@@ -11,8 +13,8 @@ import { DynamicForm, NgxFormBuilder, FormConfig, UrlSchemaService } from 'ngx-d
 export class App implements OnInit {
   private urlSchemaService = inject(UrlSchemaService);
 
-  // Current view: 'builder' or 'preview'
-  currentView = signal<'builder' | 'preview'>('builder');
+  // Current view
+  currentView = signal<ViewType>('builder');
 
   // Current form configuration
   currentConfig = signal<FormConfig | null>(null);
@@ -64,7 +66,7 @@ export class App implements OnInit {
     }, 3000);
   }
 
-  switchView(view: 'builder' | 'preview'): void {
+  switchView(view: ViewType): void {
     this.currentView.set(view);
   }
 

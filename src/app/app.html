@@ -19,6 +19,18 @@
       [disabled]="!currentConfig() || currentConfig()!.fields.length === 0">
       Preview & Test
     </button>
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'docs'"
+      (click)="switchView('docs')">
+      Documentation
+    </button>
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'changelog'"
+      (click)="switchView('changelog')">
+      Changelog
+    </button>
   </nav>
 
   @if (shareNotification()) {
@@ -104,6 +116,219 @@
           <li><code>data-validation-error</code> - Error message container</li>
         </ul>
       </div>
+    </div>
+  }
+
+  <!-- Documentation View -->
+  @if (currentView() === 'docs') {
+    <div class="view-content docs-view">
+      <article class="documentation">
+        <h2>&#64;moe1399/ngx-dynamic-forms</h2>
+        <p class="lead">Dynamic form builder and renderer for Angular with a headless UI pattern.</p>
+
+        <section>
+          <h3>Installation</h3>
+          <pre><code>npm install &#64;moe1399/ngx-dynamic-forms</code></pre>
+          <p><strong>Peer Dependencies:</strong> Angular 21+, pako (optional, for URL sharing)</p>
+        </section>
+
+        <section>
+          <h3>Basic Usage</h3>
+          <p>The DynamicForm component does not render submit/save buttons. You provide your own buttons via content projection:</p>
+          <pre><code>&lt;ngx-dynamic-form
+  #form
+  [config]="formConfig"
+  (formSubmit)="onSubmit($event)"
+  (valueChanges)="onValueChange($event)"&gt;
+  &lt;!-- Your custom buttons --&gt;
+  &lt;button (click)="form.submitForm()" [disabled]="!form.valid"&gt;
+    Submit
+  &lt;/button&gt;
+&lt;/ngx-dynamic-form&gt;</code></pre>
+        </section>
+
+        <section>
+          <h3>Form Configuration</h3>
+          <pre><code>const formConfig: FormConfig = &#123;
+  id: 'contact-form',
+  fields: [
+    &#123;
+      name: 'name',
+      label: 'Name',
+      type: 'text',
+      validations: [&#123; type: 'required', message: 'Name is required' &#125;]
+    &#125;,
+    &#123; name: 'email', label: 'Email', type: 'email' &#125;
+  ],
+  submitLabel: 'Send'
+&#125;;</code></pre>
+        </section>
+
+        <section>
+          <h3>DynamicForm API</h3>
+          <h4>Inputs</h4>
+          <table>
+            <thead><tr><th>Input</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>config</code></td><td>FormConfig</td><td>Form configuration</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Outputs</h4>
+          <table>
+            <thead><tr><th>Output</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>formSubmit</code></td><td>EventEmitter&lt;object&gt;</td><td>Emitted when submitForm() is called and form is valid</td></tr>
+              <tr><td><code>formSave</code></td><td>EventEmitter&lt;object&gt;</td><td>Emitted when saveForm() is called</td></tr>
+              <tr><td><code>validationErrors</code></td><td>EventEmitter&lt;FieldError[]&gt;</td><td>Emitted on validation changes</td></tr>
+              <tr><td><code>valueChanges</code></td><td>EventEmitter&lt;object&gt;</td><td>Emitted when any form value changes</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Properties</h4>
+          <table>
+            <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>value</code></td><td>object</td><td>Current form values (read-only)</td></tr>
+              <tr><td><code>valid</code></td><td>boolean</td><td>Whether form is valid</td></tr>
+              <tr><td><code>touched</code></td><td>boolean</td><td>Whether form has been interacted with</td></tr>
+              <tr><td><code>dirty</code></td><td>boolean</td><td>Whether form values have changed</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Methods</h4>
+          <table>
+            <thead><tr><th>Method</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>submitForm()</code></td><td>Validates and submits the form</td></tr>
+              <tr><td><code>saveForm()</code></td><td>Saves form data to local storage</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h3>Field Types</h3>
+          <table>
+            <thead><tr><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>text</code></td><td>Single line text input</td></tr>
+              <tr><td><code>email</code></td><td>Email input with validation</td></tr>
+              <tr><td><code>number</code></td><td>Numeric input</td></tr>
+              <tr><td><code>textarea</code></td><td>Multi-line text input</td></tr>
+              <tr><td><code>date</code></td><td>Date picker</td></tr>
+              <tr><td><code>daterange</code></td><td>From/to date range</td></tr>
+              <tr><td><code>select</code></td><td>Dropdown select</td></tr>
+              <tr><td><code>radio</code></td><td>Radio button group</td></tr>
+              <tr><td><code>checkbox</code></td><td>Checkbox (single or multi)</td></tr>
+              <tr><td><code>table</code></td><td>Dynamic table with rows</td></tr>
+              <tr><td><code>datagrid</code></td><td>Fixed grid with computed columns</td></tr>
+              <tr><td><code>phone</code></td><td>Phone with country code</td></tr>
+              <tr><td><code>info</code></td><td>Static markdown content</td></tr>
+              <tr><td><code>formref</code></td><td>Embed another form's fields</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h3>Validation Types</h3>
+          <table>
+            <thead><tr><th>Type</th><th>Value</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>required</code></td><td>-</td><td>Field must have a value</td></tr>
+              <tr><td><code>email</code></td><td>-</td><td>Must be valid email format</td></tr>
+              <tr><td><code>minLength</code></td><td>number</td><td>Minimum character length</td></tr>
+              <tr><td><code>maxLength</code></td><td>number</td><td>Maximum character length</td></tr>
+              <tr><td><code>min</code></td><td>number</td><td>Minimum numeric value</td></tr>
+              <tr><td><code>max</code></td><td>number</td><td>Maximum numeric value</td></tr>
+              <tr><td><code>pattern</code></td><td>string</td><td>Regex pattern to match</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h3>Styling with Data Attributes</h3>
+          <p>The headless UI exposes state via data attributes for CSS styling:</p>
+          <pre><code>[data-form-id] &#123;
+  /* Form container styles */
+&#125;
+
+[data-field-valid="false"] &#123;
+  /* Invalid field styles */
+&#125;
+
+[data-field-touched="true"][data-field-valid="false"] &#123;
+  /* Show errors only after interaction */
+&#125;
+
+[data-validation-error] &#123;
+  /* Error message styles */
+&#125;</code></pre>
+        </section>
+
+        <section>
+          <h3>npm Package</h3>
+          <p><a href="https://www.npmjs.com/package/@moe1399/ngx-dynamic-forms" target="_blank">https://www.npmjs.com/package/&#64;moe1399/ngx-dynamic-forms</a></p>
+        </section>
+
+        <section>
+          <h3>GitHub Repository</h3>
+          <p><a href="https://github.com/moe1399/ngx-dynamic-forms" target="_blank">https://github.com/moe1399/ngx-dynamic-forms</a></p>
+        </section>
+      </article>
+    </div>
+  }
+
+  <!-- Changelog View -->
+  @if (currentView() === 'changelog') {
+    <div class="view-content changelog-view">
+      <article class="changelog">
+        <h2>Changelog</h2>
+
+        <section class="version">
+          <h3>v0.2.0 <span class="date">(2026-01-07)</span></h3>
+          <h4>Breaking Changes</h4>
+          <ul>
+            <li>Removed built-in submit/save buttons from DynamicForm component</li>
+            <li>Consuming applications must now render their own buttons via content projection</li>
+          </ul>
+          <h4>New Features</h4>
+          <ul>
+            <li>Added <code>value</code> getter for accessing current form values</li>
+            <li>Added <code>valid</code>, <code>touched</code>, <code>dirty</code> getters for form state</li>
+            <li>Added <code>valueChanges</code> output that emits on every form value change</li>
+            <li>Added content projection support for custom buttons/actions</li>
+          </ul>
+        </section>
+
+        <section class="version">
+          <h3>v0.1.2 <span class="date">(2026-01-07)</span></h3>
+          <ul>
+            <li>Updated README with comprehensive usage documentation</li>
+            <li>Added MIT license file</li>
+          </ul>
+        </section>
+
+        <section class="version">
+          <h3>v0.1.1 <span class="date">(2026-01-07)</span></h3>
+          <ul>
+            <li>Fixed package scope to &#64;moe1399/ngx-dynamic-forms</li>
+          </ul>
+        </section>
+
+        <section class="version">
+          <h3>v0.1.0 <span class="date">(2026-01-07)</span></h3>
+          <h4>Initial Release</h4>
+          <ul>
+            <li>DynamicForm component - headless form renderer</li>
+            <li>NgxFormBuilder component - visual form builder</li>
+            <li>14 field types: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref</li>
+            <li>FormBuilderService for configuration management</li>
+            <li>FormStorage service for form data persistence</li>
+            <li>UrlSchemaService for URL-based form sharing</li>
+            <li>Default theme with data-attribute based styling</li>
+          </ul>
+        </section>
+      </article>
     </div>
   }
 </div>
