@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DynamicForm, NgxFormBuilder, FormConfig, UrlSchemaService } from 'ngx-dynamic-forms';
+import { marked } from 'marked';
 
 type ViewType = 'builder' | 'preview' | 'docs' | 'changelog' | 'theme';
 
@@ -28,8 +29,29 @@ export class App implements OnInit {
   // Theme CSS copied notification
   themeCopied = signal<boolean>(false);
 
+  // Documentation content (parsed from README.md)
+  docsHtml = signal<string>('');
+  docsLoading = signal<boolean>(false);
+
   ngOnInit(): void {
     this.loadSchemaFromUrl();
+    this.loadDocumentation();
+  }
+
+  private async loadDocumentation(): Promise<void> {
+    this.docsLoading.set(true);
+    try {
+      const response = await fetch('README.md');
+      if (response.ok) {
+        const markdown = await response.text();
+        const html = await marked(markdown);
+        this.docsHtml.set(html);
+      }
+    } catch (error) {
+      console.error('Failed to load documentation:', error);
+    } finally {
+      this.docsLoading.set(false);
+    }
   }
 
   private loadSchemaFromUrl(): void {
