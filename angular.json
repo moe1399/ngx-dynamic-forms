@@ -28,11 +28,6 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "README.md",
-                "input": "projects/ngx-dynamic-forms",
-                "output": "/"
               }
             ],
             "styles": [
