@@ -372,6 +372,7 @@
 
         <pre><code id="theme-css-content">/**
  * Default Theme for Dynamic Form
+ * Government/official form style with purple headers and lavender rows
  * Uses data-* attributes for styling
  */
 
@@ -387,15 +388,33 @@ form[data-form-id] &#123;
   font-size: 14px;
 &#125;
 
-/* Validating state */
+/* Validating state - shows loading overlay */
 form[data-form-validating="true"] &#123;
-  opacity: 0.8;
+  position: relative;
   pointer-events: none;
 &#125;
 
+form[data-form-validating="true"]::after &#123;
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 100;
+&#125;
+
+/* Fields Section */
+[data-form-section="fields"] &#123;
+  margin: 0;
+&#125;
+
 /* ========================================
-   Section Headers
+   Section Container & Headers
    ======================================== */
+[data-section-id] &#123;
+  margin: 0;
+&#125;
+
+/* Section Headers - Purple background */
 [data-section-header] &#123;
   background: #512B58;
   color: #ffffff;
@@ -406,16 +425,25 @@ form[data-form-validating="true"] &#123;
   border-bottom: 1px solid #ccc;
 &#125;
 
+/* Remove header border when followed by description */
+[data-section-header] + [data-section-description] &#123;
+  margin-top: -1px;
+&#125;
+
+/* Section Description - Purple background, smaller text */
 [data-section-description] &#123;
   background: #512B58;
   color: #ffffff;
   padding: 6px 12px 10px 12px;
   font-size: 13px;
+  font-weight: normal;
+  line-height: 1.4;
+  margin: 0;
   border-bottom: 1px solid #ccc;
 &#125;
 
 /* ========================================
-   Field Row & Layout
+   Field Row - Container for fields
    ======================================== */
 [data-field-row] &#123;
   display: flex;
@@ -427,8 +455,9 @@ form[data-form-validating="true"] &#123;
   border-bottom: none;
 &#125;
 
-/* Inline group fields */
+/* Inline Group - Multiple fields in a row */
 [data-field-row][data-inline-group] [data-field-name] &#123;
+  border-bottom: none;
   border-right: 1px solid #ccc;
 &#125;
 
@@ -436,14 +465,25 @@ form[data-form-validating="true"] &#123;
   border-right: none;
 &#125;
 
-/* Field width proportions */
-[data-field-width="1"] &#123; flex: 1; &#125;
-[data-field-width="2"] &#123; flex: 2; &#125;
-[data-field-width="3"] &#123; flex: 3; &#125;
-[data-field-width="4"] &#123; flex: 4; &#125;
+/* Field width proportions for inline groups */
+[data-field-row][data-inline-group] [data-field-width="1"] &#123;
+  flex: 1;
+&#125;
+
+[data-field-row][data-inline-group] [data-field-width="2"] &#123;
+  flex: 2;
+&#125;
+
+[data-field-row][data-inline-group] [data-field-width="3"] &#123;
+  flex: 3;
+&#125;
+
+[data-field-row][data-inline-group] [data-field-width="4"] &#123;
+  flex: 4;
+&#125;
 
 /* ========================================
-   Individual Field
+   Individual Field - Table row style
    ======================================== */
 [data-field-name] &#123;
   display: flex;
@@ -451,9 +491,10 @@ form[data-form-validating="true"] &#123;
   flex: 1;
   align-items: stretch;
   background: #E8E0ED;
+  margin: 0;
 &#125;
 
-/* Field validating state */
+/* Field validating state - spinner indicator */
 [data-field-validating="true"] &#123;
   position: relative;
 &#125;
@@ -465,10 +506,12 @@ form[data-form-validating="true"] &#123;
   right: 12px;
   width: 16px;
   height: 16px;
+  margin-top: -8px;
   border: 2px solid #512B58;
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  z-index: 10;
 &#125;
 
 &#64;keyframes spin &#123;
@@ -476,7 +519,7 @@ form[data-form-validating="true"] &#123;
 &#125;
 
 /* ========================================
-   Labels
+   Labels - Left column style
    ======================================== */
 label[data-label-for] &#123;
   display: flex;
@@ -485,19 +528,23 @@ label[data-label-for] &#123;
   max-width: 200px;
   padding: 10px 12px;
   font-size: 13px;
+  font-weight: normal;
   color: #333;
   background: #E8E0ED;
   border-right: 1px solid #ccc;
+  margin: 0;
   position: relative;
 &#125;
 
+/* Required Indicator */
 [data-required-indicator] &#123;
   color: #c00;
+  font-size: 14px;
   margin-left: 4px;
 &#125;
 
 /* ========================================
-   Input Container & Inputs
+   Input Container - Right column style
    ======================================== */
 [data-input-container] &#123;
   flex: 1;
@@ -508,6 +555,7 @@ label[data-label-for] &#123;
   background: #ffffff;
 &#125;
 
+/* Input Fields */
 input[data-input-type],
 textarea[data-input-type],
 select[data-input-type] &#123;
@@ -532,6 +580,10 @@ textarea[data-input-type] &#123;
   resize: vertical;
 &#125;
 
+select[data-input-type] &#123;
+  cursor: pointer;
+&#125;
+
 /* ========================================
    Invalid Field State
    ======================================== */
@@ -540,6 +592,12 @@ textarea[data-input-type] &#123;
 [data-field-valid="false"] select:not([data-table-input]) &#123;
   border-color: #c00;
   background: #fff8f8;
+&#125;
+
+[data-field-valid="false"] input:not([data-table-input]):focus,
+[data-field-valid="false"] textarea:not([data-table-input]):focus,
+[data-field-valid="false"] select:not([data-table-input]):focus &#123;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
 &#125;
 
 /* Validation Error Messages */
@@ -568,19 +626,23 @@ textarea[data-input-type] &#123;
 &#125;
 
 /* ========================================
-   Action Buttons
+   Actions Section
    ======================================== */
+[data-form-section="actions"],
 [data-form-actions] &#123;
   display: flex;
   gap: 10px;
+  justify-content: flex-start;
   padding: 15px 12px;
   background: #E8E0ED;
   border-top: 1px solid #ccc;
 &#125;
 
+/* Buttons */
 button[data-action] &#123;
   padding: 8px 20px;
   font-size: 13px;
+  font-weight: normal;
   border: 1px solid #999;
   cursor: pointer;
   font-family: inherit;
@@ -589,6 +651,19 @@ button[data-action] &#123;
 &#125;
 
 button[data-action]:hover &#123;
+  background: #e8e8e8;
+&#125;
+
+button[data-action]:active &#123;
+  background: #ddd;
+&#125;
+
+button[data-action="save"] &#123;
+  background: #f5f5f5;
+  color: #333;
+&#125;
+
+button[data-action="save"]:hover &#123;
   background: #e8e8e8;
 &#125;
 
@@ -607,12 +682,43 @@ button[data-action="submit"][data-can-submit="false"] &#123;
   cursor: not-allowed;
 &#125;
 
+button[data-action="submit"][data-can-submit="false"]:hover &#123;
+  background: #512B58;
+&#125;
+
+/* Fields without labels - input takes full width */
+[data-has-label="false"] [data-input-container] &#123;
+  flex: 1;
+  width: 100%;
+&#125;
+
+/* ========================================
+   Single Checkbox (boolean toggle)
+   ======================================== */
+[data-field-type="checkbox"]:has([data-checkbox-single]) &#123;
+  flex-direction: row;
+  align-items: center;
+&#125;
+
+[data-field-type="checkbox"]:has([data-checkbox-single]) label[data-label-for] &#123;
+  flex: none;
+  min-width: auto;
+  max-width: none;
+  border-right: none;
+&#125;
+
+[data-checkbox-single] &#123;
+  width: auto;
+  margin-right: 8px;
+&#125;
+
 /* ========================================
    Radio Group
    ======================================== */
 [data-radio-group] &#123;
   display: flex;
   flex-direction: column;
+  gap: 0;
   width: 100%;
 &#125;
 
@@ -623,6 +729,7 @@ button[data-action="submit"][data-can-submit="false"] &#123;
   cursor: pointer;
   border-bottom: 1px solid #ddd;
   background: #fff;
+  transition: background 0.15s;
 &#125;
 
 [data-radio-option]:last-child &#123;
@@ -636,16 +743,25 @@ button[data-action="submit"][data-can-submit="false"] &#123;
 [data-radio-input] &#123;
   width: 16px;
   height: 16px;
+  margin: 0;
   margin-right: 10px;
+  cursor: pointer;
   accent-color: #512B58;
 &#125;
 
+[data-radio-label] &#123;
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+&#125;
+
 /* ========================================
-   Checkbox Group
+   Checkbox Group (multiple selection)
    ======================================== */
 [data-checkbox-group] &#123;
   display: flex;
   flex-direction: column;
+  gap: 0;
   width: 100%;
 &#125;
 
@@ -656,6 +772,7 @@ button[data-action="submit"][data-can-submit="false"] &#123;
   cursor: pointer;
   border-bottom: 1px solid #ddd;
   background: #fff;
+  transition: background 0.15s;
 &#125;
 
 [data-checkbox-option]:last-child &#123;
@@ -673,23 +790,109 @@ button[data-action="submit"][data-can-submit="false"] &#123;
 [data-checkbox-input] &#123;
   width: 16px;
   height: 16px;
+  margin: 0;
   margin-right: 10px;
+  cursor: pointer;
   accent-color: #512B58;
 &#125;
 
-/* ========================================
-   Info Block (Markdown)
-   ======================================== */
-[data-info-block] &#123;
+[data-checkbox-label] &#123;
+  font-size: 13px;
+  color: #333;
   flex: 1;
-  background: #E8E0ED;
-  border-bottom: 1px solid #ccc;
 &#125;
 
-[data-info-content] &#123;
-  padding: 12px 16px;
-  font-size: 13px;
-  line-height: 1.5;
+/* Checkbox label markdown styles */
+[data-checkbox-label] a &#123;
+  color: #512B58;
+  text-decoration: underline;
+&#125;
+
+[data-checkbox-label] a:hover &#123;
+  color: #3d2042;
+&#125;
+
+[data-checkbox-label] strong &#123;
+  font-weight: bold;
+&#125;
+
+[data-checkbox-label] em &#123;
+  font-style: italic;
+&#125;
+
+/* Radio/Checkbox fields - adjust input container */
+[data-field-type="radio"] [data-input-container],
+[data-field-type="checkbox"]:has([data-checkbox-group]) [data-input-container] &#123;
+  padding: 0;
+&#125;
+
+/* ========================================
+   Info Icon & Popover
+   ======================================== */
+[data-info-icon] &#123;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #512B58;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s;
+&#125;
+
+[data-info-icon]:hover &#123;
+  background: rgba(81, 43, 88, 0.1);
+&#125;
+
+[data-info-icon][data-popover-open="true"] &#123;
+  background: #512B58;
+  color: #fff;
+&#125;
+
+/* Popover */
+[data-popover] &#123;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 10px 12px;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  color: #333;
+&#125;
+
+[data-popover-content] &#123;
+  flex: 1;
+&#125;
+
+[data-popover-close] &#123;
+  flex-shrink: 0;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  color: #666;
+  cursor: pointer;
+&#125;
+
+[data-popover-close]:hover &#123;
   color: #333;
 &#125;
 
@@ -700,15 +903,62 @@ button[data-action="submit"][data-can-submit="false"] &#123;
   display: flex;
   gap: 8px;
   width: 100%;
+  align-items: stretch;
 &#125;
 
 select[data-phone-country-code] &#123;
   width: auto !important;
   min-width: 180px;
+  max-width: 220px;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+  cursor: pointer;
+  flex: 0 0 auto;
+&#125;
+
+select[data-phone-country-code]:focus &#123;
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
 &#125;
 
 input[data-phone-number] &#123;
-  flex: 1;
+  width: auto !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+&#125;
+
+input[data-phone-number]:focus &#123;
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+&#125;
+
+/* Invalid phone field state */
+[data-phone-valid="false"] [data-phone-number] &#123;
+  border-color: #c00;
+  background: #fff8f8;
+&#125;
+
+[data-phone-valid="false"] [data-phone-number]:focus &#123;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+&#125;
+
+/* Phone field disabled state */
+[data-field-disabled="true"] select[data-phone-country-code],
+[data-field-disabled="true"] input[data-phone-number] &#123;
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #888;
+  cursor: not-allowed;
 &#125;
 
 /* ========================================
@@ -725,136 +975,798 @@ input[data-phone-number] &#123;
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 &#125;
 
 [data-daterange-label] &#123;
   font-size: 11px;
   color: #666;
   margin-bottom: 4px;
+  font-weight: normal;
+&#125;
+
+input[data-daterange-input] &#123;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+&#125;
+
+input[data-daterange-input]:focus &#123;
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
 &#125;
 
 [data-daterange-separator] &#123;
   padding: 0 4px;
+  font-size: 13px;
   color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;
+&#125;
+
+/* Invalid date range state */
+[data-daterange-valid="false"] input[data-daterange-input] &#123;
+  border-color: #c00;
+  background: #fff8f8;
+&#125;
+
+[data-daterange-valid="false"] input[data-daterange-input]:focus &#123;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+&#125;
+
+/* Date range disabled state */
+[data-field-disabled="true"] input[data-daterange-input] &#123;
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #888;
+  cursor: not-allowed;
+&#125;
+
+/* ========================================
+   Info Block (Markdown Content)
+   ======================================== */
+[data-info-block] &#123;
+  flex: 1;
+  background: #E8E0ED;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+[data-info-content] &#123;
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+&#125;
+
+/* Info block markdown styles */
+[data-info-content] strong &#123;
+  color: #512B58;
+  font-weight: bold;
+&#125;
+
+[data-info-content] em &#123;
+  font-style: italic;
+&#125;
+
+[data-info-content] a &#123;
+  color: #512B58;
+  text-decoration: underline;
+&#125;
+
+[data-info-content] a:hover &#123;
+  color: #3d2042;
+&#125;
+
+/* ========================================
+   Form Reference (formref) Field
+   ======================================== */
+[data-field-type="formref"] &#123;
+  display: block;
+  background: transparent;
+&#125;
+
+[data-field-type="formref"] label[data-label-for] &#123;
+  display: block;
+  background: #512B58;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-right: none;
+  border-bottom: 1px solid #ccc;
+  min-width: 100%;
+  max-width: 100%;
+&#125;
+
+[data-field-type="formref"] [data-input-container] &#123;
+  padding: 0;
+  background: transparent;
+&#125;
+
+/* Formref Container */
+[data-formref-container] &#123;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-top: none;
+&#125;
+
+/* Formref Section Headers */
+[data-formref-section-header] &#123;
+  background: #6b3d73;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-weight: bold;
+  font-size: 13px;
+  margin: 0;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+[data-formref-section-description] &#123;
+  background: #6b3d73;
+  color: #ffffff;
+  padding: 6px 12px 10px 12px;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  margin: 0;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+/* Formref Field */
+[data-formref-field] &#123;
+  display: flex;
+  flex-wrap: wrap;
+  background: #E8E0ED;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+[data-formref-field]:last-child &#123;
+  border-bottom: none;
+&#125;
+
+/* Formref Labels */
+[data-formref-label] &#123;
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+  max-width: 200px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: normal;
+  color: #333;
+  background: #E8E0ED;
+  border-right: 1px solid #ccc;
+  margin: 0;
+&#125;
+
+/* Formref Input Container */
+[data-formref-input-container] &#123;
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 6px 10px;
+  background: #ffffff;
+&#125;
+
+/* Formref Input Fields */
+input[data-formref-input],
+textarea[data-formref-input],
+select[data-formref-input] &#123;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
+&#125;
+
+input[data-formref-input]:focus,
+textarea[data-formref-input]:focus,
+select[data-formref-input]:focus &#123;
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+&#125;
+
+textarea[data-formref-input] &#123;
+  min-height: 80px;
+  resize: vertical;
+&#125;
+
+/* Invalid Formref Field State */
+[data-formref-field][data-field-valid="false"] input[data-formref-input],
+[data-formref-field][data-field-valid="false"] textarea[data-formref-input],
+[data-formref-field][data-field-valid="false"] select[data-formref-input] &#123;
+  border-color: #c00;
+  background: #fff8f8;
+&#125;
+
+[data-formref-field][data-field-valid="false"] input[data-formref-input]:focus,
+[data-formref-field][data-field-valid="false"] textarea[data-formref-input]:focus,
+[data-formref-field][data-field-valid="false"] select[data-formref-input]:focus &#123;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+&#125;
+
+/* Formref Error Message */
+[data-formref-error] &#123;
+  padding: 12px 16px;
+  background: #fff8f8;
+  color: #c00;
+  font-size: 13px;
+  border: 1px solid #f5c6cb;
+&#125;
+
+/* Formref Radio Group */
+[data-formref-radio-group] &#123;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+&#125;
+
+[data-formref-radio-option] &#123;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  transition: background 0.15s;
+&#125;
+
+[data-formref-radio-option]:last-child &#123;
+  border-bottom: none;
+&#125;
+
+[data-formref-radio-option]:hover &#123;
+  background: #f5f5f5;
+&#125;
+
+[data-formref-radio-input] &#123;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #512B58;
+&#125;
+
+[data-formref-radio-label] &#123;
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+&#125;
+
+/* Formref Checkbox Group */
+[data-formref-checkbox-group] &#123;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+&#125;
+
+[data-formref-checkbox-option] &#123;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  transition: background 0.15s;
+&#125;
+
+[data-formref-checkbox-option]:last-child &#123;
+  border-bottom: none;
+&#125;
+
+[data-formref-checkbox-option]:hover &#123;
+  background: #f5f5f5;
+&#125;
+
+[data-formref-checkbox-input] &#123;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #512B58;
+&#125;
+
+[data-formref-checkbox-label] &#123;
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+&#125;
+
+[data-formref-checkbox-single] &#123;
+  width: auto;
+  margin-right: 8px;
 &#125;
 
 /* ========================================
    Table Field
    ======================================== */
+[data-field-type="table"] &#123;
+  display: block;
+  background: transparent;
+&#125;
+
+[data-field-type="table"] label[data-label-for] &#123;
+  display: none;
+&#125;
+
+[data-field-type="table"] [data-input-container] &#123;
+  padding: 0;
+  background: transparent;
+&#125;
+
+/* Table Container */
 [data-table-container] &#123;
   width: 100%;
   overflow-x: auto;
 &#125;
 
+/* Table Element */
 [data-table] &#123;
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: fixed;
 &#125;
 
+/* Table Header */
 [data-table-header] &#123;
   background: #E8E0ED;
+&#125;
+
+[data-table-header-row] &#123;
+  border-bottom: 1px solid #ccc;
 &#125;
 
 [data-table-header-cell] &#123;
   padding: 10px 12px;
   text-align: left;
+  font-weight: normal;
+  color: #333;
   border-right: 1px solid #ccc;
 &#125;
 
+[data-table-header-cell]:last-child &#123;
+  border-right: none;
+&#125;
+
+/* Column width proportions */
+[data-table-header-cell][data-column-width="1"] &#123;
+  width: 15%;
+&#125;
+
+[data-table-header-cell][data-column-width="2"] &#123;
+  width: 25%;
+&#125;
+
+[data-table-header-cell][data-column-width="3"] &#123;
+  width: 35%;
+&#125;
+
+[data-table-header-cell][data-column-width="4"] &#123;
+  width: 45%;
+&#125;
+
+/* Actions column (narrow) */
+[data-table-actions-column] &#123;
+  width: 50px;
+  min-width: 50px;
+  text-align: center;
+&#125;
+
+/* Table Body */
+[data-table-body] &#123;
+  background: #ffffff;
+&#125;
+
+/* Table Row */
 [data-table-row] &#123;
   border-bottom: 1px solid #ccc;
 &#125;
 
-[data-table-cell] &#123;
-  padding: 6px 8px;
-  border-right: 1px solid #ccc;
+[data-table-row]:last-child &#123;
+  border-bottom: none;
 &#125;
 
+/* Empty row styling (lighter) */
+[data-table-row][data-row-empty="true"] &#123;
+  background: #fafafa;
+&#125;
+
+/* Table Cell */
+[data-table-cell] &#123;
+  padding: 6px 8px;
+  vertical-align: top;
+  border-right: 1px solid #ccc;
+  position: relative;
+&#125;
+
+[data-table-cell]:last-child &#123;
+  border-right: none;
+&#125;
+
+/* Actions cell (centered) */
+[data-table-actions-cell] &#123;
+  text-align: center;
+  vertical-align: middle;
+&#125;
+
+/* Table Inputs */
 [data-table-input] &#123;
   width: 100%;
   padding: 6px 8px;
   border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
 &#125;
 
+[data-table-input]:focus &#123;
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+&#125;
+
+/* Invalid cell state */
 [data-cell-valid="false"] [data-table-input] &#123;
   border-color: #c00;
   background: #fff8f8;
+&#125;
+
+[data-cell-valid="false"] [data-table-input]:focus &#123;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+&#125;
+
+/* Cell Error Tooltip */
+[data-cell-error-tooltip] &#123;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  min-width: 150px;
+  max-width: 250px;
+  padding: 6px 10px;
+  margin-top: 2px;
+  background: #c00;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.3;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+&#125;
+
+[data-cell-error-tooltip]::before &#123;
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 10px;
+  border: 6px solid transparent;
+  border-bottom-color: #c00;
+&#125;
+
+/* Table Footer (Add row button) */
+[data-table-footer] &#123;
+  padding: 10px 12px;
+  background: #E8E0ED;
+  border-top: 1px solid #ccc;
+&#125;
+
+/* Table Action Buttons */
+button[data-table-action] &#123;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: normal;
+  border: 1px solid #999;
+  cursor: pointer;
+  font-family: inherit;
+  background: #f5f5f5;
+  color: #333;
+&#125;
+
+button[data-table-action]:hover:not(:disabled) &#123;
+  background: #e8e8e8;
+&#125;
+
+button[data-table-action]:disabled &#123;
+  opacity: 0.5;
+  cursor: not-allowed;
 &#125;
 
 button[data-table-action="add"] &#123;
   background: #512B58;
   color: #ffffff;
   border-color: #512B58;
-  padding: 6px 12px;
+&#125;
+
+button[data-table-action="add"]:hover:not(:disabled) &#123;
+  background: #3d2042;
 &#125;
 
 button[data-table-action="remove"] &#123;
   background: #f8d7da;
   color: #721c24;
+  border-color: #f5c6cb;
   padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1;
+&#125;
+
+button[data-table-action="remove"]:hover:not(:disabled) &#123;
+  background: #f5c6cb;
 &#125;
 
 /* ========================================
    DataGrid Field
    ======================================== */
+[data-field-type="datagrid"] &#123;
+  display: block;
+  background: transparent;
+&#125;
+
+[data-field-type="datagrid"] label[data-label-for] &#123;
+  display: none;
+&#125;
+
+[data-field-type="datagrid"] [data-input-container] &#123;
+  padding: 0;
+  background: transparent;
+&#125;
+
+/* DataGrid Container */
 [data-datagrid-container] &#123;
   width: 100%;
   overflow-x: auto;
 &#125;
 
+/* DataGrid Table */
 [data-datagrid] &#123;
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: fixed;
 &#125;
 
+/* DataGrid Header - Two-tier with groups */
 [data-datagrid-header] &#123;
   background: #E8E0ED;
 &#125;
 
-[data-datagrid-header-cell] &#123;
-  padding: 10px 12px;
-  border-right: 1px solid #ccc;
+[data-datagrid-header-groups] &#123;
+  background: transparent;
 &#125;
 
-[data-column-group] &#123;
+/* Group row - purple background for group headers */
+[data-datagrid-group-row] &#123;
+  background: #512B58;
+&#125;
+
+[data-datagrid-group-row] [data-datagrid-header-cell] &#123;
   background: #512B58;
   color: #ffffff;
   font-weight: bold;
   text-align: center;
+  padding: 8px 12px;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid #ccc;
 &#125;
 
-[data-row-label-cell] &#123;
-  background: #E8E0ED;
-  padding: 10px 12px;
+[data-datagrid-group-row] [data-datagrid-header-cell]:last-child &#123;
   border-right: 1px solid #ccc;
 &#125;
 
+/* Column group header cells */
+[data-datagrid-header-cell][data-column-group] &#123;
+  background: #512B58;
+  color: #ffffff;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+/* Row label header - spans both rows with purple bg */
+[data-row-label-header] &#123;
+  background: #512B58 !important;
+  color: #ffffff !important;
+  font-weight: bold;
+  text-align: left;
+  border-right: 1px solid #ccc;
+&#125;
+
+/* Row total header */
+[data-row-total-header] &#123;
+  background: #512B58 !important;
+  color: #ffffff !important;
+  font-weight: bold;
+  text-align: center;
+  border-left: 1px solid #ccc;
+&#125;
+
+/* Column row (second tier) */
+[data-datagrid-column-row] &#123;
+  background: #E8E0ED;
+&#125;
+
+[data-datagrid-column-row] [data-datagrid-header-cell] &#123;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: normal;
+  color: #333;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+[data-datagrid-column-row] [data-datagrid-header-cell]:last-child &#123;
+  border-right: 1px solid #ccc;
+&#125;
+
+/* Ungrouped columns (span both rows) */
+[data-column-ungrouped] &#123;
+  background: #E8E0ED !important;
+  color: #333 !important;
+  font-weight: normal;
+  border-right: 1px solid #ccc;
+&#125;
+
+/* Single-tier header row (no groups) */
+[data-datagrid-header-row] &#123;
+  background: #E8E0ED;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+[data-datagrid-header-row] [data-datagrid-header-cell] &#123;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: normal;
+  color: #333;
+  border-right: 1px solid #ccc;
+&#125;
+
+[data-datagrid-header-row] [data-datagrid-header-cell]:last-child &#123;
+  border-right: none;
+&#125;
+
+/* DataGrid Body */
+[data-datagrid-body] &#123;
+  background: #ffffff;
+&#125;
+
+/* DataGrid Row */
+[data-datagrid-row] &#123;
+  border-bottom: 1px solid #ccc;
+&#125;
+
+[data-datagrid-row]:last-child &#123;
+  border-bottom: none;
+&#125;
+
+/* Row label cell - lavender background like label column */
+[data-row-label-cell] &#123;
+  background: #E8E0ED;
+  font-weight: normal;
+  padding: 10px 12px;
+  border-right: 1px solid #ccc;
+  color: #333;
+&#125;
+
+/* DataGrid Cell */
+[data-datagrid-cell] &#123;
+  padding: 6px 8px;
+  vertical-align: middle;
+  border-right: 1px solid #ccc;
+&#125;
+
+[data-datagrid-cell]:last-child &#123;
+  border-right: none;
+&#125;
+
+/* Computed column cells - light grey background */
+[data-datagrid-cell][data-column-computed="true"] &#123;
+  background: #f9f9f9;
+&#125;
+
+/* DataGrid Inputs */
 [data-datagrid-input] &#123;
   width: 100%;
   padding: 6px 8px;
   border: 1px solid #999;
+  font-size: 13px;
+  font-family: inherit;
+  background: #ffffff;
 &#125;
 
+[data-datagrid-input]:focus &#123;
+  outline: none;
+  border-color: #512B58;
+  box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+&#125;
+
+/* Invalid cell state */
+[data-datagrid-cell][data-cell-valid="false"] [data-datagrid-input] &#123;
+  border-color: #c00;
+  background: #fff8f8;
+&#125;
+
+[data-datagrid-cell][data-cell-valid="false"] [data-datagrid-input]:focus &#123;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+&#125;
+
+/* Computed values display */
 [data-datagrid-computed-value] &#123;
+  display: block;
   padding: 6px 8px;
+  font-size: 13px;
   color: #666;
+  background: transparent;
   text-align: right;
 &#125;
 
-[data-is-total-row="true"] &#123;
+/* Total row styling */
+[data-datagrid-row][data-is-total-row="true"] &#123;
   background: #E8E0ED;
   font-weight: bold;
   border-top: 2px solid #512B58;
 &#125;
 
+[data-datagrid-row][data-is-total-row="true"] [data-datagrid-cell] &#123;
+  background: #E8E0ED;
+&#125;
+
+[data-datagrid-row][data-is-total-row="true"] [data-datagrid-computed-value] &#123;
+  color: #333;
+  font-weight: bold;
+&#125;
+
+/* Total label cell */
+[data-total-label-cell] &#123;
+  font-weight: bold;
+&#125;
+
+/* Row total cell styling */
+[data-row-total-cell] &#123;
+  background: #f5f5f5;
+  border-left: 1px solid #ccc;
+&#125;
+
+/* Column total cell styling */
+[data-column-total-cell] &#123;
+  background: #E8E0ED;
+&#125;
+
+/* Grand total cell */
+[data-grand-total-cell] &#123;
+  background: #E8E0ED !important;
+  font-weight: bold;
+&#125;
+
+[data-grand-total-cell] [data-datagrid-computed-value] &#123;
+  font-weight: bold;
+  color: #512B58;
+&#125;
+
 /* ========================================
-   Responsive (Mobile)
+   Responsive Styles (Mobile)
    ======================================== */
 &#64;media (max-width: 640px) &#123;
+  /* Stack inline groups vertically on mobile */
   [data-field-row] &#123;
     flex-direction: column;
+  &#125;
+
+  [data-field-row][data-inline-group] [data-field-name] &#123;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  &#125;
+
+  [data-field-row][data-inline-group] [data-field-name]:last-child &#123;
+    border-bottom: none;
   &#125;
 
   [data-field-name] &#123;
@@ -866,38 +1778,296 @@ button[data-table-action="remove"] &#123;
     max-width: 100%;
     border-right: none;
     border-bottom: 1px solid #ccc;
+    padding: 8px 12px;
   &#125;
 
-  /* Table cards on mobile */
+  [data-form-section="actions"],
+  [data-form-actions] &#123;
+    flex-direction: column;
+  &#125;
+
+  button[data-action] &#123;
+    width: 100%;
+  &#125;
+
+  /* Phone field responsive */
+  [data-phone-container] &#123;
+    flex-direction: column;
+    gap: 6px;
+  &#125;
+
+  select[data-phone-country-code] &#123;
+    width: 100% !important;
+    min-width: 100%;
+    max-width: 100%;
+  &#125;
+
+  input[data-phone-number] &#123;
+    width: 100% !important;
+  &#125;
+
+  /* Date range responsive */
+  [data-daterange-container] &#123;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  &#125;
+
+  [data-daterange-field] &#123;
+    width: 100%;
+  &#125;
+
+  [data-daterange-separator] &#123;
+    text-align: center;
+    padding: 4px 0;
+  &#125;
+
+  /* Formref responsive */
+  [data-formref-field] &#123;
+    flex-direction: column;
+  &#125;
+
+  [data-formref-label] &#123;
+    min-width: 100%;
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    padding: 8px 12px;
+  &#125;
+
+  /* Table responsive - Card layout */
+  [data-table-container] &#123;
+    overflow-x: visible;
+  &#125;
+
   [data-table] &#123;
     display: block;
+    min-width: 0;
   &#125;
 
   [data-table-header] &#123;
     display: none;
   &#125;
 
+  [data-table-body] &#123;
+    display: block;
+  &#125;
+
+  /* Each row becomes a card */
   [data-table-row] &#123;
     display: block;
     margin-bottom: 12px;
     padding: 12px;
+    background: #fff;
     border: 1px solid #ccc;
     border-radius: 4px;
   &#125;
 
+  [data-table-row]:last-child &#123;
+    margin-bottom: 0;
+  &#125;
+
+  [data-table-row][data-row-empty="true"] &#123;
+    background: #fafafa;
+  &#125;
+
+  /* Each cell becomes a labeled field */
   [data-table-cell] &#123;
     display: flex;
     flex-direction: column;
     padding: 8px 0;
     border-right: none;
+    border-bottom: 1px solid #eee;
   &#125;
 
+  [data-table-cell]:last-child &#123;
+    border-bottom: none;
+  &#125;
+
+  /* Show column label before input */
   [data-table-cell][data-column-label]::before &#123;
     content: attr(data-column-label);
+    display: block;
+    margin-bottom: 4px;
     font-size: 12px;
     font-weight: bold;
     color: #666;
-    margin-bottom: 4px;
+  &#125;
+
+  /* Actions cell styling */
+  [data-table-actions-cell] &#123;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-bottom: none;
+  &#125;
+
+  [data-table-actions-cell]::before &#123;
+    display: none;
+  &#125;
+
+  [data-table-input] &#123;
+    width: 100%;
+  &#125;
+
+  /* Cell error tooltip positioning for cards */
+  [data-cell-error-tooltip] &#123;
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-top: 4px;
+  &#125;
+
+  [data-cell-error-tooltip]::before &#123;
+    display: none;
+  &#125;
+
+  [data-table-footer] &#123;
+    margin-top: 12px;
+  &#125;
+
+  /* DataGrid responsive - Card layout */
+  [data-datagrid-container] &#123;
+    overflow-x: visible;
+  &#125;
+
+  [data-datagrid] &#123;
+    display: block;
+    min-width: 0;
+  &#125;
+
+  [data-datagrid] colgroup &#123;
+    display: none;
+  &#125;
+
+  [data-datagrid-header] &#123;
+    display: none;
+  &#125;
+
+  [data-datagrid-body] &#123;
+    display: block;
+  &#125;
+
+  /* Each row becomes a card */
+  [data-datagrid-row] &#123;
+    display: block;
+    margin-bottom: 12px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+  &#125;
+
+  [data-datagrid-row]:last-child &#123;
+    margin-bottom: 0;
+  &#125;
+
+  /* Row label cell becomes card header */
+  [data-datagrid-row] [data-row-label-cell] &#123;
+    display: block;
+    background: #512B58;
+    color: #fff;
+    font-weight: bold;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  &#125;
+
+  /* Show row label header before the row label for context */
+  [data-datagrid-row] [data-row-label-cell][data-row-label-header]:not([data-row-label-header=""])::before &#123;
+    content: attr(data-row-label-header) ": ";
+    font-weight: normal;
+    opacity: 0.85;
+  &#125;
+
+  /* Each data cell becomes a labeled field */
+  [data-datagrid-cell] &#123;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  &#125;
+
+  [data-datagrid-cell]:last-child &#123;
+    border-bottom: none;
+  &#125;
+
+  /* Show column label before input */
+  [data-datagrid-cell][data-column-label]::before &#123;
+    content: attr(data-column-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+  &#125;
+
+  /* Show column group label before column label when present */
+  [data-datagrid-cell][data-column-label][data-column-group-label]::before &#123;
+    content: attr(data-column-group-label) " - " attr(data-column-label);
+  &#125;
+
+  [data-datagrid-input] &#123;
+    width: 100%;
+  &#125;
+
+  [data-datagrid-computed-value] &#123;
+    text-align: left;
+    padding: 0;
+  &#125;
+
+  [data-datagrid-cell][data-column-computed="true"] &#123;
+    background: #f9f9f9;
+  &#125;
+
+  [data-row-total-cell] &#123;
+    background: #f0f0f0;
+    border-left: none;
+    font-weight: bold;
+  &#125;
+
+  [data-row-total-cell]::before &#123;
+    content: attr(data-total-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+  &#125;
+
+  /* Total row styling in card mode */
+  [data-datagrid-row][data-is-total-row="true"] &#123;
+    background: #E8E0ED;
+    border-top: none;
+  &#125;
+
+  [data-datagrid-row][data-is-total-row="true"] [data-row-label-cell] &#123;
+    background: #512B58;
+    color: #fff;
+  &#125;
+
+  [data-datagrid-row][data-is-total-row="true"] [data-datagrid-cell] &#123;
+    background: #E8E0ED;
+  &#125;
+
+  /* Grand total cell in card mode */
+  [data-grand-total-cell] &#123;
+    font-weight: bold;
+  &#125;
+
+  [data-grand-total-cell]::before &#123;
+    content: 'Grand Total';
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #512B58;
+  &#125;
+
+  [data-grand-total-cell] [data-datagrid-computed-value] &#123;
+    font-size: 15px;
+    color: #512B58;
   &#125;
 &#125;</code></pre>
 
