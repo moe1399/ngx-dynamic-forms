@@ -1459,4 +1459,12 @@ export class NgxFormBuilder {
     const currentId = this.currentConfig().id;
     return this.savedConfigs().filter((config) => config.id !== currentId);
   }
+
+  // ============================================
+  // JSON Preview
+  // ============================================
+
+  getFieldJson(field: FormFieldConfig): string {
+    return JSON.stringify(field, null, 2);
+  }
 }
