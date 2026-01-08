@@ -23,6 +23,9 @@ import { ValidatorRegistry } from '../../services/validator-registry.service';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './dynamic-form.html',
   styleUrl: './dynamic-form.scss',
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+  },
 })
 export class DynamicForm implements OnInit, OnDestroy {
   // Inject services
@@ -1051,6 +1054,22 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   closePopover(): void {
     this.activePopover = null;
+  }
+
+  /**
+   * Handle document clicks to close popover when clicking outside
+   */
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.activePopover) return;
+
+    const target = event.target as HTMLElement;
+    // Check if click is on the popover or info icon
+    const isPopoverClick = target.closest('[data-popover]') !== null;
+    const isInfoIconClick = target.closest('[data-info-icon]') !== null;
+
+    if (!isPopoverClick && !isInfoIconClick) {
+      this.closePopover();
+    }
   }
 
   /**
