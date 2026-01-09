@@ -171,10 +171,15 @@
             <label>Section ID</label>
             <input
               type="text"
-              [value]="section.id"
-              disabled
+              [ngModel]="section.id"
+              (ngModelChange)="updateSectionId(section.id, $event)"
+              #sectionIdInput="ngModel"
             />
-            <small class="form-hint">Auto-generated, read-only</small>
+            @if (sectionIdInput.value && isSectionIdDuplicate(sectionIdInput.value, section.id)) {
+              <small class="form-error">Section ID already exists</small>
+            } @else {
+              <small class="form-hint">Unique identifier for the section</small>
+            }
           </div>
 
           <div class="form-group">

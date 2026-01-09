@@ -140,6 +140,7 @@
                   <input
                     type="radio"
                     [formControlName]="field.name"
+                    [attr.name]="field.name"
                     [value]="option.value"
                     data-radio-input
                   />
@@ -161,6 +162,7 @@
                     [attr.data-option-selected]="isCheckboxOptionSelected(field.name, option.value)">
                     <input
                       type="checkbox"
+                      [attr.name]="field.name + '_' + option.value"
                       [checked]="isCheckboxOptionSelected(field.name, option.value)"
                       (change)="toggleCheckboxOption(field.name, option.value)"
                       data-checkbox-input
@@ -747,6 +749,7 @@
                                         <input
                                           type="radio"
                                           [formControlName]="embeddedField.name"
+                                          [attr.name]="embeddedField.name"
                                           [value]="option.value"
                                           data-formref-radio-input
                                         />
@@ -762,6 +765,7 @@
                                         <label data-formref-checkbox-option>
                                           <input
                                             type="checkbox"
+                                            [attr.name]="embeddedField.name + '_' + option.value"
                                             data-formref-checkbox-input
                                           />
                                           <span data-formref-checkbox-label>{{ option.label }}</span>
@@ -868,6 +872,7 @@
                                     <input
                                       type="radio"
                                       [formControlName]="embeddedField.name"
+                                      [attr.name]="embeddedField.name"
                                       [value]="option.value"
                                       data-formref-radio-input
                                     />
@@ -883,6 +888,7 @@
                                     <label data-formref-checkbox-option>
                                       <input
                                         type="checkbox"
+                                        [attr.name]="embeddedField.name + '_' + option.value"
                                         data-formref-checkbox-input
                                       />
                                       <span data-formref-checkbox-label>{{ option.label }}</span>
@@ -987,6 +993,7 @@
                                   <input
                                     type="radio"
                                     [formControlName]="embeddedField.name"
+                                    [attr.name]="embeddedField.name"
                                     [value]="option.value"
                                     data-formref-radio-input
                                   />
@@ -1002,6 +1009,7 @@
                                   <label data-formref-checkbox-option>
                                     <input
                                       type="checkbox"
+                                      [attr.name]="embeddedField.name + '_' + option.value"
                                       data-formref-checkbox-input
                                     />
                                     <span data-formref-checkbox-label>{{ option.label }}</span>

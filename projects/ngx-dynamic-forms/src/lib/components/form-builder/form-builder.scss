@@ -111,6 +111,13 @@ $text-muted: #666;
     font-size: 0.6875rem;
     color: $text-muted;
   }
+
+  .form-error {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.6875rem;
+    color: #dc3545;
+  }
 }
 
 .fields-list {

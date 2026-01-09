@@ -636,6 +636,11 @@ export class NgxFormBuilder {
     return [...(this.currentConfig().sections || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
 
+  isSectionIdDuplicate(id: string, excludeId?: string): boolean {
+    const sections = this.currentConfig().sections || [];
+    return sections.some((s) => s.id === id && s.id !== excludeId);
+  }
+
   updateFieldSectionId(index: number, sectionId: string): void {
     const field = { ...this.currentConfig().fields[index], sectionId: sectionId || undefined };
     this.updateField(index, field);
@@ -651,6 +656,30 @@ export class NgxFormBuilder {
 
   updateSectionAnchorId(id: string, anchorId: string): void {
     this.updateSection(id, { anchorId: anchorId || undefined });
+  }
+
+  updateSectionId(oldId: string, newId: string): void {
+    if (!newId || newId === oldId) return;
+
+    // Check for duplicate
+    if (this.isSectionIdDuplicate(newId, oldId)) {
+      return;
+    }
+
+    const config = { ...this.currentConfig() };
+
+    // Update section id
+    config.sections = (config.sections || []).map((section) =>
+      section.id === oldId ? { ...section, id: newId } : section
+    );
+
+    // Update all fields referencing this section
+    config.fields = config.fields.map((field) =>
+      field.sectionId === oldId ? { ...field, sectionId: newId } : field
+    );
+
+    this.updateConfig(config);
+    this.selectedSectionId.set(newId);
   }
 
   // ============================================
