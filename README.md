@@ -1,59 +1,178 @@
 # ngx-dynamic-forms
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.2.
+A headless Angular dynamic form system with matching server-side validation packages for Node.js and .NET.
 
-## Development server
+## Packages
 
-To start a local development server, run:
+| Package | Description | Install |
+|---------|-------------|---------|
+| [@moe1399/ngx-dynamic-forms](./projects/ngx-dynamic-forms) | Angular headless form components | `npm install @moe1399/ngx-dynamic-forms` |
+| [@moe1399/form-validation](./packages/form-validation) | Node.js/TypeScript server validation | `npm install @moe1399/form-validation` |
+| [DynamicForms.FormValidation](./packages/form-validation-dotnet) | .NET server validation | `dotnet add package DynamicForms.FormValidation` |
 
-```bash
-ng serve
+## Features
+
+- **Headless UI**: Zero styling, complete control via `data-*` attributes
+- **JSON-driven**: Define forms as JSON configuration
+- **15 Field Types**: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref, fileupload
+- **Validation**: Built-in validators + custom validators with conditional validation
+- **Server Validation**: Same validation rules on client and server
+- **Form Builder**: Visual form builder UI included
+
+## Quick Start
+
+### Angular (Client)
+
+```typescript
+import { DynamicFormComponent } from '@moe1399/ngx-dynamic-forms';
+
+@Component({
+  imports: [DynamicFormComponent],
+  template: `
+    <ngx-dynamic-form
+      [config]="formConfig"
+      (formSubmit)="onSubmit($event)"
+    />
+  `
+})
+export class MyComponent {
+  formConfig = {
+    id: 'contact-form',
+    fields: [
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'email',
+        validations: [
+          { type: 'required', message: 'Email is required' },
+          { type: 'email', message: 'Invalid email format' }
+        ]
+      },
+      {
+        name: 'endDate',
+        label: 'End Date',
+        type: 'date',
+        validations: [
+          {
+            type: 'required',
+            message: 'End date required for fixed term',
+            condition: {
+              field: 'tenure',
+              operator: 'equals',
+              value: 'fixedTerm'
+            }
+          }
+        ]
+      }
+    ]
+  };
+}
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Node.js (Server)
 
-## Code scaffolding
+```typescript
+import { validateForm, validatorRegistry } from '@moe1399/form-validation';
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+// Register custom validators
+validatorRegistry.register('australianPhone', (value) => {
+  if (!value) return true;
+  return /^(\+61|0)[2-478]\d{8}$/.test(value.replace(/\s/g, ''));
+});
 
-```bash
-ng generate component component-name
+// Validate using same config as Angular
+const result = validateForm(formConfig, req.body);
+
+if (!result.valid) {
+  return res.status(400).json({ errors: result.errors });
+}
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### .NET (Server)
 
-```bash
-ng generate --help
+```csharp
+using DynamicForms.FormValidation;
+
+// Register custom validators
+ValidatorRegistry.Instance.Register("australianPhone", (value, _, _, _) => {
+    if (value == null) return true;
+    var phone = value.ToString()?.Replace(" ", "") ?? "";
+    return Regex.IsMatch(phone, @"^(\+61|0)[2-478]\d{8}$");
+});
+
+// Validate using same config as Angular
+var result = FormValidator.ValidateForm(formConfig, formData);
+
+if (!result.Valid) {
+    return Results.BadRequest(new { errors = result.Errors });
+}
 ```
 
-## Building
+## Validation Types
 
-To build the project run:
+| Type | Value | Description |
+|------|-------|-------------|
+| `required` | - | Non-empty value |
+| `email` | - | Valid email format |
+| `minLength` | number | String length >= value |
+| `maxLength` | number | String length <= value |
+| `min` | number | Numeric value >= value |
+| `max` | number | Numeric value <= value |
+| `pattern` | regex | Matches regex pattern |
+| `custom` | - | Named custom validator |
 
-```bash
-ng build
+### Conditional Validation
+
+Validations can be applied conditionally based on other field values:
+
+```typescript
+{
+  type: 'required',
+  message: 'End date required for fixed term',
+  condition: {
+    field: 'tenure',           // Field to check
+    operator: 'equals',        // equals, notEquals, isEmpty, isNotEmpty
+    value: 'fixedTerm'         // Value to compare (for equals/notEquals)
+  }
+}
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+For table/datagrid columns, use `$form.fieldName` to reference form-level fields:
 
-## Running unit tests
+```typescript
+condition: {
+  field: '$form.employmentType',
+  operator: 'equals',
+  value: 'contractor'
+}
+```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Development
 
 ```bash
+# Install dependencies
+npm install
+
+# Start dev server (http://localhost:19240)
+npm start
+
+# Build Angular library
+ng build ngx-dynamic-forms
+
+# Build server validation packages
+cd packages/form-validation && npm run build
+cd packages/form-validation-dotnet && dotnet build
+
+# Run tests
 ng test
 ```
 
-## Running end-to-end tests
+## Documentation
 
-For end-to-end (e2e) testing, run:
+- [Angular Library](./projects/ngx-dynamic-forms/README.md)
+- [Node.js Validation](./packages/form-validation/README.md)
+- [.NET Validation](./packages/form-validation-dotnet/README.md)
 
-```bash
-ng e2e
-```
+## License
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+MIT
