@@ -1574,6 +1574,10 @@ export class NgxFormBuilder {
     this.updateFileUploadConfig(fieldIndex, { allowDragDrop: allow });
   }
 
+  updateFileUploadAllowDownload(fieldIndex: number, allow: boolean): void {
+    this.updateFileUploadConfig(fieldIndex, { allowDownload: allow });
+  }
+
   updateFileUploadShowFileSize(fieldIndex: number, show: boolean): void {
     this.updateFileUploadConfig(fieldIndex, { showFileSize: show });
   }

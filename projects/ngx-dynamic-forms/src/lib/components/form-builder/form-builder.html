@@ -776,6 +776,18 @@
                 <label>
                   <input
                     type="checkbox"
+                    [ngModel]="field.fileuploadConfig?.allowDownload !== false"
+                    (ngModelChange)="updateFileUploadAllowDownload(fieldIndex, $event)"
+                  />
+                  Allow Download
+                </label>
+                <small class="form-hint">Allow users to download completed files (disable if files need virus scanning first)</small>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
                     [ngModel]="field.fileuploadConfig?.showFileSize !== false"
                     (ngModelChange)="updateFileUploadShowFileSize(fieldIndex, $event)"
                   />

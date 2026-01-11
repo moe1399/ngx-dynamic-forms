@@ -1180,7 +1180,7 @@
 
                       <!-- Actions -->
                       <div class="fileupload-item-actions">
-                        @if (fileState.status === 'completed' && isDownloadAvailable()) {
+                        @if (fileState.status === 'completed' && isDownloadAvailable(field)) {
                           <button
                             type="button"
                             class="fileupload-action fileupload-action-download"

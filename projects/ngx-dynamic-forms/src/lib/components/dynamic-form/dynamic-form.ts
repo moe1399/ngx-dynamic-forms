@@ -2514,10 +2514,11 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
-   * Check if download is available (handler is provided)
+   * Check if download is available (handler is provided and config allows)
    */
-  isDownloadAvailable(): boolean {
-    return !!this.fileDownloadHandler();
+  isDownloadAvailable(field: FormFieldConfig): boolean {
+    const config = field.fileuploadConfig || {};
+    return !!this.fileDownloadHandler() && (config.allowDownload !== false);
   }
 
   /**

@@ -55,6 +55,7 @@ export interface FileUploadConfig {
   allowedMimeTypes?: string[]; // Allowed MIME types e.g., ['image/*', 'application/pdf']
   uploadTiming?: FileUploadTiming; // When to upload: 'immediate' or 'manual' (default: 'immediate')
   allowDragDrop?: boolean;     // Allow drag and drop (default: true)
+  allowDownload?: boolean;     // Allow downloading completed files (default: true)
   uploadButtonLabel?: string;  // Label for upload button (default: 'Choose file')
   dragDropLabel?: string;      // Label for drag-drop zone (default: 'or drag and drop here')
   showFileSize?: boolean;      // Show file size in file list (default: true)
