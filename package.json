@@ -1,16 +1,22 @@
 {
-  "name": "ngx-dynamic-forms-demo",
+  "name": "ngx-dynamic-forms-monorepo",
   "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "projects/*",
+    "packages/ngx-dynamic-forms-validation"
+  ],
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "dev": "concurrently -k -n lib,app -c blue,green \"ng build ngx-dynamic-forms --watch\" \"sleep 5 && ng serve\"",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "start": "ng serve ngx-dynamic-forms-demo",
+    "dev": "concurrently -k -n lib,app -c blue,green \"ng build ngx-dynamic-forms --watch\" \"sleep 5 && ng serve ngx-dynamic-forms-demo\"",
+    "build": "ng build ngx-dynamic-forms-demo",
+    "watch": "ng build ngx-dynamic-forms-demo --watch --configuration development",
+    "test": "ng test ngx-dynamic-forms-demo",
     "build:lib": "ng build ngx-dynamic-forms",
     "build:lib:watch": "ng build ngx-dynamic-forms --watch",
-    "build:validation": "cd packages/form-validation && npm run build",
+    "build:validation": "npm run build -w @moe1399/ngx-dynamic-forms-validation",
     "build:validation-dotnet": "cd packages/form-validation-dotnet && dotnet build -c Release",
     "build:all": "npm run build:lib && npm run build:validation && npm run build:validation-dotnet",
     "publish": "./scripts/publish.sh patch",
@@ -18,7 +24,9 @@
     "publish:major": "./scripts/publish.sh major",
     "publish:dry": "./scripts/publish.sh patch --dry-run",
     "publish:npm": "./scripts/publish.sh patch --npm-only",
-    "publish:npm:dry": "./scripts/publish.sh patch --npm-only --dry-run"
+    "publish:npm:dry": "./scripts/publish.sh patch --npm-only --dry-run",
+    "changelog": "conventional-changelog -p angular -i projects/ngx-dynamic-forms/CHANGELOG.md -s",
+    "changelog:all": "conventional-changelog -p angular -i projects/ngx-dynamic-forms/CHANGELOG.md -s -r 0"
   },
   "prettier": {
     "printWidth": 100,
@@ -32,8 +40,19 @@
       }
     ]
   },
-  "private": true,
   "packageManager": "npm@11.6.2",
+  "devDependencies": {
+    "@angular/build": "^21.0.2",
+    "@angular/cli": "^21.0.2",
+    "@angular/compiler-cli": "^21.0.0",
+    "@types/pako": "^2.0.4",
+    "concurrently": "^9.2.1",
+    "conventional-changelog-cli": "^5.0.0",
+    "jsdom": "^27.1.0",
+    "ng-packagr": "^21.0.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
+  },
   "dependencies": {
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
@@ -45,16 +64,5 @@
     "pako": "^2.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^21.0.2",
-    "@angular/cli": "^21.0.2",
-    "@angular/compiler-cli": "^21.0.0",
-    "@types/pako": "^2.0.4",
-    "concurrently": "^9.2.1",
-    "jsdom": "^27.1.0",
-    "ng-packagr": "^21.0.0",
-    "typescript": "~5.9.2",
-    "vitest": "^4.0.8"
   }
 }

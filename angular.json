@@ -14,24 +14,24 @@
           "style": "scss"
         }
       },
-      "root": "",
-      "sourceRoot": "src",
+      "root": "apps/demo",
+      "sourceRoot": "apps/demo/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
+            "browser": "apps/demo/src/main.ts",
+            "tsConfig": "apps/demo/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "apps/demo/public"
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "apps/demo/src/styles.scss"
             ]
           },
           "configurations": {

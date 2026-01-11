@@ -42,14 +42,14 @@ echo "New version: $NEW_VERSION"
 # 2. Bump version in TypeScript validation package
 echo ""
 echo ">>> Bumping TypeScript validation package version..."
-cd "$ROOT_DIR/packages/form-validation"
+cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation"
 npm version "$VERSION_TYPE" --no-git-tag-version
 
 # 3. Bump version in .NET validation package
 if [ -z "$NPM_ONLY" ]; then
   echo ""
   echo ">>> Bumping .NET validation package version..."
-  cd "$ROOT_DIR/packages/form-validation-dotnet"
+  cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation-dotnet"
   # Extract current version and bump it
   CURRENT_DOTNET_VERSION=$(grep -oP '(?<=<Version>)[^<]+' DynamicForms.FormValidation.csproj)
   IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_DOTNET_VERSION"
@@ -72,7 +72,13 @@ if [ -z "$NPM_ONLY" ]; then
   echo "New .NET version: $NEW_DOTNET_VERSION"
 fi
 
-# 4. Build all packages
+# 4. Update changelog
+echo ""
+echo ">>> Updating changelog..."
+cd "$ROOT_DIR"
+npm run changelog
+
+# 5. Build all packages
 echo ""
 echo ">>> Building all packages..."
 cd "$ROOT_DIR"
@@ -82,7 +88,7 @@ if [ -z "$NPM_ONLY" ]; then
   npm run build:validation-dotnet
 fi
 
-# 5. Publish Angular library
+# 6. Publish Angular library
 echo ""
 echo ">>> Publishing Angular library..."
 cd "$ROOT_DIR/dist/ngx-dynamic-forms"
@@ -92,21 +98,21 @@ else
   npm publish --access public
 fi
 
-# 6. Publish TypeScript validation package
+# 7. Publish TypeScript validation package
 echo ""
 echo ">>> Publishing TypeScript validation package..."
-cd "$ROOT_DIR/packages/form-validation"
+cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation"
 if [ -n "$DRY_RUN" ]; then
   npm publish --access public --dry-run
 else
   npm publish --access public
 fi
 
-# 7. Publish .NET validation package
+# 8. Publish .NET validation package
 if [ -z "$NPM_ONLY" ] && [ -z "$DRY_RUN" ]; then
   echo ""
   echo ">>> Publishing .NET validation package..."
-  cd "$ROOT_DIR/packages/form-validation-dotnet"
+  cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation-dotnet"
   dotnet pack -c Release
   if [ -n "$NUGET_API_KEY" ]; then
     dotnet nuget push bin/Release/DynamicForms.FormValidation.*.nupkg \

@@ -1,1 +1,0 @@
-../projects/ngx-dynamic-forms/README.md

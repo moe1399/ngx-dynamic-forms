@@ -376,6 +376,42 @@ The headless UI exposes state via data attributes for CSS styling:
 
 See the live demo at: https://moe1399.github.io/ngx-dynamic-forms/
 
+## Contributing
+
+### Commit Messages
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. This enables automatic changelog generation.
+
+**Format:** `<type>: <description>`
+
+| Type | Description |
+|------|-------------|
+| `feat` | New feature (appears in changelog) |
+| `fix` | Bug fix (appears in changelog) |
+| `docs` | Documentation changes |
+| `refactor` | Code refactoring |
+| `perf` | Performance improvements |
+| `test` | Adding or updating tests |
+| `chore` | Build/tooling changes |
+
+**Examples:**
+```bash
+feat: add file upload field type
+fix: resolve validation error display on blur
+feat!: remove deprecated API (breaking change)
+```
+
+### Changelog
+
+The changelog is automatically generated from commit messages:
+
+```bash
+npm run changelog      # Append new commits
+npm run changelog:all  # Regenerate entire changelog
+```
+
+The publish script automatically updates the changelog before each release.
+
 ## License
 
 MIT

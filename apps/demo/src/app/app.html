@@ -1,0 +1,240 @@
+<div class="test-harness">
+  <header class="harness-header">
+    <h1>Form Builder</h1>
+    <p class="subtitle">Create and test dynamic forms with custom styling</p>
+  </header>
+
+  <!-- View Switcher -->
+  <nav class="view-switcher">
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'builder'"
+      (click)="switchView('builder')">
+      Form Builder
+    </button>
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'preview'"
+      (click)="switchView('preview')"
+      [disabled]="!currentConfig() || currentConfig()!.fields.length === 0">
+      Preview & Test
+    </button>
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'docs'"
+      (click)="switchView('docs')">
+      Documentation
+    </button>
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'changelog'"
+      (click)="switchView('changelog')">
+      Changelog
+    </button>
+    <button
+      class="view-tab"
+      [class.active]="currentView() === 'theme'"
+      (click)="switchView('theme')">
+      Theme CSS
+    </button>
+  </nav>
+
+  @if (shareNotification()) {
+    <div class="share-notification">{{ shareNotification() }}</div>
+  }
+
+  <!-- Builder View -->
+  @if (currentView() === 'builder') {
+    <div class="view-content">
+      <div class="info-banner">
+        <h3>Welcome to the Form Builder!</h3>
+        <p>Create custom forms visually, save them to local storage, and test with different style themes.</p>
+        <ul>
+          <li>Add fields and configure validations</li>
+          <li>Save and load form configurations</li>
+          <li>Export/import as JSON</li>
+          <li>Preview with different styling themes</li>
+        </ul>
+      </div>
+
+      <ngx-form-builder
+        [(config)]="currentConfig"
+        (shareRequested)="shareForm()" />
+    </div>
+  }
+
+  <!-- Preview View -->
+  @if (currentView() === 'preview' && currentConfig()) {
+    <div class="view-content preview-view">
+      @if (submissionResult()) {
+        <div class="submission-result" [class.submitted]="formSubmitted()">
+          <h4>{{ formSubmitted() ? '✓ Form Submitted Successfully' : 'Submission Result' }}</h4>
+          @if (formSubmitted()) {
+            <p>The form has been submitted and is now read-only. Click "Edit" to make changes.</p>
+            <button type="button" class="edit-btn" (click)="editForm()">Edit Form</button>
+          }
+          <pre>{{ submissionResult() }}</pre>
+        </div>
+      }
+
+      <!-- Form Preview -->
+      <div class="form-preview">
+        <h3>Form Preview - {{ currentConfig()!.id }}</h3>
+        <p class="preview-note">
+          This form uses a headless component styled with data-* attributes.
+        </p>
+
+        <ngx-dynamic-form
+          #dynamicForm
+          [config]="currentConfig()!"
+          [fileUploadHandler]="fileUploadHandler"
+          [fileDownloadHandler]="fileDownloadHandler"
+          (formSubmit)="onFormSubmit($event)"
+          (formSave)="onFormSave($event)"
+          (validationErrors)="onValidationErrors($event)">
+          <!-- Custom buttons rendered by consuming application -->
+          <div data-form-actions>
+            @if (!formSubmitted()) {
+              @if (currentConfig()!.saveLabel) {
+                <button
+                  type="button"
+                  data-action="save"
+                  (click)="dynamicForm.saveForm()">
+                  {{ currentConfig()!.saveLabel }}
+                </button>
+              }
+              <button
+                type="button"
+                data-action="submit"
+                [attr.data-can-submit]="dynamicForm.valid"
+                (click)="dynamicForm.submitForm()">
+                {{ currentConfig()!.submitLabel || 'Submit' }}
+              </button>
+            } @else {
+              <span data-form-status>Form submitted - read only</span>
+            }
+          </div>
+        </ngx-dynamic-form>
+      </div>
+
+      <!-- Data Attributes Info -->
+      <div class="info-panel">
+        <h3>About Data Attributes</h3>
+        <p>The form component uses data-* attributes for state management, allowing complete styling flexibility:</p>
+        <ul class="data-attributes-list">
+          <li><code>data-form-valid</code> - Form validation state (true/false)</li>
+          <li><code>data-form-touched</code> - Whether form has been interacted with</li>
+          <li><code>data-field-name</code> - Field identifier</li>
+          <li><code>data-field-type</code> - Field type (text, email, etc.)</li>
+          <li><code>data-field-valid</code> - Field validation state</li>
+          <li><code>data-field-touched</code> - Field interaction state</li>
+          <li><code>data-field-required</code> - Whether field is required</li>
+          <li><code>data-validation-error</code> - Error message container</li>
+        </ul>
+      </div>
+    </div>
+  }
+
+  <!-- Documentation View -->
+  @if (currentView() === 'docs') {
+    <div class="view-content docs-view">
+      <article class="documentation">
+        @if (docsLoading()) {
+          <p>Loading documentation...</p>
+        } @else if (docsHtml()) {
+          <div [innerHTML]="docsHtml()"></div>
+        } @else {
+          <p>Documentation not available.</p>
+        }
+      </article>
+    </div>
+  }
+
+  <!-- Changelog View -->
+  @if (currentView() === 'changelog') {
+    <div class="view-content changelog-view">
+      @if (changelogLoading()) {
+        <div class="loading">Loading changelog...</div>
+      } @else if (changelogHtml()) {
+        <article class="changelog" [innerHTML]="changelogHtml()"></article>
+      } @else {
+        <div class="error">Failed to load changelog</div>
+      }
+    </div>
+  }
+
+  <!-- Theme CSS View -->
+  @if (currentView() === 'theme') {
+    <div class="view-content theme-view">
+      <article class="theme-content">
+        <h2>Default Theme CSS</h2>
+        <p class="lead">Copy this CSS to your project's stylesheet to style the dynamic form component.</p>
+
+        <div class="theme-actions">
+          <button type="button" class="copy-btn" (click)="copyThemeCss()" [disabled]="!themeCss()">
+            @if (themeCopied()) {
+              &#10003; Copied!
+            } @else {
+              Copy SCSS
+            }
+          </button>
+          <span class="theme-note">This is SCSS that compiles to CSS. All styles are scoped to <code>.ngx-df</code> to prevent CSS clashes.</span>
+        </div>
+
+        @if (themeCssLoading()) {
+          <p>Loading theme CSS...</p>
+        } @else if (themeCss()) {
+          <pre><code>{{ themeCss() }}</code></pre>
+        } @else {
+          <p>Failed to load theme CSS.</p>
+        }
+        <section class="theme-info">
+          <h3>Data Attributes Reference</h3>
+          <p>The form component exposes these data attributes for styling:</p>
+
+          <h4>Form Level</h4>
+          <ul>
+            <li><code>data-form-id</code> - Form identifier</li>
+            <li><code>data-form-valid</code> - Form validity (true/false)</li>
+            <li><code>data-form-touched</code> - Form touched state</li>
+            <li><code>data-form-dirty</code> - Form dirty state</li>
+            <li><code>data-form-validating</code> - Async validation in progress</li>
+          </ul>
+
+          <h4>Field Level</h4>
+          <ul>
+            <li><code>data-field-name</code> - Field identifier</li>
+            <li><code>data-field-type</code> - Field type (text, email, etc.)</li>
+            <li><code>data-field-valid</code> - Field validity</li>
+            <li><code>data-field-touched</code> - Field touched state</li>
+            <li><code>data-field-dirty</code> - Field dirty state</li>
+            <li><code>data-field-disabled</code> - Field disabled state</li>
+            <li><code>data-field-required</code> - Field required state</li>
+            <li><code>data-field-validating</code> - Field async validation in progress</li>
+            <li><code>data-field-width</code> - Field width (1-4)</li>
+          </ul>
+
+          <h4>Input Elements</h4>
+          <ul>
+            <li><code>data-input-type</code> - Input type identifier</li>
+            <li><code>data-validation-error</code> - Error message container</li>
+            <li><code>data-required-indicator</code> - Required field marker</li>
+          </ul>
+
+          <h4>Special Fields</h4>
+          <ul>
+            <li><code>data-radio-group</code>, <code>data-radio-option</code>, <code>data-radio-input</code></li>
+            <li><code>data-checkbox-group</code>, <code>data-checkbox-option</code>, <code>data-checkbox-input</code></li>
+            <li><code>data-table-container</code>, <code>data-table</code>, <code>data-table-row</code>, <code>data-table-cell</code></li>
+            <li><code>data-datagrid-container</code>, <code>data-datagrid</code>, <code>data-datagrid-row</code>, <code>data-datagrid-cell</code></li>
+            <li><code>data-phone-container</code>, <code>data-phone-country-code</code>, <code>data-phone-number</code></li>
+            <li><code>data-daterange-container</code>, <code>data-daterange-from</code>, <code>data-daterange-to</code></li>
+            <li><code>data-info-block</code>, <code>data-info-content</code></li>
+          </ul>
+        </section>
+      </article>
+    </div>
+  }
+</div>
+
+<router-outlet />

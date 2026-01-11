@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for commit messages.
+The changelog is automatically generated using `npm run changelog`.
+
+## [0.5.3] - 2026-01-12
+
+### Changed
+
+- Refactored to npm workspaces monorepo structure
+- Renamed validation package from `@moe1399/form-validation` to `@moe1399/ngx-dynamic-forms-validation`
+- Angular library now imports shared types from validation package
+
+## [0.5.2] - 2026-01-10
+
+### Added
+
+- Conditional validation support for form fields
+  - `conditions` property on `ValidationRule` to apply validation conditionally
+  - Support for operators: `equals`, `notEquals`, `contains`, `greaterThan`, `lessThan`, `isEmpty`, `isNotEmpty`
+  - `conditionLogic` property for combining multiple conditions (`and` or `or`)
+- CSS design tokens for theme customization (colors, spacing, typography)
+- `allowDownload` option for file upload fields
+- `name` attributes on all form inputs for better accessibility
+
+### Fixed
+
+- File upload read-only mode display
+- Consolidated theme styling
+
+## [0.5.1] - 2026-01-09
+
+### Fixed
+
+- Validation error message not showing on blur
+
+## [0.5.0] - 2026-01-08
+
+### Added
+
+- File upload field type with progress tracking, abort support, and download capability
+- Server-side validation libraries for Node.js (`@moe1399/ngx-dynamic-forms-validation`) and .NET (`DynamicForms.FormValidation`)
+
+### Changed
+
+- Increased component style budget to 50kB
+
+## [0.4.0] - 2026-01-08
+
+### Added
+
+- Archived field support (`archived: boolean` property)
+- JSON preview in field configuration modal
+- Info icon click behavior improvement
+
+### Fixed
+
+- README.md asset loading with symlink in public folder
+- Info icon click no longer focuses input field on required fields
+
 ## [0.3.0] - 2026-01-07
 
 ### Added

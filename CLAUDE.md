@@ -5,6 +5,57 @@
 - **NEVER commit changes to git unless explicitly told to**
 - Do not push to remote unless explicitly requested
 
+### Conventional Commits
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. The changelog is automatically generated from these commits using `npm run changelog`.
+
+**Commit Format:**
+```
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+
+| Type | Description | Changelog Section |
+|------|-------------|-------------------|
+| `feat` | New feature | Features |
+| `fix` | Bug fix | Bug Fixes |
+| `docs` | Documentation only | - |
+| `style` | Formatting, no code change | - |
+| `refactor` | Code change that neither fixes nor adds | - |
+| `perf` | Performance improvement | Performance |
+| `test` | Adding tests | - |
+| `chore` | Build process, dependencies | - |
+
+**Examples:**
+```bash
+feat: add conditional validation support
+fix: resolve phone input validation on blur
+docs: update README with new API examples
+refactor: simplify table row rendering logic
+perf: optimize form change detection
+feat!: remove deprecated validation API
+```
+
+**Breaking Changes:**
+- Add `!` after type: `feat!: remove old API`
+- Or add `BREAKING CHANGE:` in footer
+
+**Scope (optional):**
+```bash
+feat(table): add row reordering
+fix(validation): handle empty date ranges
+```
+
+**Changelog Generation:**
+- `npm run changelog` - Append new commits to changelog
+- `npm run changelog:all` - Regenerate entire changelog
+- Changelog is automatically updated during `npm run publish`
+
 ## Project Overview
 
 Angular 21 app with standalone components, TypeScript strict mode, no NgModules.

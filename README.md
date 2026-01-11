@@ -7,7 +7,7 @@ A headless Angular dynamic form system with matching server-side validation pack
 | Package | Description | Install |
 |---------|-------------|---------|
 | [@moe1399/ngx-dynamic-forms](./projects/ngx-dynamic-forms) | Angular headless form components | `npm install @moe1399/ngx-dynamic-forms` |
-| [@moe1399/form-validation](./packages/form-validation) | Node.js/TypeScript server validation | `npm install @moe1399/form-validation` |
+| [@moe1399/ngx-dynamic-forms-validation](./packages/form-validation) | Node.js/TypeScript server validation | `npm install @moe1399/ngx-dynamic-forms-validation` |
 | [DynamicForms.FormValidation](./packages/form-validation-dotnet) | .NET server validation | `dotnet add package DynamicForms.FormValidation` |
 
 ## Features
@@ -72,7 +72,7 @@ export class MyComponent {
 ### Node.js (Server)
 
 ```typescript
-import { validateForm, validatorRegistry } from '@moe1399/form-validation';
+import { validateForm, validatorRegistry } from '@moe1399/ngx-dynamic-forms-validation';
 
 // Register custom validators
 validatorRegistry.register('australianPhone', (value) => {
