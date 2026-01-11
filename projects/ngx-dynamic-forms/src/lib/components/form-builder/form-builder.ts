@@ -20,6 +20,8 @@ import {
   CountryCodeOption,
   DateRangeConfig,
   FormRefConfig,
+  FileUploadConfig,
+  FileUploadTiming,
 } from '../../models/form-config.interface';
 import { FormBuilderService } from '../../services/form-builder.service';
 
@@ -84,7 +86,7 @@ export class NgxFormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref', 'fileupload'];
 
   // Default country codes for phone field
   defaultCountryCodes: CountryCodeOption[] = [
@@ -493,6 +495,22 @@ export class NgxFormBuilder {
     // Clear formrefConfig when switching away from formref type
     if (type !== 'formref') {
       delete field.formrefConfig;
+    }
+
+    // Initialize fileuploadConfig when switching to fileupload type
+    if (type === 'fileupload' && !field.fileuploadConfig) {
+      field.fileuploadConfig = {
+        maxFiles: 1,
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        uploadTiming: 'immediate',
+        allowDragDrop: true,
+        showFileSize: true,
+      };
+    }
+
+    // Clear fileuploadConfig when switching away from fileupload type
+    if (type !== 'fileupload') {
+      delete field.fileuploadConfig;
     }
 
     // Initialize options when switching to select, radio, or checkbox type
@@ -1497,6 +1515,88 @@ export class NgxFormBuilder {
   getAvailableFormsForFormRef(): FormConfig[] {
     const currentId = this.currentConfig().id;
     return this.savedConfigs().filter((config) => config.id !== currentId);
+  }
+
+  // ============================================
+  // File Upload Configuration Methods
+  // ============================================
+
+  updateFileUploadConfig(fieldIndex: number, updates: Partial<FileUploadConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.fileuploadConfig) return;
+
+    const updatedField = {
+      ...field,
+      fileuploadConfig: { ...field.fileuploadConfig, ...updates },
+    };
+    this.updateField(fieldIndex, updatedField);
+  }
+
+  updateFileUploadMaxFiles(fieldIndex: number, maxFiles: number): void {
+    this.updateFileUploadConfig(fieldIndex, { maxFiles: Number(maxFiles) || 1 });
+  }
+
+  updateFileUploadMinFiles(fieldIndex: number, minFiles: number): void {
+    this.updateFileUploadConfig(fieldIndex, { minFiles: Number(minFiles) || 0 });
+  }
+
+  updateFileUploadMaxFileSize(fieldIndex: number, maxFileSizeMB: number): void {
+    const sizeInBytes = (Number(maxFileSizeMB) || 10) * 1024 * 1024;
+    this.updateFileUploadConfig(fieldIndex, { maxFileSize: sizeInBytes });
+  }
+
+  updateFileUploadAllowedExtensions(fieldIndex: number, extensions: string): void {
+    const extArray = extensions
+      .split(',')
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0)
+      .map((e) => (e.startsWith('.') ? e : '.' + e));
+    this.updateFileUploadConfig(fieldIndex, {
+      allowedExtensions: extArray.length > 0 ? extArray : undefined,
+    });
+  }
+
+  updateFileUploadAllowedMimeTypes(fieldIndex: number, mimeTypes: string): void {
+    const mimeArray = mimeTypes
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => m.length > 0);
+    this.updateFileUploadConfig(fieldIndex, {
+      allowedMimeTypes: mimeArray.length > 0 ? mimeArray : undefined,
+    });
+  }
+
+  updateFileUploadTiming(fieldIndex: number, timing: FileUploadTiming): void {
+    this.updateFileUploadConfig(fieldIndex, { uploadTiming: timing });
+  }
+
+  updateFileUploadAllowDragDrop(fieldIndex: number, allow: boolean): void {
+    this.updateFileUploadConfig(fieldIndex, { allowDragDrop: allow });
+  }
+
+  updateFileUploadShowFileSize(fieldIndex: number, show: boolean): void {
+    this.updateFileUploadConfig(fieldIndex, { showFileSize: show });
+  }
+
+  updateFileUploadButtonLabel(fieldIndex: number, label: string): void {
+    this.updateFileUploadConfig(fieldIndex, { uploadButtonLabel: label || undefined });
+  }
+
+  updateFileUploadDragDropLabel(fieldIndex: number, label: string): void {
+    this.updateFileUploadConfig(fieldIndex, { dragDropLabel: label || undefined });
+  }
+
+  getFileUploadMaxFileSizeMB(field: FormFieldConfig): number {
+    const bytes = field.fileuploadConfig?.maxFileSize ?? 10 * 1024 * 1024;
+    return Math.round(bytes / (1024 * 1024));
+  }
+
+  getFileUploadAllowedExtensionsString(field: FormFieldConfig): string {
+    return field.fileuploadConfig?.allowedExtensions?.join(', ') ?? '';
+  }
+
+  getFileUploadAllowedMimeTypesString(field: FormFieldConfig): string {
+    return field.fileuploadConfig?.allowedMimeTypes?.join(', ') ?? '';
   }
 
   // ============================================

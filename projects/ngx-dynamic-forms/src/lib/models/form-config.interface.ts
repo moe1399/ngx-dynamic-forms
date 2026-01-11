@@ -1,7 +1,7 @@
 /**
  * Supported form field types
  */
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone' | 'formref';
+export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone' | 'formref' | 'fileupload';
 
 /**
  * Country code option for phone field
@@ -37,6 +37,91 @@ export interface FormRefConfig {
   formId: string;           // ID of the form to embed
   showSections?: boolean;   // Whether to show section headers from the embedded form (default: false)
   fieldPrefix?: string;     // Optional prefix for embedded field names to avoid conflicts
+}
+
+/**
+ * File upload timing configuration
+ */
+export type FileUploadTiming = 'immediate' | 'manual';
+
+/**
+ * File upload field configuration
+ */
+export interface FileUploadConfig {
+  maxFiles?: number;           // Maximum number of files (default: 1)
+  minFiles?: number;           // Minimum number of files (default: 0)
+  maxFileSize?: number;        // Maximum file size in bytes (default: 10MB)
+  allowedExtensions?: string[]; // Allowed file extensions e.g., ['.pdf', '.doc']
+  allowedMimeTypes?: string[]; // Allowed MIME types e.g., ['image/*', 'application/pdf']
+  uploadTiming?: FileUploadTiming; // When to upload: 'immediate' or 'manual' (default: 'immediate')
+  allowDragDrop?: boolean;     // Allow drag and drop (default: true)
+  uploadButtonLabel?: string;  // Label for upload button (default: 'Choose file')
+  dragDropLabel?: string;      // Label for drag-drop zone (default: 'or drag and drop here')
+  showFileSize?: boolean;      // Show file size in file list (default: true)
+}
+
+/**
+ * Progress callback for file upload
+ */
+export type FileUploadProgressCallback = (progress: number) => void;
+
+/**
+ * Result of a file upload operation
+ */
+export interface FileUploadResult {
+  success: boolean;
+  reference?: string;          // Server file ID/URL on success
+  error?: string;              // Error message on failure
+  metadata?: Record<string, unknown>; // Additional metadata from server
+}
+
+/**
+ * File upload handler function type
+ */
+export type FileUploadHandler = (
+  file: File,
+  onProgress: FileUploadProgressCallback,
+  abortSignal: AbortSignal
+) => Promise<FileUploadResult>;
+
+/**
+ * File download handler function type
+ * Returns a URL to download the file, or triggers download directly
+ */
+export type FileDownloadHandler = (
+  fileValue: FileUploadValue
+) => Promise<void> | void;
+
+/**
+ * Status of a file in the upload queue
+ */
+export type FileUploadStatus = 'pending' | 'uploading' | 'completed' | 'failed' | 'cancelled';
+
+/**
+ * Internal state for tracking a file upload
+ */
+export interface FileUploadState {
+  id: string;                  // Unique ID for tracking
+  file?: File;                 // The File object (only available client-side)
+  fileName: string;            // Original file name
+  fileSize: number;            // File size in bytes
+  mimeType: string;            // MIME type
+  status: FileUploadStatus;    // Current upload status
+  progress: number;            // Upload progress 0-100
+  reference?: string;          // Server reference on success
+  error?: string;              // Error message on failure
+  metadata?: Record<string, unknown>; // Additional metadata
+}
+
+/**
+ * Value stored in form for a successfully uploaded file
+ */
+export interface FileUploadValue {
+  reference: string;           // Server file ID/URL
+  fileName: string;            // Original file name
+  fileSize: number;            // File size in bytes
+  mimeType: string;            // MIME type
+  metadata?: Record<string, unknown>; // Additional metadata
 }
 
 /**
@@ -225,6 +310,7 @@ export interface FormFieldConfig {
   phoneConfig?: PhoneConfig; // Configuration for phone field type
   daterangeConfig?: DateRangeConfig; // Configuration for daterange field type
   formrefConfig?: FormRefConfig; // Configuration for formref field type
+  fileuploadConfig?: FileUploadConfig; // Configuration for fileupload field type
   asyncValidation?: AsyncValidationConfig; // Async/API validation configuration
 }
 

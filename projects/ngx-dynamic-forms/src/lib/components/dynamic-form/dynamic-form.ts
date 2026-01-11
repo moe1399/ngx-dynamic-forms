@@ -1,4 +1,4 @@
-import { Component, input, output, OnInit, OnDestroy, effect, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, OnInit, OnDestroy, effect, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, fromEvent, merge } from 'rxjs';
@@ -13,6 +13,11 @@ import {
   DataGridColumnConfig,
   DataGridColumnGroup,
   AsyncValidationConfig,
+  FileUploadHandler,
+  FileDownloadHandler,
+  FileUploadState,
+  FileUploadValue,
+  FileUploadConfig,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage.service';
 import { FormBuilderService } from '../../services/form-builder.service';
@@ -37,6 +42,8 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   // Inputs using signals
   config = input.required<FormConfig>();
+  fileUploadHandler = input<FileUploadHandler | undefined>(undefined);
+  fileDownloadHandler = input<FileDownloadHandler | undefined>(undefined);
 
   // Outputs
   formSubmit = output<{ [key: string]: any }>();
@@ -47,6 +54,14 @@ export class DynamicForm implements OnInit, OnDestroy {
   // Component state
   form: FormGroup = new FormGroup({});
   errors: FieldError[] = [];
+
+  // File upload state
+  // Map of fieldName -> Map of fileId -> FileUploadState
+  private uploadStates = new Map<string, Map<string, FileUploadState>>();
+  // Map of fieldName -> AbortController for cancellable uploads
+  private uploadAbortControllers = new Map<string, Map<string, AbortController>>();
+  // Signal tracking which fields have active drag-over
+  dragActiveFields = signal<Set<string>>(new Set());
 
   // Async validation state
   private validatingFields = new Set<string>();
@@ -90,6 +105,35 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   get validating(): boolean {
     return this.validatingFields.size > 0;
+  }
+
+  /**
+   * Check if the form is currently disabled (Angular form state)
+   */
+  get disabled(): boolean {
+    return this.form.disabled;
+  }
+
+  /**
+   * Read-only state - form is viewable but not editable
+   */
+  private _readOnly = signal(false);
+
+  /**
+   * Check if the form is currently in read-only mode
+   */
+  get readOnly(): boolean {
+    return this._readOnly();
+  }
+
+  /**
+   * Set the form to read-only mode
+   * In read-only mode, the form values are visible but cannot be edited
+   * Unlike disabled, read-only fields are still submitted and look normal
+   */
+  setReadOnly(value: boolean): void {
+    this._readOnly.set(value);
+    this.cdr.markForCheck();
   }
 
   activePopover: string | null = null;
@@ -157,6 +201,9 @@ export class DynamicForm implements OnInit, OnDestroy {
         if (formRefGroup) {
           group[field.name] = formRefGroup;
         }
+      } else if (field.type === 'fileupload') {
+        // Create FormArray for file upload field
+        group[field.name] = this.createFileUploadFormArray(field);
       } else {
         // Skip validators for archived fields
         const validators = field.archived ? [] : this.buildValidators(field.validations || []);
@@ -728,12 +775,13 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.form.get(key)?.markAsTouched();
     });
 
-    // Mark table, datagrid, phone, daterange, and formref fields as touched
+    // Mark table, datagrid, phone, daterange, formref, and fileupload fields as touched
     this.markTableFieldsTouched();
     this.markDataGridFieldsTouched();
     this.markPhoneFieldsTouched();
     this.markDateRangeFieldsTouched();
     this.markFormRefFieldsTouched();
+    this.markFileUploadFieldsTouched();
 
     this.updateErrors();
 
@@ -760,7 +808,10 @@ export class DynamicForm implements OnInit, OnDestroy {
       } else if (field.type === 'formref' && !this.isFormRefValid(field.name)) {
         isValid = false;
         break;
-      } else if (field.type !== 'table' && field.type !== 'datagrid' && field.type !== 'phone' && field.type !== 'daterange' && field.type !== 'formref') {
+      } else if (field.type === 'fileupload' && !this.isFileUploadValid(field.name)) {
+        isValid = false;
+        break;
+      } else if (field.type !== 'table' && field.type !== 'datagrid' && field.type !== 'phone' && field.type !== 'daterange' && field.type !== 'formref' && field.type !== 'fileupload') {
         const control = this.form.get(field.name);
         if (control?.invalid) {
           isValid = false;
@@ -969,6 +1020,10 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
       } else if (field.type === 'formref') {
         if (!this.isFormRefValid(field.name)) {
+          return false;
+        }
+      } else if (field.type === 'fileupload') {
+        if (!this.isFileUploadValid(field.name)) {
           return false;
         }
       } else {
@@ -2117,5 +2172,582 @@ export class DynamicForm implements OnInit, OnDestroy {
     this.updateErrors();
 
     return results.every((r) => r);
+  }
+
+  // ============================================
+  // File Upload Field Methods
+  // ============================================
+
+  /**
+   * Create FormArray for a file upload field
+   * The FormArray stores FileUploadValue objects for successfully uploaded files
+   */
+  private createFileUploadFormArray(field: FormFieldConfig): FormArray {
+    const existingValue = (field.value as FileUploadValue[]) || [];
+    const isDisabled = field.disabled ?? field.archived ?? false;
+
+    // Create FormControl for each existing uploaded file
+    const controls = existingValue.map((fileValue) => {
+      return new FormControl({ value: fileValue, disabled: isDisabled });
+    });
+
+    // Initialize upload states map for this field
+    this.uploadStates.set(field.name, new Map());
+    this.uploadAbortControllers.set(field.name, new Map());
+
+    // Populate upload states from existing values (as completed)
+    existingValue.forEach((fileValue) => {
+      const fileId = this.generateFileId();
+      const state: FileUploadState = {
+        id: fileId,
+        fileName: fileValue.fileName,
+        fileSize: fileValue.fileSize,
+        mimeType: fileValue.mimeType,
+        status: 'completed',
+        progress: 100,
+        reference: fileValue.reference,
+        metadata: fileValue.metadata,
+      };
+      this.uploadStates.get(field.name)!.set(fileId, state);
+    });
+
+    return new FormArray(controls);
+  }
+
+  /**
+   * Get FormArray for a file upload field
+   */
+  getFileUploadFormArray(fieldName: string): FormArray | null {
+    const control = this.form.get(fieldName);
+    return control instanceof FormArray ? control : null;
+  }
+
+  /**
+   * Get all upload states for a field (includes pending, uploading, completed, failed)
+   */
+  getFileUploadStates(fieldName: string): FileUploadState[] {
+    const statesMap = this.uploadStates.get(fieldName);
+    return statesMap ? Array.from(statesMap.values()) : [];
+  }
+
+  /**
+   * Check if any file in the field is currently uploading
+   */
+  isFileUploading(fieldName: string): boolean {
+    const states = this.getFileUploadStates(fieldName);
+    return states.some((s) => s.status === 'uploading');
+  }
+
+  /**
+   * Check if drag is active for a field
+   */
+  isDragActive(fieldName: string): boolean {
+    return this.dragActiveFields().has(fieldName);
+  }
+
+  /**
+   * Handle files selected via input
+   */
+  onFilesSelected(event: Event, field: FormFieldConfig): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (!files || files.length === 0) return;
+
+    this.processSelectedFiles(Array.from(files), field);
+
+    // Reset the input so the same file can be selected again
+    input.value = '';
+  }
+
+  /**
+   * Handle drag over event
+   */
+  onDragOver(event: DragEvent, field: FormFieldConfig): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (field.fileuploadConfig?.allowDragDrop === false) return;
+
+    const current = this.dragActiveFields();
+    if (!current.has(field.name)) {
+      this.dragActiveFields.set(new Set([...current, field.name]));
+    }
+  }
+
+  /**
+   * Handle drag leave event
+   */
+  onDragLeave(event: DragEvent, field: FormFieldConfig): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const current = this.dragActiveFields();
+    const newSet = new Set(current);
+    newSet.delete(field.name);
+    this.dragActiveFields.set(newSet);
+  }
+
+  /**
+   * Handle drop event
+   */
+  onDrop(event: DragEvent, field: FormFieldConfig): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Clear drag active state
+    const current = this.dragActiveFields();
+    const newSet = new Set(current);
+    newSet.delete(field.name);
+    this.dragActiveFields.set(newSet);
+
+    if (field.fileuploadConfig?.allowDragDrop === false) return;
+
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    this.processSelectedFiles(Array.from(files), field);
+  }
+
+  /**
+   * Process selected files - validate and add to upload queue
+   */
+  private processSelectedFiles(files: File[], field: FormFieldConfig): void {
+    const config = field.fileuploadConfig || {};
+    const maxFiles = config.maxFiles ?? 1;
+    const currentStates = this.getFileUploadStates(field.name);
+    const successfulCount = currentStates.filter(
+      (s) => s.status === 'completed' || s.status === 'pending' || s.status === 'uploading'
+    ).length;
+
+    // Determine how many more files we can add
+    const availableSlots = maxFiles - successfulCount;
+    const filesToProcess = files.slice(0, availableSlots);
+
+    for (const file of filesToProcess) {
+      const validation = this.validateFile(file, config);
+      if (!validation.valid) {
+        // Add as failed state with validation error
+        const fileId = this.generateFileId();
+        const state: FileUploadState = {
+          id: fileId,
+          file: file,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          status: 'failed',
+          progress: 0,
+          error: validation.error,
+        };
+        this.uploadStates.get(field.name)!.set(fileId, state);
+        continue;
+      }
+
+      // Add file as pending
+      const fileId = this.generateFileId();
+      const state: FileUploadState = {
+        id: fileId,
+        file: file,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        status: 'pending',
+        progress: 0,
+      };
+      this.uploadStates.get(field.name)!.set(fileId, state);
+
+      // If immediate upload timing, start upload
+      if ((config.uploadTiming ?? 'immediate') === 'immediate') {
+        this.startUpload(field.name, fileId);
+      }
+    }
+
+    // Mark form control as touched
+    const formArray = this.getFileUploadFormArray(field.name);
+    if (formArray) {
+      formArray.markAsTouched();
+      formArray.markAsDirty();
+    }
+  }
+
+  /**
+   * Validate a file against the config
+   */
+  validateFile(file: File, config: FileUploadConfig): { valid: boolean; error?: string } {
+    // Check file size
+    const maxSize = config.maxFileSize ?? 10 * 1024 * 1024; // Default 10MB
+    if (file.size > maxSize) {
+      return { valid: false, error: `File exceeds maximum size of ${this.formatFileSize(maxSize)}` };
+    }
+
+    // Check allowed extensions
+    if (config.allowedExtensions && config.allowedExtensions.length > 0) {
+      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      const normalizedExtensions = config.allowedExtensions.map((e) => e.toLowerCase());
+      if (!normalizedExtensions.includes(ext)) {
+        return { valid: false, error: `File type not allowed. Allowed: ${config.allowedExtensions.join(', ')}` };
+      }
+    }
+
+    // Check allowed MIME types
+    if (config.allowedMimeTypes && config.allowedMimeTypes.length > 0) {
+      const mimeMatches = config.allowedMimeTypes.some((allowed) => {
+        if (allowed.endsWith('/*')) {
+          // Wildcard match (e.g., 'image/*')
+          const prefix = allowed.slice(0, -1);
+          return file.type.startsWith(prefix);
+        }
+        return file.type === allowed;
+      });
+      if (!mimeMatches) {
+        return { valid: false, error: `File type ${file.type} not allowed` };
+      }
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Start uploading a file
+   */
+  async startUpload(fieldName: string, fileId: string): Promise<void> {
+    const handler = this.fileUploadHandler();
+    if (!handler) {
+      // Mark the file as failed with a helpful error message
+      const statesMap = this.uploadStates.get(fieldName);
+      const state = statesMap?.get(fileId);
+      if (state) {
+        state.status = 'failed';
+        state.error = 'File upload handler not configured';
+        this.cdr.markForCheck();
+      }
+      console.error('FileUploadHandler not provided. Pass a [fileUploadHandler] function to enable file uploads.');
+      return;
+    }
+
+    const statesMap = this.uploadStates.get(fieldName);
+    if (!statesMap) return;
+
+    const state = statesMap.get(fileId);
+    if (!state || !state.file) return;
+
+    // Update state to uploading
+    state.status = 'uploading';
+    state.progress = 0;
+
+    // Create abort controller
+    const abortController = new AbortController();
+    const controllersMap = this.uploadAbortControllers.get(fieldName);
+    if (controllersMap) {
+      controllersMap.set(fileId, abortController);
+    }
+
+    try {
+      const result = await handler(
+        state.file,
+        (progress) => {
+          // Update progress
+          state.progress = progress;
+          this.cdr.markForCheck();
+        },
+        abortController.signal
+      );
+
+      if (result.success) {
+        state.status = 'completed';
+        state.progress = 100;
+        state.reference = result.reference;
+        state.metadata = result.metadata;
+
+        // Add to form array
+        const formArray = this.getFileUploadFormArray(fieldName);
+        if (formArray) {
+          const fileValue: FileUploadValue = {
+            reference: result.reference!,
+            fileName: state.fileName,
+            fileSize: state.fileSize,
+            mimeType: state.mimeType,
+            metadata: result.metadata,
+          };
+          formArray.push(new FormControl(fileValue));
+        }
+      } else {
+        state.status = 'failed';
+        state.error = result.error || 'Upload failed';
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        state.status = 'cancelled';
+      } else {
+        state.status = 'failed';
+        state.error = error.message || 'Upload failed';
+      }
+    } finally {
+      // Clean up abort controller
+      controllersMap?.delete(fileId);
+      this.cdr.markForCheck();
+    }
+  }
+
+  /**
+   * Cancel an ongoing upload
+   */
+  cancelUpload(fieldName: string, fileId: string): void {
+    const controllersMap = this.uploadAbortControllers.get(fieldName);
+    const controller = controllersMap?.get(fileId);
+    if (controller) {
+      controller.abort();
+    }
+  }
+
+  /**
+   * Retry a failed upload
+   */
+  retryUpload(fieldName: string, fileId: string): void {
+    const statesMap = this.uploadStates.get(fieldName);
+    const state = statesMap?.get(fileId);
+    if (state && (state.status === 'failed' || state.status === 'cancelled') && state.file) {
+      state.status = 'pending';
+      state.progress = 0;
+      state.error = undefined;
+      this.startUpload(fieldName, fileId);
+    }
+  }
+
+  /**
+   * Check if download is available (handler is provided)
+   */
+  isDownloadAvailable(): boolean {
+    return !!this.fileDownloadHandler();
+  }
+
+  /**
+   * Download a completed file
+   */
+  async downloadFile(fieldName: string, fileId: string): Promise<void> {
+    const handler = this.fileDownloadHandler();
+    if (!handler) {
+      console.error('FileDownloadHandler not provided');
+      return;
+    }
+
+    const statesMap = this.uploadStates.get(fieldName);
+    const state = statesMap?.get(fileId);
+    if (!state || state.status !== 'completed' || !state.reference) {
+      console.error('File not available for download');
+      return;
+    }
+
+    // Create FileUploadValue from state
+    const fileValue: FileUploadValue = {
+      reference: state.reference,
+      fileName: state.fileName,
+      fileSize: state.fileSize,
+      mimeType: state.mimeType,
+      metadata: state.metadata,
+    };
+
+    await handler(fileValue);
+  }
+
+  /**
+   * Remove a file from the upload queue or completed list
+   */
+  removeFile(fieldName: string, fileId: string): void {
+    const statesMap = this.uploadStates.get(fieldName);
+    const state = statesMap?.get(fileId);
+    if (!state) return;
+
+    // Cancel if uploading
+    if (state.status === 'uploading') {
+      this.cancelUpload(fieldName, fileId);
+    }
+
+    // Remove from form array if completed
+    if (state.status === 'completed' && state.reference) {
+      const formArray = this.getFileUploadFormArray(fieldName);
+      if (formArray) {
+        const index = formArray.controls.findIndex(
+          (c) => c.value?.reference === state.reference
+        );
+        if (index !== -1) {
+          formArray.removeAt(index);
+        }
+      }
+    }
+
+    // Remove from states
+    statesMap?.delete(fileId);
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Trigger the hidden file input for a field
+   */
+  triggerFileInput(fieldName: string): void {
+    const input = document.querySelector(
+      `input[type="file"][data-fileupload-input="${fieldName}"]`
+    ) as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  }
+
+  /**
+   * Check if file upload field is valid
+   */
+  isFileUploadValid(fieldName: string): boolean {
+    const field = this.getField(fieldName);
+    if (!field || field.type !== 'fileupload') return true;
+
+    const config = field.fileuploadConfig || {};
+    const minFiles = config.minFiles ?? 0;
+    const states = this.getFileUploadStates(fieldName);
+    const completedCount = states.filter((s) => s.status === 'completed').length;
+
+    // Check if required and has at least one file
+    const isRequired = field.validations?.some((v) => v.type === 'required');
+    if (isRequired && completedCount === 0) {
+      return false;
+    }
+
+    // Check minimum files
+    if (completedCount < minFiles) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if file upload field has error (for display)
+   */
+  hasFileUploadError(fieldName: string): boolean {
+    const formArray = this.getFileUploadFormArray(fieldName);
+    if (!formArray?.touched) return false;
+
+    return !this.isFileUploadValid(fieldName);
+  }
+
+  /**
+   * Get file upload error message
+   */
+  getFileUploadErrorMessage(fieldName: string): string {
+    const field = this.getField(fieldName);
+    if (!field) return '';
+
+    const config = field.fileuploadConfig || {};
+    const minFiles = config.minFiles ?? 0;
+    const states = this.getFileUploadStates(fieldName);
+    const completedCount = states.filter((s) => s.status === 'completed').length;
+
+    // Check required validation
+    const isRequired = field.validations?.some((v) => v.type === 'required');
+    if (isRequired && completedCount === 0) {
+      const requiredValidation = field.validations?.find((v) => v.type === 'required');
+      return requiredValidation?.message || 'File is required';
+    }
+
+    // Check minimum files
+    if (completedCount < minFiles) {
+      return `At least ${minFiles} file(s) required`;
+    }
+
+    return '';
+  }
+
+  /**
+   * Get file validation errors for display
+   */
+  getFileValidationErrors(fieldName: string): { fileName: string; error: string }[] {
+    const states = this.getFileUploadStates(fieldName);
+    return states
+      .filter((s) => s.status === 'failed' && s.error)
+      .map((s) => ({ fileName: s.fileName, error: s.error! }));
+  }
+
+  /**
+   * Check if maximum files reached
+   */
+  isMaxFilesReached(fieldName: string): boolean {
+    const field = this.getField(fieldName);
+    if (!field) return false;
+
+    const config = field.fileuploadConfig || {};
+    const maxFiles = config.maxFiles ?? 1;
+    const states = this.getFileUploadStates(fieldName);
+    const activeCount = states.filter(
+      (s) => s.status === 'completed' || s.status === 'pending' || s.status === 'uploading'
+    ).length;
+
+    return activeCount >= maxFiles;
+  }
+
+  /**
+   * Format file size for display
+   */
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Get accept attribute for file input
+   */
+  getAcceptAttribute(field: FormFieldConfig): string {
+    const config = field.fileuploadConfig || {};
+    const accept: string[] = [];
+
+    if (config.allowedExtensions) {
+      accept.push(...config.allowedExtensions);
+    }
+
+    if (config.allowedMimeTypes) {
+      accept.push(...config.allowedMimeTypes);
+    }
+
+    return accept.join(',');
+  }
+
+  /**
+   * Generate unique file ID
+   */
+  private generateFileId(): string {
+    return `file_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  /**
+   * Check if there are pending uploads that need manual triggering
+   */
+  hasPendingUploads(fieldName: string): boolean {
+    const states = this.getFileUploadStates(fieldName);
+    return states.some((s) => s.status === 'pending');
+  }
+
+  /**
+   * Start all pending uploads for a field
+   */
+  startAllPendingUploads(fieldName: string): void {
+    const states = this.getFileUploadStates(fieldName);
+    states
+      .filter((s) => s.status === 'pending')
+      .forEach((s) => this.startUpload(fieldName, s.id));
+  }
+
+  /**
+   * Mark file upload fields as touched (for form submission)
+   */
+  private markFileUploadFieldsTouched(): void {
+    const currentConfig = this.config();
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'fileupload') {
+        const formArray = this.getFileUploadFormArray(field.name);
+        if (formArray) {
+          formArray.markAsTouched();
+        }
+      }
+    });
   }
 }

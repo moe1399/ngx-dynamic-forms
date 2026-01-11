@@ -1,6 +1,14 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, viewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DynamicForm, NgxFormBuilder, FormConfig, UrlSchemaService } from 'ngx-dynamic-forms';
+import {
+  DynamicForm,
+  NgxFormBuilder,
+  FormConfig,
+  UrlSchemaService,
+  FileUploadHandler,
+  FileDownloadHandler,
+  FileUploadValue,
+} from 'ngx-dynamic-forms';
 import { marked } from 'marked';
 
 type ViewType = 'builder' | 'preview' | 'docs' | 'changelog' | 'theme';
@@ -29,13 +37,24 @@ export class App implements OnInit {
   // Theme CSS copied notification
   themeCopied = signal<boolean>(false);
 
+  // Form submitted state (for demo of disable functionality)
+  formSubmitted = signal<boolean>(false);
+
+  // Reference to the dynamic form component
+  dynamicForm = viewChild<DynamicForm>('dynamicForm');
+
   // Documentation content (parsed from README.md)
   docsHtml = signal<string>('');
   docsLoading = signal<boolean>(false);
 
+  // Theme CSS content (loaded from default-theme.scss)
+  themeCss = signal<string>('');
+  themeCssLoading = signal<boolean>(false);
+
   ngOnInit(): void {
     this.loadSchemaFromUrl();
     this.loadDocumentation();
+    this.loadThemeCss();
   }
 
   private async loadDocumentation(): Promise<void> {
@@ -51,6 +70,21 @@ export class App implements OnInit {
       console.error('Failed to load documentation:', error);
     } finally {
       this.docsLoading.set(false);
+    }
+  }
+
+  private async loadThemeCss(): Promise<void> {
+    this.themeCssLoading.set(true);
+    try {
+      const response = await fetch('default-theme.scss');
+      if (response.ok) {
+        const css = await response.text();
+        this.themeCss.set(css);
+      }
+    } catch (error) {
+      console.error('Failed to load theme CSS:', error);
+    } finally {
+      this.themeCssLoading.set(false);
     }
   }
 
@@ -99,9 +133,18 @@ export class App implements OnInit {
     console.log('Form submitted:', data);
     this.submissionResult.set(`Form submitted successfully! Data: ${JSON.stringify(data, null, 2)}`);
 
-    setTimeout(() => {
-      this.submissionResult.set('');
-    }, 5000);
+    // Set form to read-only after successful submission
+    this.dynamicForm()?.setReadOnly(true);
+    this.formSubmitted.set(true);
+  }
+
+  /**
+   * Re-enable the form for editing
+   */
+  editForm(): void {
+    this.dynamicForm()?.setReadOnly(false);
+    this.formSubmitted.set(false);
+    this.submissionResult.set('');
   }
 
   onFormSave(data: { [key: string]: any }): void {
@@ -112,11 +155,63 @@ export class App implements OnInit {
     console.log('Validation errors:', errors);
   }
 
+  /**
+   * Mock file upload handler for demo purposes
+   * Simulates upload progress and returns a fake reference
+   */
+  fileUploadHandler: FileUploadHandler = (file, onProgress, abortSignal) => {
+    return new Promise((resolve, reject) => {
+      let progress = 0;
+      // Slower progress to demonstrate the progress bar (5-15% per tick)
+      const interval = setInterval(() => {
+        if (abortSignal.aborted) {
+          clearInterval(interval);
+          reject(new DOMException('Upload cancelled', 'AbortError'));
+          return;
+        }
+
+        progress += 5 + Math.random() * 10;
+        if (progress >= 100) {
+          progress = 100;
+          onProgress(progress);
+          clearInterval(interval);
+          // Simulate successful upload with mock reference
+          resolve({
+            success: true,
+            reference: `demo-file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            metadata: {
+              uploadedAt: new Date().toISOString(),
+              originalName: file.name,
+            },
+          });
+        } else {
+          onProgress(Math.round(progress));
+        }
+      }, 300);
+    });
+  };
+
+  /**
+   * Mock file download handler for demo purposes
+   * Creates a blob URL and triggers download (in real app, would fetch from server)
+   */
+  fileDownloadHandler: FileDownloadHandler = (fileValue: FileUploadValue) => {
+    // In a real application, this would fetch the file from the server using fileValue.reference
+    // For demo purposes, we show an alert with the file info
+    alert(
+      `Download requested for:\n\n` +
+      `File: ${fileValue.fileName}\n` +
+      `Size: ${(fileValue.fileSize / 1024).toFixed(2)} KB\n` +
+      `Reference: ${fileValue.reference}\n\n` +
+      `In a real application, this would download the file from the server.`
+    );
+  };
+
   async copyThemeCss(): Promise<void> {
-    const cssElement = document.getElementById('theme-css-content');
-    if (cssElement) {
+    const css = this.themeCss();
+    if (css) {
       try {
-        await navigator.clipboard.writeText(cssElement.textContent || '');
+        await navigator.clipboard.writeText(css);
         this.themeCopied.set(true);
         setTimeout(() => {
           this.themeCopied.set(false);

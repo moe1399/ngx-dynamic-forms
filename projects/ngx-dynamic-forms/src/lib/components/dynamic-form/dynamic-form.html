@@ -1,11 +1,13 @@
 @if (isFormReady()) {
 <form
+  class="ngx-df"
   [formGroup]="form"
   [attr.data-form-id]="config().id"
   [attr.data-form-valid]="valid"
   [attr.data-form-dirty]="form.dirty"
   [attr.data-form-touched]="form.touched"
-  [attr.data-form-validating]="validating">
+  [attr.data-form-validating]="validating"
+  [attr.data-form-readonly]="readOnly">
 
   <!-- Field template defined inside form for formControlName to work -->
   <ng-template #fieldTemplate let-field>
@@ -78,6 +80,7 @@
               type="text"
               [placeholder]="field.placeholder || ''"
               [attr.data-input-type]="field.type"
+              [readonly]="readOnly"
             />
           }
           @case ('email') {
@@ -87,6 +90,7 @@
               type="email"
               [placeholder]="field.placeholder || ''"
               [attr.data-input-type]="field.type"
+              [readonly]="readOnly"
             />
           }
           @case ('number') {
@@ -96,6 +100,7 @@
               type="number"
               [placeholder]="field.placeholder || ''"
               [attr.data-input-type]="field.type"
+              [readonly]="readOnly"
             />
           }
           @case ('textarea') {
@@ -105,6 +110,7 @@
               [placeholder]="field.placeholder || ''"
               [attr.data-input-type]="field.type"
               rows="4"
+              [readonly]="readOnly"
             ></textarea>
           }
           @case ('date') {
@@ -113,13 +119,15 @@
               [formControlName]="field.name"
               type="date"
               [attr.data-input-type]="field.type"
+              [readonly]="readOnly"
             />
           }
           @case ('select') {
             <select
               [id]="field.name"
               [formControlName]="field.name"
-              [attr.data-input-type]="field.type">
+              [attr.data-input-type]="field.type"
+              [attr.tabindex]="readOnly ? -1 : null">
               @if (field.placeholder) {
                 <option value="" disabled>{{ field.placeholder }}</option>
               }
@@ -143,6 +151,7 @@
                     [attr.name]="field.name"
                     [value]="option.value"
                     data-radio-input
+                    [attr.disabled]="readOnly || null"
                   />
                   <span data-radio-label>{{ option.label }}</span>
                 </label>
@@ -166,6 +175,7 @@
                       [checked]="isCheckboxOptionSelected(field.name, option.value)"
                       (change)="toggleCheckboxOption(field.name, option.value)"
                       data-checkbox-input
+                      [attr.disabled]="readOnly || null"
                     />
                     <span data-checkbox-label [innerHTML]="parseMarkdown(option.label)"></span>
                   </label>
@@ -177,6 +187,7 @@
                 [formControlName]="field.name"
                 type="checkbox"
                 data-checkbox-single
+                [attr.disabled]="readOnly || null"
               />
             }
           }
@@ -237,6 +248,7 @@
                                   [placeholder]="column.placeholder || ''"
                                   data-table-input
                                   [attr.data-input-type]="column.type"
+                                  [readonly]="readOnly"
                                 />
                               }
                               @case ('number') {
@@ -246,6 +258,7 @@
                                   [placeholder]="column.placeholder || ''"
                                   data-table-input
                                   [attr.data-input-type]="column.type"
+                                  [readonly]="readOnly"
                                 />
                               }
                               @case ('date') {
@@ -254,13 +267,15 @@
                                   [formControlName]="column.name"
                                   data-table-input
                                   [attr.data-input-type]="column.type"
+                                  [readonly]="readOnly"
                                 />
                               }
                               @case ('select') {
                                 <select
                                   [formControlName]="column.name"
                                   data-table-input
-                                  [attr.data-input-type]="column.type">
+                                  [attr.data-input-type]="column.type"
+                                  [attr.tabindex]="readOnly ? -1 : null">
                                   @if (column.placeholder) {
                                     <option value="" disabled>{{ column.placeholder }}</option>
                                   }
@@ -320,7 +335,8 @@
                 <select
                   formControlName="countryCode"
                   data-phone-country-code
-                  [attr.data-input-type]="'phone-country'">
+                  [attr.data-input-type]="'phone-country'"
+                  [attr.tabindex]="readOnly ? -1 : null">
                   @for (country of field.phoneConfig.countryCodes; track country.code) {
                     <option [value]="country.code">
                       @if (country.flag) {
@@ -339,6 +355,7 @@
                   (input)="onPhoneNumberInput($event, field.name)"
                   inputmode="numeric"
                   pattern="[0-9]*"
+                  [readonly]="readOnly"
                 />
               </div>
             }
@@ -367,6 +384,7 @@
                   data-daterange-input
                   data-daterange-from
                   [attr.data-input-type]="'daterange-from'"
+                  [readonly]="readOnly"
                 />
               </div>
               <span data-daterange-separator>
@@ -384,6 +402,7 @@
                   data-daterange-input
                   data-daterange-to
                   [attr.data-input-type]="'daterange-to'"
+                  [readonly]="readOnly"
                 />
               </div>
             </div>
@@ -563,6 +582,7 @@
                                     [placeholder]="column.placeholder || ''"
                                     data-datagrid-input
                                     [attr.data-input-type]="column.type"
+                                    [readonly]="readOnly"
                                   />
                                 }
                                 @case ('number') {
@@ -572,6 +592,7 @@
                                     [placeholder]="column.placeholder || ''"
                                     data-datagrid-input
                                     [attr.data-input-type]="column.type"
+                                    [readonly]="readOnly"
                                   />
                                 }
                                 @case ('date') {
@@ -580,13 +601,15 @@
                                     [formControlName]="column.name"
                                     data-datagrid-input
                                     [attr.data-input-type]="column.type"
+                                    [readonly]="readOnly"
                                   />
                                 }
                                 @case ('select') {
                                   <select
                                     [formControlName]="column.name"
                                     data-datagrid-input
-                                    [attr.data-input-type]="column.type">
+                                    [attr.data-input-type]="column.type"
+                                    [attr.tabindex]="readOnly ? -1 : null">
                                     <option value="">--</option>
                                     @for (option of column.options; track option.value) {
                                       <option [value]="option.value">{{ option.label }}</option>
@@ -1041,6 +1064,186 @@
                 [attr.data-error-for]="field.name"
                 data-validation-error>
                 Some fields in the embedded form have errors
+              </div>
+            }
+          }
+          @case ('fileupload') {
+            <div
+              class="fileupload-container"
+              [attr.data-fileupload-name]="field.name"
+              [attr.data-fileupload-valid]="isFileUploadValid(field.name)"
+              [attr.data-fileupload-uploading]="isFileUploading(field.name)"
+              [attr.data-fileupload-max-reached]="isMaxFilesReached(field.name)">
+
+              <!-- Hidden file input -->
+              <input
+                type="file"
+                [id]="field.name"
+                [attr.data-fileupload-input]="field.name"
+                [accept]="getAcceptAttribute(field)"
+                [multiple]="(field.fileuploadConfig?.maxFiles ?? 1) > 1"
+                [disabled]="form.get(field.name)?.disabled || isMaxFilesReached(field.name)"
+                (change)="onFilesSelected($event, field)"
+                class="fileupload-hidden-input"
+              />
+
+              <!-- Drop zone -->
+              @if ((field.fileuploadConfig?.allowDragDrop ?? true) && !isMaxFilesReached(field.name)) {
+                <div
+                  class="fileupload-dropzone"
+                  [attr.data-dropzone-active]="isDragActive(field.name)"
+                  (dragover)="onDragOver($event, field)"
+                  (dragleave)="onDragLeave($event, field)"
+                  (drop)="onDrop($event, field)"
+                  (click)="triggerFileInput(field.name)">
+                  <span class="fileupload-dropzone-icon">&#128206;</span>
+                  <span class="fileupload-dropzone-text">
+                    {{ field.fileuploadConfig?.dragDropLabel || 'Drop files here or click to select' }}
+                  </span>
+                </div>
+              } @else if (!isMaxFilesReached(field.name)) {
+                <!-- Button only (no drag-drop) -->
+                <button
+                  type="button"
+                  class="fileupload-button"
+                  (click)="triggerFileInput(field.name)"
+                  [disabled]="form.get(field.name)?.disabled">
+                  {{ field.fileuploadConfig?.uploadButtonLabel || 'Choose file' }}
+                </button>
+              }
+
+              <!-- File list -->
+              @if (getFileUploadStates(field.name).length > 0) {
+                <ul class="fileupload-list">
+                  @for (fileState of getFileUploadStates(field.name); track fileState.id) {
+                    <li
+                      class="fileupload-item"
+                      [attr.data-status]="fileState.status"
+                      [attr.data-fileupload-item-id]="fileState.id">
+
+                      <!-- File icon -->
+                      <div class="fileupload-file-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor"/>
+                          <path d="M14 2V8H20" fill="currentColor" opacity="0.5"/>
+                        </svg>
+                        <!-- Status dot -->
+                        <span class="fileupload-status-dot"></span>
+                      </div>
+
+                      <!-- File info -->
+                      <div class="fileupload-file-info">
+                        <span class="fileupload-item-name">{{ fileState.fileName }}</span>
+                        @if (field.fileuploadConfig?.showFileSize !== false) {
+                          <span class="fileupload-item-size">{{ formatFileSize(fileState.fileSize) }}</span>
+                        }
+                      </div>
+
+                      <!-- Status area -->
+                      <div class="fileupload-status-area">
+                        @if (fileState.status === 'uploading') {
+                          <div class="fileupload-progress">
+                            <div class="fileupload-progress-track">
+                              <div
+                                class="fileupload-progress-bar"
+                                [style.width.%]="fileState.progress">
+                              </div>
+                            </div>
+                            <span class="fileupload-progress-label">Uploading...</span>
+                            <span class="fileupload-progress-text">{{ fileState.progress }}%</span>
+                          </div>
+                        }
+                        @if (fileState.status === 'completed') {
+                          <span class="fileupload-status-complete">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                            </svg>
+                            Complete
+                          </span>
+                        }
+                        @if (fileState.status === 'failed' && fileState.error) {
+                          <span class="fileupload-status-error">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                              <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            {{ fileState.error }}
+                          </span>
+                        }
+                        @if (fileState.status === 'pending') {
+                          <span class="fileupload-status-pending">Pending</span>
+                        }
+                        @if (fileState.status === 'cancelled') {
+                          <span class="fileupload-status-cancelled">Cancelled</span>
+                        }
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="fileupload-item-actions">
+                        @if (fileState.status === 'completed' && isDownloadAvailable()) {
+                          <button
+                            type="button"
+                            class="fileupload-action fileupload-action-download"
+                            (click)="downloadFile(field.name, fileState.id)"
+                            title="Download">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                            </svg>
+                          </button>
+                        }
+                        @if (fileState.status === 'failed' || fileState.status === 'cancelled') {
+                          <button
+                            type="button"
+                            class="fileupload-action fileupload-action-retry"
+                            (click)="retryUpload(field.name, fileState.id)"
+                            title="Retry">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                            </svg>
+                          </button>
+                        }
+                        @if (fileState.status === 'pending' && (field.fileuploadConfig?.uploadTiming === 'manual')) {
+                          <button
+                            type="button"
+                            class="fileupload-action fileupload-action-upload"
+                            (click)="startUpload(field.name, fileState.id)"
+                            title="Upload">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" fill="currentColor"/>
+                            </svg>
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="fileupload-action fileupload-action-remove"
+                          (click)="removeFile(field.name, fileState.id)"
+                          title="Remove">
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+
+              <!-- Upload all button for manual timing -->
+              @if ((field.fileuploadConfig?.uploadTiming === 'manual') && hasPendingUploads(field.name)) {
+                <button
+                  type="button"
+                  class="fileupload-action fileupload-action-upload-all"
+                  (click)="startAllPendingUploads(field.name)">
+                  Upload all
+                </button>
+              }
+            </div>
+
+            @if (hasFileUploadError(field.name)) {
+              <div
+                [attr.data-error-for]="field.name"
+                data-validation-error>
+                {{ getFileUploadErrorMessage(field.name) }}
               </div>
             }
           }

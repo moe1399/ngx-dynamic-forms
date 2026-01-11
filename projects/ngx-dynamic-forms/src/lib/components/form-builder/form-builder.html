@@ -685,6 +685,129 @@
             </div>
           }
 
+          <!-- File Upload Configuration (for fileupload fields) -->
+          @if (field.type === 'fileupload') {
+            <div class="fileupload-config-section">
+              <h4>File Upload Configuration</h4>
+              <small class="form-hint">Configure file upload behavior and restrictions</small>
+
+              <div class="form-group">
+                <label>Maximum Files</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  [ngModel]="field.fileuploadConfig?.maxFiles || 1"
+                  (ngModelChange)="updateFileUploadMaxFiles(fieldIndex, $event)"
+                />
+                <small class="form-hint">Maximum number of files that can be uploaded</small>
+              </div>
+
+              <div class="form-group">
+                <label>Minimum Files</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  [ngModel]="field.fileuploadConfig?.minFiles || 0"
+                  (ngModelChange)="updateFileUploadMinFiles(fieldIndex, $event)"
+                />
+                <small class="form-hint">Minimum number of files required (use validation 'required' for at least 1)</small>
+              </div>
+
+              <div class="form-group">
+                <label>Maximum File Size (MB)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="1000"
+                  [ngModel]="getFileUploadMaxFileSizeMB(field)"
+                  (ngModelChange)="updateFileUploadMaxFileSize(fieldIndex, $event)"
+                />
+                <small class="form-hint">Maximum size per file in megabytes</small>
+              </div>
+
+              <div class="form-group">
+                <label>Allowed Extensions</label>
+                <input
+                  type="text"
+                  [ngModel]="getFileUploadAllowedExtensionsString(field)"
+                  (ngModelChange)="updateFileUploadAllowedExtensions(fieldIndex, $event)"
+                  placeholder="e.g., .pdf, .doc, .docx"
+                />
+                <small class="form-hint">Comma-separated file extensions (leave empty to allow all)</small>
+              </div>
+
+              <div class="form-group">
+                <label>Allowed MIME Types</label>
+                <input
+                  type="text"
+                  [ngModel]="getFileUploadAllowedMimeTypesString(field)"
+                  (ngModelChange)="updateFileUploadAllowedMimeTypes(fieldIndex, $event)"
+                  placeholder="e.g., image/*, application/pdf"
+                />
+                <small class="form-hint">Comma-separated MIME types (use * for wildcards like image/*)</small>
+              </div>
+
+              <div class="form-group">
+                <label>Upload Timing</label>
+                <select
+                  [ngModel]="field.fileuploadConfig?.uploadTiming || 'immediate'"
+                  (ngModelChange)="updateFileUploadTiming(fieldIndex, $event)">
+                  <option value="immediate">Immediate (upload when selected)</option>
+                  <option value="manual">Manual (user clicks upload button)</option>
+                </select>
+                <small class="form-hint">When files should be uploaded to the server</small>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [ngModel]="field.fileuploadConfig?.allowDragDrop !== false"
+                    (ngModelChange)="updateFileUploadAllowDragDrop(fieldIndex, $event)"
+                  />
+                  Allow Drag and Drop
+                </label>
+                <small class="form-hint">Enable drag and drop file selection</small>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [ngModel]="field.fileuploadConfig?.showFileSize !== false"
+                    (ngModelChange)="updateFileUploadShowFileSize(fieldIndex, $event)"
+                  />
+                  Show File Size
+                </label>
+                <small class="form-hint">Display file size in the file list</small>
+              </div>
+
+              <div class="form-group">
+                <label>Upload Button Label</label>
+                <input
+                  type="text"
+                  [ngModel]="field.fileuploadConfig?.uploadButtonLabel || ''"
+                  (ngModelChange)="updateFileUploadButtonLabel(fieldIndex, $event)"
+                  placeholder="Choose file"
+                />
+                <small class="form-hint">Text for the file selection button</small>
+              </div>
+
+              <div class="form-group">
+                <label>Drag & Drop Label</label>
+                <input
+                  type="text"
+                  [ngModel]="field.fileuploadConfig?.dragDropLabel || ''"
+                  (ngModelChange)="updateFileUploadDragDropLabel(fieldIndex, $event)"
+                  placeholder="Drop files here or click to select"
+                />
+                <small class="form-hint">Text displayed in the drag and drop zone</small>
+              </div>
+            </div>
+          }
+
           <!-- DataGrid Configuration (for datagrid fields) -->
           @if (field.type === 'datagrid') {
             <div class="datagrid-config-section">

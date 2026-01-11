@@ -195,6 +195,41 @@ Or create custom styles using `data-*` attribute selectors:
 | `submitForm()` | Validates and submits the form, emits `formSubmit` if valid |
 | `saveForm()` | Saves form data to local storage, emits `formSave` |
 
+#### saveForm() vs submitForm()
+
+These methods serve different purposes:
+
+**`saveForm()` - Save Draft**
+- **No validation** - saves regardless of form state
+- Preserves work-in-progress, including incomplete/invalid data
+- Saves to local storage for recovery
+- Always emits `formSave` event
+- Use case: "Save Draft" button
+
+**`submitForm()` - Final Submission**
+- **Full validation** - only proceeds if all fields are valid
+- Marks all fields as touched (shows validation errors)
+- Cleans data before emitting (removes empty table rows, etc.)
+- Only emits `formSubmit` event if valid
+- Use case: "Submit" button
+
+```html
+<ngx-dynamic-form [config]="config" #form (formSave)="onSave($event)" (formSubmit)="onSubmit($event)">
+  <!-- Save draft: no validation, always saves -->
+  <button type="button" (click)="form.saveForm()">Save Draft</button>
+
+  <!-- Submit: validates first, only submits if valid -->
+  <button type="button" (click)="form.submitForm()" [disabled]="!form.valid">Submit</button>
+</ngx-dynamic-form>
+```
+
+| | `saveForm()` | `submitForm()` |
+|---|---|---|
+| Validates | No | Yes |
+| Shows errors | No | Yes |
+| Emits event | Always | Only if valid |
+| Event | `formSave` | `formSubmit` |
+
 ### NgxFormBuilder Component
 
 **Selector:** `ngx-form-builder`
