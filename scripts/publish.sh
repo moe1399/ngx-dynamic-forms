@@ -124,6 +124,24 @@ if [ -z "$NPM_ONLY" ] && [ -z "$DRY_RUN" ]; then
   fi
 fi
 
+# 9. Commit and push changes
+if [ -z "$DRY_RUN" ]; then
+  echo ""
+  echo ">>> Committing version changes..."
+  cd "$ROOT_DIR"
+  git add -A
+  git commit -m "chore: release v$NEW_VERSION"
+
+  echo ""
+  echo ">>> Pushing to remote..."
+  git push
+
+  echo ""
+  echo ">>> Creating git tag..."
+  git tag "v$NEW_VERSION"
+  git push --tags
+fi
+
 echo ""
 echo "========================================"
 echo "Publishing complete!"

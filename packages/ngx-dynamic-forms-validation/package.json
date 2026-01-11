@@ -1,6 +1,6 @@
 {
   "name": "@moe1399/ngx-dynamic-forms-validation",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Server-side form validation library compatible with @moe1399/ngx-dynamic-forms",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
