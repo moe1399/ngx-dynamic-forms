@@ -1088,7 +1088,7 @@
               />
 
               <!-- Drop zone -->
-              @if ((field.fileuploadConfig?.allowDragDrop ?? true) && !isMaxFilesReached(field.name)) {
+              @if (!readOnly && (field.fileuploadConfig?.allowDragDrop ?? true) && !isMaxFilesReached(field.name)) {
                 <div
                   class="fileupload-dropzone"
                   [attr.data-dropzone-active]="isDragActive(field.name)"
@@ -1101,7 +1101,7 @@
                     {{ field.fileuploadConfig?.dragDropLabel || 'Drop files here or click to select' }}
                   </span>
                 </div>
-              } @else if (!isMaxFilesReached(field.name)) {
+              } @else if (!readOnly && !isMaxFilesReached(field.name)) {
                 <!-- Button only (no drag-drop) -->
                 <button
                   type="button"
@@ -1213,15 +1213,17 @@
                             </svg>
                           </button>
                         }
-                        <button
-                          type="button"
-                          class="fileupload-action fileupload-action-remove"
-                          (click)="removeFile(field.name, fileState.id)"
-                          title="Remove">
-                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
-                          </svg>
-                        </button>
+                        @if (!readOnly) {
+                          <button
+                            type="button"
+                            class="fileupload-action fileupload-action-remove"
+                            (click)="removeFile(field.name, fileState.id)"
+                            title="Remove">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                            </svg>
+                          </button>
+                        }
                       </div>
                     </li>
                   }
@@ -1229,7 +1231,7 @@
               }
 
               <!-- Upload all button for manual timing -->
-              @if ((field.fileuploadConfig?.uploadTiming === 'manual') && hasPendingUploads(field.name)) {
+              @if (!readOnly && (field.fileuploadConfig?.uploadTiming === 'manual') && hasPendingUploads(field.name)) {
                 <button
                   type="button"
                   class="fileupload-action fileupload-action-upload-all"

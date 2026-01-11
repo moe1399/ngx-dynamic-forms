@@ -1391,15 +1391,14 @@
      File Upload Field Styles
      ========================================
 
-     Uses hybrid approach:
-     - CSS classes for structure/layout (cleaner selectors)
-     - Data attributes for state (valid, uploading, status)
+     Matches government form style with purple/lavender theme
+     Uses table-like layout consistent with other fields
      ======================================== */
 
-  /* File upload field - reset input container styles */
+  /* File upload field - use standard input container */
   [data-field-type="fileupload"] [data-input-container] {
     display: block;
-    padding: 12px;
+    padding: 6px 10px;
     align-items: initial;
   }
 
@@ -1421,47 +1420,46 @@
     border: 0;
   }
 
-  /* Drop zone */
+  /* Drop zone - simple bordered style */
   .fileupload-dropzone {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 24px 16px;
-    border: 2px dashed #999;
-    border-radius: 4px;
-    background: #fafafa;
+    gap: 6px;
+    padding: 16px;
+    border: 1px dashed #999;
+    background: #ffffff;
     cursor: pointer;
     transition: all 0.15s ease;
   }
 
   .fileupload-dropzone:hover {
     border-color: #512B58;
-    background: #f5f0f6;
+    background: #fafafa;
   }
 
-  /* Drop zone active state (data attribute for state) */
+  /* Drop zone active state */
   .fileupload-dropzone[data-dropzone-active="true"] {
     border-color: #512B58;
-    background: #E8E0ED;
     border-style: solid;
+    background: #E8E0ED;
   }
 
   .fileupload-dropzone-icon {
-    font-size: 28px;
-    color: #666;
+    font-size: 24px;
+    color: #512B58;
   }
 
   .fileupload-dropzone-text {
     font-size: 13px;
-    color: #666;
+    color: #333;
     text-align: center;
   }
 
-  /* Upload button (when drag-drop is disabled) */
+  /* Upload button (when drag-drop is disabled) - matches standard button style */
   .fileupload-button {
-    padding: 8px 16px;
+    padding: 8px 20px;
     font-size: 13px;
     font-weight: normal;
     border: 1px solid #999;
@@ -1469,7 +1467,6 @@
     font-family: inherit;
     background: #f5f5f5;
     color: #333;
-    border-radius: 3px;
   }
 
   .fileupload-button:hover:not(:disabled) {
@@ -1481,79 +1478,74 @@
     cursor: not-allowed;
   }
 
-  /* File list */
+  /* File list - table-like style */
   .fileupload-list {
     list-style: none;
-    margin: 16px 0 0 0;
+    margin: 8px 0 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    background: #e9ecef;
-    border-radius: 12px;
-    overflow: hidden;
+    border: 1px solid #ccc;
     width: 100%;
   }
 
-  /* File item */
+  /* File item - row style matching table rows */
   .fileupload-item {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 16px 20px;
+    padding: 8px 10px;
     background: #fff;
-    gap: 16px;
+    gap: 10px;
     width: 100%;
     box-sizing: border-box;
-  }
-
-  .fileupload-item:first-child {
-    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid #ccc;
   }
 
   .fileupload-item:last-child {
-    border-radius: 0 0 12px 12px;
+    border-bottom: none;
   }
 
-  .fileupload-item:only-child {
-    border-radius: 12px;
+  /* Alternate row background like table */
+  .fileupload-item:nth-child(even) {
+    background: #fafafa;
   }
 
-  /* File icon */
+  /* File icon - simple gray style */
   .fileupload-file-icon {
     position: relative;
-    flex: 0 0 40px;
-    width: 40px;
-    height: 48px;
-    color: #f97316;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    color: #666;
   }
 
   .fileupload-file-icon > svg {
     display: block;
-    width: 40px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
   }
 
   /* Status dot (base style) */
   .fileupload-status-dot {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 12px;
-    height: 12px;
+    bottom: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     border: 2px solid #fff;
-    background: #9ca3af;
+    background: #999;
   }
 
-  /* Status dot colors based on item status (data attribute for state) */
+  /* Status dot colors based on item status */
   .fileupload-item[data-status="completed"] .fileupload-status-dot {
-    background: #22c55e;
+    background: #512B58;
   }
 
   .fileupload-item[data-status="failed"] .fileupload-status-dot,
   .fileupload-item[data-status="cancelled"] .fileupload-status-dot {
-    background: #ef4444;
+    background: #c00;
   }
 
   .fileupload-item[data-status="uploading"] .fileupload-status-dot {
@@ -1574,9 +1566,9 @@
   }
 
   .fileupload-item-name {
-    font-size: 14px;
-    color: #1f2937;
-    font-weight: 500;
+    font-size: 13px;
+    color: #333;
+    font-weight: normal;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1585,7 +1577,7 @@
 
   .fileupload-item-size {
     font-size: 12px;
-    color: #9ca3af;
+    color: #666;
   }
 
   /* Status area */
@@ -1595,62 +1587,61 @@
     align-items: center;
     justify-content: flex-end;
     min-width: 0;
+    padding-right: 8px;
   }
 
-  /* Progress bar */
+  /* Progress bar - simple flat style */
   .fileupload-progress {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
-    max-width: 250px;
+    max-width: 200px;
   }
 
   .fileupload-progress-track {
     flex: 1;
-    height: 6px;
+    height: 4px;
     background: #e5e7eb;
-    border-radius: 3px;
     overflow: hidden;
-    min-width: 80px;
+    min-width: 60px;
   }
 
   .fileupload-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
-    border-radius: 3px;
+    background: #512B58;
     transition: width 0.2s ease-out;
   }
 
   .fileupload-progress-label {
     font-size: 12px;
-    color: #6b7280;
+    color: #666;
     white-space: nowrap;
   }
 
   .fileupload-progress-text {
     font-size: 12px;
-    font-weight: 500;
-    color: #3b82f6;
+    font-weight: normal;
+    color: #512B58;
     min-width: 32px;
     text-align: right;
   }
 
-  /* Status complete */
+  /* Status complete - purple style */
   .fileupload-status-complete {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-size: 13px;
-    font-weight: 500;
-    color: #22c55e;
+    font-weight: normal;
+    color: #512B58;
   }
 
   .fileupload-status-complete svg {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
 
@@ -1658,16 +1649,16 @@
   .fileupload-status-error {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-size: 13px;
-    font-weight: 500;
-    color: #ef4444;
+    font-weight: normal;
+    color: #c00;
   }
 
   .fileupload-status-error svg {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
 
@@ -1675,14 +1666,14 @@
   .fileupload-status-pending {
     font-size: 13px;
     color: #f59e0b;
-    font-weight: 500;
+    font-weight: normal;
   }
 
   /* Status cancelled */
   .fileupload-status-cancelled {
     font-size: 13px;
-    color: #6b7280;
-    font-weight: 500;
+    color: #666;
+    font-weight: normal;
   }
 
   /* File item actions */
@@ -1690,74 +1681,71 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     flex-shrink: 0;
-    margin-left: 12px;
   }
 
-  /* Action buttons - base style */
+  /* Action buttons - simple flat style */
   .fileupload-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     padding: 0;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    border: 1px solid #999;
     cursor: pointer;
     font-family: inherit;
-    background: #fff;
-    color: #6b7280;
-    transition: all 0.15s ease;
+    background: #f5f5f5;
+    color: #333;
+    transition: background 0.15s ease;
   }
 
   .fileupload-action svg {
     display: block;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
   }
 
   .fileupload-action:hover:not(:disabled) {
-    background: #f3f4f6;
-    border-color: #d1d5db;
-    color: #374151;
+    background: #e8e8e8;
+    border-color: #666;
   }
 
   /* Action button variants */
   .fileupload-action-remove:hover {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #ef4444;
+    background: #f8d7da;
+    border-color: #c00;
+    color: #c00;
   }
 
   .fileupload-action-retry:hover {
-    background: #fef3c7;
-    border-color: #fcd34d;
-    color: #d97706;
+    background: #fff3cd;
+    border-color: #f59e0b;
+    color: #f59e0b;
   }
 
   .fileupload-action-download:hover {
-    background: #ecfdf5;
-    border-color: #a7f3d0;
-    color: #059669;
+    background: #E8E0ED;
+    border-color: #512B58;
+    color: #512B58;
   }
 
   .fileupload-action-upload:hover {
-    background: #eff6ff;
-    border-color: #93c5fd;
-    color: #2563eb;
+    background: #E8E0ED;
+    border-color: #512B58;
+    color: #512B58;
   }
 
-  /* Upload all button */
+  /* Upload all button - purple primary style */
   .fileupload-action-upload-all {
     width: auto;
     height: auto;
-    margin-top: 12px;
-    padding: 8px 16px;
+    margin-top: 8px;
+    padding: 8px 20px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: normal;
     background: #512B58;
     color: #fff;
     border-color: #512B58;
@@ -1768,14 +1756,14 @@
     color: #fff;
   }
 
-  /* Max files reached state (data attribute for state) */
+  /* Max files reached state */
   .fileupload-container[data-fileupload-max-reached="true"] .fileupload-dropzone {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
   }
 
-  /* Disabled state (data attribute for state) */
+  /* Disabled state */
   [data-field-disabled="true"] .fileupload-dropzone {
     opacity: 0.5;
     cursor: not-allowed;
