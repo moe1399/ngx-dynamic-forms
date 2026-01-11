@@ -1,5 +1,5 @@
 import { Component, input, output, OnInit, OnDestroy, effect, inject, ChangeDetectorRef, signal } from '@angular/core';
-import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil, filter, switchMap } from 'rxjs/operators';
@@ -8,7 +8,9 @@ import {
   FormFieldConfig,
   FormSection,
   ValidationRule,
+  ValidationCondition,
   FieldError,
+  TableConfig,
   TableColumnConfig,
   DataGridColumnConfig,
   DataGridColumnGroup,
@@ -227,6 +229,237 @@ export class DynamicForm implements OnInit, OnDestroy {
 
     // Set up async validation for fields that have it configured
     this.setupAsyncValidation();
+
+    // Set up cross-field validation triggers for conditional validations
+    this.setupConditionalValidationTriggers();
+
+    // Trigger initial validation for fields with conditional validations
+    // (they may have skipped validation during FormControl creation)
+    this.triggerInitialConditionalValidation();
+  }
+
+  /**
+   * Trigger validation for all fields with conditional validations
+   * Called after form is fully initialized
+   */
+  private triggerInitialConditionalValidation(): void {
+    const currentConfig = this.config();
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'info') return;
+      const hasConditionalValidation = field.validations?.some((v) => v.condition);
+      if (hasConditionalValidation) {
+        const control = this.form.get(field.name);
+        if (control) {
+          control.updateValueAndValidity({ emitEvent: false });
+        }
+      }
+    });
+  }
+
+  /**
+   * Set up triggers to revalidate fields when their condition dependencies change
+   */
+  private setupConditionalValidationTriggers(): void {
+    const currentConfig = this.config();
+    const dependencies = new Map<string, Set<string>>(); // referencedField -> dependentFields
+
+    // Analyze standalone fields for conditional validations
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'info') return;
+
+      field.validations?.forEach((rule) => {
+        if (rule.condition) {
+          const referencedField = rule.condition.field.startsWith('$form.')
+            ? rule.condition.field.substring(6)
+            : rule.condition.field;
+
+          if (!dependencies.has(referencedField)) {
+            dependencies.set(referencedField, new Set());
+          }
+          dependencies.get(referencedField)!.add(field.name);
+        }
+      });
+    });
+
+    // Set up subscriptions for standalone field dependencies
+    dependencies.forEach((dependentFields, referencedField) => {
+      const referencedControl = this.form.get(referencedField);
+      if (referencedControl) {
+        referencedControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+          // Defer revalidation to next tick to ensure form's aggregate value is updated
+          setTimeout(() => {
+            dependentFields.forEach((fieldName) => {
+              const control = this.form.get(fieldName);
+              if (control) {
+                control.updateValueAndValidity({ emitEvent: false });
+              }
+            });
+          }, 0);
+        });
+      }
+    });
+
+    // Analyze table/datagrid columns for conditional validations
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'table' && field.tableConfig) {
+        this.setupTableConditionalTriggers(field);
+      } else if (field.type === 'datagrid' && field.datagridConfig) {
+        this.setupDataGridConditionalTriggers(field);
+      }
+    });
+  }
+
+  /**
+   * Set up conditional validation triggers for table columns
+   */
+  private setupTableConditionalTriggers(field: FormFieldConfig): void {
+    const tableConfig = field.tableConfig!;
+    const formArray = this.form.get(field.name) as FormArray;
+    if (!formArray) return;
+
+    // Collect column dependencies
+    const sameRowDeps = new Map<string, Set<string>>(); // referencedColumn -> dependentColumns
+    const formFieldDeps = new Map<string, Set<string>>(); // referencedFormField -> dependentColumns
+
+    tableConfig.columns.forEach((column) => {
+      column.validations?.forEach((rule) => {
+        if (rule.condition) {
+          if (rule.condition.field.startsWith('$form.')) {
+            const formField = rule.condition.field.substring(6);
+            if (!formFieldDeps.has(formField)) {
+              formFieldDeps.set(formField, new Set());
+            }
+            formFieldDeps.get(formField)!.add(column.name);
+          } else {
+            if (!sameRowDeps.has(rule.condition.field)) {
+              sameRowDeps.set(rule.condition.field, new Set());
+            }
+            sameRowDeps.get(rule.condition.field)!.add(column.name);
+          }
+        }
+      });
+    });
+
+    // Set up triggers for same-row dependencies (for each row)
+    if (sameRowDeps.size > 0) {
+      formArray.controls.forEach((control) => {
+        const rowGroup = control as FormGroup;
+        this.setupRowConditionalTriggers(rowGroup, sameRowDeps);
+      });
+    }
+
+    // Set up triggers for form-level field dependencies
+    formFieldDeps.forEach((dependentColumns, formFieldName) => {
+      const formControl = this.form.get(formFieldName);
+      if (formControl) {
+        formControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+          // Defer to next tick to ensure form values are updated
+          setTimeout(() => {
+            formArray.controls.forEach((control) => {
+              const rowGroup = control as FormGroup;
+              dependentColumns.forEach((columnName) => {
+                const cellControl = rowGroup.get(columnName);
+                if (cellControl) {
+                  cellControl.updateValueAndValidity({ emitEvent: false });
+                }
+              });
+            });
+          }, 0);
+        });
+      }
+    });
+  }
+
+  /**
+   * Set up conditional validation triggers within a single row
+   */
+  private setupRowConditionalTriggers(
+    rowGroup: FormGroup,
+    sameRowDeps: Map<string, Set<string>>
+  ): void {
+    sameRowDeps.forEach((dependentColumns, referencedColumn) => {
+      const referencedControl = rowGroup.get(referencedColumn);
+      if (referencedControl) {
+        referencedControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+          // Defer to next tick to ensure form values are updated
+          setTimeout(() => {
+            dependentColumns.forEach((columnName) => {
+              const cellControl = rowGroup.get(columnName);
+              if (cellControl) {
+                cellControl.updateValueAndValidity({ emitEvent: false });
+              }
+            });
+          }, 0);
+        });
+      }
+    });
+  }
+
+  /**
+   * Set up conditional validation triggers for datagrid columns
+   */
+  private setupDataGridConditionalTriggers(field: FormFieldConfig): void {
+    const datagridConfig = field.datagridConfig!;
+    const formGroup = this.form.get(field.name) as FormGroup;
+    if (!formGroup) return;
+
+    // Collect column dependencies
+    const sameRowDeps = new Map<string, Set<string>>();
+    const formFieldDeps = new Map<string, Set<string>>();
+
+    datagridConfig.columns.forEach((column) => {
+      if (column.computed) return;
+
+      column.validations?.forEach((rule) => {
+        if (rule.condition) {
+          if (rule.condition.field.startsWith('$form.')) {
+            const formField = rule.condition.field.substring(6);
+            if (!formFieldDeps.has(formField)) {
+              formFieldDeps.set(formField, new Set());
+            }
+            formFieldDeps.get(formField)!.add(column.name);
+          } else {
+            if (!sameRowDeps.has(rule.condition.field)) {
+              sameRowDeps.set(rule.condition.field, new Set());
+            }
+            sameRowDeps.get(rule.condition.field)!.add(column.name);
+          }
+        }
+      });
+    });
+
+    // Set up triggers for same-row dependencies (for each row)
+    if (sameRowDeps.size > 0) {
+      Object.keys(formGroup.controls).forEach((rowId) => {
+        const rowGroup = formGroup.get(rowId) as FormGroup;
+        if (rowGroup) {
+          this.setupRowConditionalTriggers(rowGroup, sameRowDeps);
+        }
+      });
+    }
+
+    // Set up triggers for form-level field dependencies
+    formFieldDeps.forEach((dependentColumns, formFieldName) => {
+      const formControl = this.form.get(formFieldName);
+      if (formControl) {
+        formControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+          // Defer to next tick to ensure form values are updated
+          setTimeout(() => {
+            Object.keys(formGroup.controls).forEach((rowId) => {
+              const rowGroup = formGroup.get(rowId) as FormGroup;
+              if (rowGroup) {
+                dependentColumns.forEach((columnName) => {
+                  const cellControl = rowGroup.get(columnName);
+                  if (cellControl) {
+                    cellControl.updateValueAndValidity({ emitEvent: false });
+                  }
+                });
+              }
+            });
+          }, 0);
+        });
+      }
+    });
   }
 
   /**
@@ -261,8 +494,8 @@ export class DynamicForm implements OnInit, OnDestroy {
     const controls: { [key: string]: FormControl } = {};
 
     tableConfig.columns.forEach((column) => {
-      // Skip validators for archived fields
-      const validators = field.archived ? [] : this.buildValidators(column.validations || []);
+      // Skip validators for archived fields, pass true for table context
+      const validators = field.archived ? [] : this.buildValidators(column.validations || [], true);
       controls[column.name] = new FormControl(
         { value: rowData[column.name] ?? '', disabled: field.disabled ?? field.archived ?? false },
         validators
@@ -498,8 +731,8 @@ export class DynamicForm implements OnInit, OnDestroy {
           return;
         }
 
-        // Skip validators for archived fields
-        const validators = field.archived ? [] : this.buildValidators(column.validations || []);
+        // Skip validators for archived fields, pass true for datagrid context
+        const validators = field.archived ? [] : this.buildValidators(column.validations || [], true);
         rowControls[column.name] = new FormControl(
           { value: rowData[column.name] ?? '', disabled: isDisabled },
           validators
@@ -513,56 +746,126 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
-   * Build Angular validators from validation rules
+   * Evaluate a validation condition
+   * @param condition The condition to evaluate
+   * @param formData Current form values
+   * @param rowData Row data for table/datagrid context (optional)
    */
-  private buildValidators(rules: ValidationRule[]) {
-    const validators: any[] = [];
+  private evaluateCondition(
+    condition: ValidationCondition,
+    formData: Record<string, any>,
+    rowData?: Record<string, any>
+  ): boolean {
+    let fieldValue: any;
+
+    if (condition.field.startsWith('$form.')) {
+      // Form-level field reference (used from within table/datagrid context)
+      const fieldName = condition.field.substring(6);
+      fieldValue = formData[fieldName];
+    } else if (rowData !== undefined) {
+      // Same-row column reference (table/datagrid context)
+      fieldValue = rowData[condition.field];
+    } else {
+      // Standalone field context
+      fieldValue = formData[condition.field];
+    }
+
+    let result: boolean;
+    switch (condition.operator) {
+      case 'equals':
+        result = fieldValue === condition.value;
+        break;
+      case 'notEquals':
+        result = fieldValue !== condition.value;
+        break;
+      case 'isEmpty':
+        result = fieldValue === null || fieldValue === undefined || fieldValue === '';
+        break;
+      case 'isNotEmpty':
+        result = fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
+        break;
+      default:
+        result = true;
+    }
+
+    return result;
+  }
+
+  /**
+   * Create a base validator function from a validation rule
+   */
+  private createBaseValidator(rule: ValidationRule): ValidatorFn | null {
+    switch (rule.type) {
+      case 'required':
+        return Validators.required;
+      case 'email':
+        return Validators.email;
+      case 'minLength':
+        return Validators.minLength(rule.value);
+      case 'maxLength':
+        return Validators.maxLength(rule.value);
+      case 'min':
+        return Validators.min(rule.value);
+      case 'max':
+        return Validators.max(rule.value);
+      case 'pattern':
+        return Validators.pattern(rule.value);
+      case 'custom':
+        if (rule.customValidatorName) {
+          const namedValidator = this.validatorRegistry.get(rule.customValidatorName);
+          if (namedValidator) {
+            return (control: AbstractControl) => {
+              const formData = this.form.value;
+              return namedValidator(control.value, rule.customValidatorParams, undefined, formData)
+                ? null
+                : { custom: true };
+            };
+          } else {
+            console.warn(`Custom validator "${rule.customValidatorName}" not registered`);
+            return null;
+          }
+        } else if (rule.validator) {
+          return (control: AbstractControl) => {
+            return rule.validator!(control.value) ? null : { custom: true };
+          };
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Build Angular validators from validation rules
+   * @param rules Validation rules to convert
+   * @param isTableContext Whether this is for a table/datagrid column (affects condition evaluation)
+   */
+  private buildValidators(rules: ValidationRule[], isTableContext: boolean = false): ValidatorFn[] {
+    const validators: ValidatorFn[] = [];
 
     rules.forEach((rule) => {
-      switch (rule.type) {
-        case 'required':
-          validators.push(Validators.required);
-          break;
-        case 'email':
-          validators.push(Validators.email);
-          break;
-        case 'minLength':
-          validators.push(Validators.minLength(rule.value));
-          break;
-        case 'maxLength':
-          validators.push(Validators.maxLength(rule.value));
-          break;
-        case 'min':
-          validators.push(Validators.min(rule.value));
-          break;
-        case 'max':
-          validators.push(Validators.max(rule.value));
-          break;
-        case 'pattern':
-          validators.push(Validators.pattern(rule.value));
-          break;
-        case 'custom':
-          // Support both inline validator and named validator
-          if (rule.customValidatorName) {
-            // Named validator - look up from registry
-            const namedValidator = this.validatorRegistry.get(rule.customValidatorName);
-            if (namedValidator) {
-              validators.push((control: FormControl) => {
-                const formData = this.form.value;
-                return namedValidator(control.value, rule.customValidatorParams, undefined, formData)
-                  ? null
-                  : { custom: true };
-              });
-            } else {
-              console.warn(`Custom validator "${rule.customValidatorName}" not registered`);
-            }
-          } else if (rule.validator) {
-            // Legacy inline validator (deprecated)
-            validators.push((control: FormControl) => {
-              return rule.validator!(control.value) ? null : { custom: true };
-            });
+      const baseValidator = this.createBaseValidator(rule);
+      if (!baseValidator) return;
+
+      if (rule.condition) {
+        // Wrap validator with condition check
+        validators.push((control: AbstractControl) => {
+          // Safety check: form might not be initialized yet during FormControl creation
+          if (!this.form) {
+            return null;
           }
-          break;
+
+          const formData = this.form.value;
+          // For table/datagrid context, get row data from parent FormGroup
+          const rowData = isTableContext ? control.parent?.value : undefined;
+
+          if (!this.evaluateCondition(rule.condition!, formData, rowData)) {
+            return null; // Condition not met, validation doesn't apply
+          }
+          return baseValidator(control);
+        });
+      } else {
+        validators.push(baseValidator);
       }
     });
 
@@ -784,6 +1087,16 @@ export class DynamicForm implements OnInit, OnDestroy {
     this.markFileUploadFieldsTouched();
 
     this.updateErrors();
+
+    // Don't submit if async validation is in progress
+    if (this.validating) {
+      return;
+    }
+
+    // Don't submit if there are async validation errors
+    if (this.externalErrors.size > 0) {
+      return;
+    }
 
     // Check regular form validity AND table/datagrid/phone/daterange/formref validity
     let isValid = true;
@@ -1221,7 +1534,34 @@ export class DynamicForm implements OnInit, OnDestroy {
     const maxRows = tableConfig.maxRows ?? 10;
     if (formArray.length >= maxRows) return;
 
-    formArray.push(this.createTableRowFormGroup(field));
+    const newRowGroup = this.createTableRowFormGroup(field);
+    formArray.push(newRowGroup);
+
+    // Set up conditional validation triggers for the new row
+    const sameRowDeps = this.getTableSameRowDependencies(tableConfig);
+    if (sameRowDeps.size > 0) {
+      this.setupRowConditionalTriggers(newRowGroup, sameRowDeps);
+    }
+  }
+
+  /**
+   * Get same-row column dependencies for a table config
+   */
+  private getTableSameRowDependencies(tableConfig: TableConfig): Map<string, Set<string>> {
+    const sameRowDeps = new Map<string, Set<string>>();
+
+    tableConfig.columns.forEach((column) => {
+      column.validations?.forEach((rule) => {
+        if (rule.condition && !rule.condition.field.startsWith('$form.')) {
+          if (!sameRowDeps.has(rule.condition.field)) {
+            sameRowDeps.set(rule.condition.field, new Set());
+          }
+          sameRowDeps.get(rule.condition.field)!.add(column.name);
+        }
+      });
+    });
+
+    return sameRowDeps;
   }
 
   /**

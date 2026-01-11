@@ -6,6 +6,8 @@ import {
   FormFieldConfig,
   FormSection,
   ValidationRule,
+  ValidationCondition,
+  ValidationConditionOperator,
   FieldType,
   TableColumnType,
   TableRowMode,
@@ -122,6 +124,9 @@ export class NgxFormBuilder {
 
   // Validation types
   validationTypes = ['required', 'email', 'minLength', 'maxLength', 'min', 'max', 'pattern'];
+
+  // Condition operators for conditional validations
+  conditionOperators: ValidationConditionOperator[] = ['equals', 'notEquals', 'isEmpty', 'isNotEmpty'];
 
   constructor() {
     // Sync model with internal state when model changes externally
@@ -580,6 +585,135 @@ export class NgxFormBuilder {
     this.updateValidation(fieldIndex, validationIndex, validation);
   }
 
+  /**
+   * Toggle conditional validation on/off for a field validation
+   */
+  toggleValidationCondition(fieldIndex: number, validationIndex: number): void {
+    const validation = { ...this.currentConfig().fields[fieldIndex].validations![validationIndex] };
+    if (validation.condition) {
+      delete validation.condition;
+    } else {
+      // Get available fields for condition
+      const availableFields = this.getAvailableConditionFields(fieldIndex);
+      const firstField = availableFields.length > 0 ? availableFields[0].value : '';
+      validation.condition = {
+        field: firstField,
+        operator: 'equals',
+        value: '',
+      };
+    }
+    this.updateValidation(fieldIndex, validationIndex, validation);
+  }
+
+  /**
+   * Update the field reference for a validation condition
+   */
+  updateValidationConditionField(fieldIndex: number, validationIndex: number, field: string): void {
+    const validation = { ...this.currentConfig().fields[fieldIndex].validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, field };
+      this.updateValidation(fieldIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Update the operator for a validation condition
+   */
+  updateValidationConditionOperator(fieldIndex: number, validationIndex: number, operator: ValidationConditionOperator): void {
+    const validation = { ...this.currentConfig().fields[fieldIndex].validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, operator };
+      // Clear value for isEmpty/isNotEmpty operators
+      if (operator === 'isEmpty' || operator === 'isNotEmpty') {
+        delete validation.condition.value;
+      }
+      this.updateValidation(fieldIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Update the value for a validation condition
+   */
+  updateValidationConditionValue(fieldIndex: number, validationIndex: number, value: any): void {
+    const validation = { ...this.currentConfig().fields[fieldIndex].validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, value };
+      this.updateValidation(fieldIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Get available fields for validation condition dropdown (for standalone fields)
+   */
+  getAvailableConditionFields(fieldIndex: number): { value: string; label: string }[] {
+    const config = this.currentConfig();
+    const currentField = config.fields[fieldIndex];
+    const result: { value: string; label: string }[] = [];
+
+    config.fields.forEach((field) => {
+      // Skip the current field and non-value fields
+      if (field.name === currentField.name || field.type === 'info' || field.type === 'formref') {
+        return;
+      }
+      result.push({
+        value: field.name,
+        label: field.label || field.name,
+      });
+    });
+
+    return result;
+  }
+
+  /**
+   * Get available fields for validation condition dropdown (for table/datagrid columns)
+   * Includes both same-row columns and form-level fields
+   */
+  getAvailableColumnConditionFields(
+    fieldIndex: number,
+    columnIndex: number,
+    fieldType: 'table' | 'datagrid'
+  ): { value: string; label: string }[] {
+    const config = this.currentConfig();
+    const tableField = config.fields[fieldIndex];
+    const result: { value: string; label: string }[] = [];
+
+    // Add same-row columns (for tables/datagrids)
+    if (fieldType === 'table' && tableField.tableConfig) {
+      tableField.tableConfig.columns.forEach((column, idx) => {
+        if (idx !== columnIndex) {
+          result.push({
+            value: column.name,
+            label: `${column.label} (same row)`,
+          });
+        }
+      });
+    } else if (fieldType === 'datagrid' && tableField.datagridConfig) {
+      tableField.datagridConfig.columns.forEach((column, idx) => {
+        if (idx !== columnIndex && !column.computed) {
+          result.push({
+            value: column.name,
+            label: `${column.label} (same row)`,
+          });
+        }
+      });
+    }
+
+    // Add form-level fields
+    config.fields.forEach((field) => {
+      // Skip the current table/datagrid field and non-value fields
+      if (field.name === tableField.name || field.type === 'info' || field.type === 'formref' ||
+          field.type === 'table' || field.type === 'datagrid') {
+        return;
+      }
+      result.push({
+        value: `$form.${field.name}`,
+        label: `${field.label || field.name} (form field)`,
+      });
+    });
+
+    return result;
+  }
+
   // ============================================
   // Section Management Methods
   // ============================================
@@ -900,6 +1034,97 @@ export class NgxFormBuilder {
     this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, { message });
   }
 
+  /**
+   * Toggle conditional validation on/off for a table column validation
+   */
+  toggleColumnValidationCondition(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.tableConfig) return;
+
+    const column = field.tableConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+
+    if (validation.condition) {
+      delete validation.condition;
+    } else {
+      const availableFields = this.getAvailableColumnConditionFields(fieldIndex, columnIndex, 'table');
+      const firstField = availableFields.length > 0 ? availableFields[0].value : '';
+      validation.condition = {
+        field: firstField,
+        operator: 'equals',
+        value: '',
+      };
+    }
+    this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+  }
+
+  /**
+   * Update the field reference for a table column validation condition
+   */
+  updateColumnValidationConditionField(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    field: string
+  ): void {
+    const tableField = this.currentConfig().fields[fieldIndex];
+    if (!tableField.tableConfig) return;
+
+    const column = tableField.tableConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, field };
+      this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Update the operator for a table column validation condition
+   */
+  updateColumnValidationConditionOperator(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    operator: ValidationConditionOperator
+  ): void {
+    const tableField = this.currentConfig().fields[fieldIndex];
+    if (!tableField.tableConfig) return;
+
+    const column = tableField.tableConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, operator };
+      if (operator === 'isEmpty' || operator === 'isNotEmpty') {
+        delete validation.condition.value;
+      }
+      this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Update the value for a table column validation condition
+   */
+  updateColumnValidationConditionValue(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    value: any
+  ): void {
+    const tableField = this.currentConfig().fields[fieldIndex];
+    if (!tableField.tableConfig) return;
+
+    const column = tableField.tableConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, value };
+      this.updateColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+    }
+  }
+
   addColumnOption(fieldIndex: number, columnIndex: number): void {
     const field = this.currentConfig().fields[fieldIndex];
     if (!field.tableConfig) return;
@@ -1199,6 +1424,97 @@ export class NgxFormBuilder {
     message: string
   ): void {
     this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, { message });
+  }
+
+  /**
+   * Toggle conditional validation on/off for a datagrid column validation
+   */
+  toggleDataGridColumnValidationCondition(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+
+    if (validation.condition) {
+      delete validation.condition;
+    } else {
+      const availableFields = this.getAvailableColumnConditionFields(fieldIndex, columnIndex, 'datagrid');
+      const firstField = availableFields.length > 0 ? availableFields[0].value : '';
+      validation.condition = {
+        field: firstField,
+        operator: 'equals',
+        value: '',
+      };
+    }
+    this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+  }
+
+  /**
+   * Update the field reference for a datagrid column validation condition
+   */
+  updateDataGridColumnValidationConditionField(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    field: string
+  ): void {
+    const datagridField = this.currentConfig().fields[fieldIndex];
+    if (!datagridField.datagridConfig) return;
+
+    const column = datagridField.datagridConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, field };
+      this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Update the operator for a datagrid column validation condition
+   */
+  updateDataGridColumnValidationConditionOperator(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    operator: ValidationConditionOperator
+  ): void {
+    const datagridField = this.currentConfig().fields[fieldIndex];
+    if (!datagridField.datagridConfig) return;
+
+    const column = datagridField.datagridConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, operator };
+      if (operator === 'isEmpty' || operator === 'isNotEmpty') {
+        delete validation.condition.value;
+      }
+      this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+    }
+  }
+
+  /**
+   * Update the value for a datagrid column validation condition
+   */
+  updateDataGridColumnValidationConditionValue(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    value: any
+  ): void {
+    const datagridField = this.currentConfig().fields[fieldIndex];
+    if (!datagridField.datagridConfig) return;
+
+    const column = datagridField.datagridConfig.columns[columnIndex];
+    const validation = { ...column.validations![validationIndex] };
+    if (validation.condition) {
+      validation.condition = { ...validation.condition, value };
+      this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, validation);
+    }
   }
 
   addDataGridColumnOption(fieldIndex: number, columnIndex: number): void {

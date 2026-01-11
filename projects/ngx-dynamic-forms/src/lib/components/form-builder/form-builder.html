@@ -578,6 +578,45 @@
 
                           <button class="btn-icon btn-danger" (click)="removeColumnValidation(fieldIndex, ci, vi)">×</button>
                         </div>
+
+                        <!-- Conditional Validation for Table Column -->
+                        <div class="column-condition-section">
+                          <label class="condition-toggle-inline">
+                            <input
+                              type="checkbox"
+                              [checked]="!!validation.condition"
+                              (change)="toggleColumnValidationCondition(fieldIndex, ci, vi)"
+                            />
+                            Conditional
+                          </label>
+
+                          @if (validation.condition) {
+                            <div class="column-condition-config">
+                              <select
+                                [ngModel]="validation.condition.field"
+                                (ngModelChange)="updateColumnValidationConditionField(fieldIndex, ci, vi, $event)">
+                                @for (f of getAvailableColumnConditionFields(fieldIndex, ci, 'table'); track f.value) {
+                                  <option [value]="f.value">{{ f.label }}</option>
+                                }
+                              </select>
+                              <select
+                                [ngModel]="validation.condition.operator"
+                                (ngModelChange)="updateColumnValidationConditionOperator(fieldIndex, ci, vi, $event)">
+                                @for (op of conditionOperators; track op) {
+                                  <option [value]="op">{{ op }}</option>
+                                }
+                              </select>
+                              @if (validation.condition.operator === 'equals' || validation.condition.operator === 'notEquals') {
+                                <input
+                                  type="text"
+                                  [ngModel]="validation.condition.value"
+                                  (ngModelChange)="updateColumnValidationConditionValue(fieldIndex, ci, vi, $event)"
+                                  placeholder="Value"
+                                />
+                              }
+                            </div>
+                          }
+                        </div>
                       }
                     </div>
                   </div>
@@ -1165,6 +1204,45 @@
 
                             <button class="btn-icon btn-danger" (click)="removeDataGridColumnValidation(fieldIndex, ci, vi)">×</button>
                           </div>
+
+                          <!-- Conditional Validation for DataGrid Column -->
+                          <div class="column-condition-section">
+                            <label class="condition-toggle-inline">
+                              <input
+                                type="checkbox"
+                                [checked]="!!validation.condition"
+                                (change)="toggleDataGridColumnValidationCondition(fieldIndex, ci, vi)"
+                              />
+                              Conditional
+                            </label>
+
+                            @if (validation.condition) {
+                              <div class="column-condition-config">
+                                <select
+                                  [ngModel]="validation.condition.field"
+                                  (ngModelChange)="updateDataGridColumnValidationConditionField(fieldIndex, ci, vi, $event)">
+                                  @for (f of getAvailableColumnConditionFields(fieldIndex, ci, 'datagrid'); track f.value) {
+                                    <option [value]="f.value">{{ f.label }}</option>
+                                  }
+                                </select>
+                                <select
+                                  [ngModel]="validation.condition.operator"
+                                  (ngModelChange)="updateDataGridColumnValidationConditionOperator(fieldIndex, ci, vi, $event)">
+                                  @for (op of conditionOperators; track op) {
+                                    <option [value]="op">{{ op }}</option>
+                                  }
+                                </select>
+                                @if (validation.condition.operator === 'equals' || validation.condition.operator === 'notEquals') {
+                                  <input
+                                    type="text"
+                                    [ngModel]="validation.condition.value"
+                                    (ngModelChange)="updateDataGridColumnValidationConditionValue(fieldIndex, ci, vi, $event)"
+                                    placeholder="Value"
+                                  />
+                                }
+                              </div>
+                            }
+                          </div>
                         }
                       </div>
                     }
@@ -1222,6 +1300,58 @@
                       [ngModel]="validation.message"
                       (ngModelChange)="updateValidationMessage(fieldIndex, vi, $event)"
                     />
+                  </div>
+
+                  <!-- Conditional Validation -->
+                  <div class="condition-section">
+                    <div class="form-group condition-toggle">
+                      <label>
+                        <input
+                          type="checkbox"
+                          [checked]="!!validation.condition"
+                          (change)="toggleValidationCondition(fieldIndex, vi)"
+                        />
+                        Apply conditionally
+                      </label>
+                    </div>
+
+                    @if (validation.condition) {
+                      <div class="condition-config">
+                        <div class="form-group">
+                          <label>When field</label>
+                          <select
+                            [ngModel]="validation.condition.field"
+                            (ngModelChange)="updateValidationConditionField(fieldIndex, vi, $event)">
+                            @for (f of getAvailableConditionFields(fieldIndex); track f.value) {
+                              <option [value]="f.value">{{ f.label }}</option>
+                            }
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label>Operator</label>
+                          <select
+                            [ngModel]="validation.condition.operator"
+                            (ngModelChange)="updateValidationConditionOperator(fieldIndex, vi, $event)">
+                            @for (op of conditionOperators; track op) {
+                              <option [value]="op">{{ op }}</option>
+                            }
+                          </select>
+                        </div>
+
+                        @if (validation.condition.operator === 'equals' || validation.condition.operator === 'notEquals') {
+                          <div class="form-group">
+                            <label>Value</label>
+                            <input
+                              type="text"
+                              [ngModel]="validation.condition.value"
+                              (ngModelChange)="updateValidationConditionValue(fieldIndex, vi, $event)"
+                              placeholder="Enter value"
+                            />
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
 
                   <button class="btn-sm btn-danger" (click)="removeValidation(fieldIndex, vi)">Remove</button>

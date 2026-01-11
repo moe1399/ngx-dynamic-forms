@@ -241,6 +241,30 @@ export interface FormSection {
 }
 
 /**
+ * Comparison operators for validation conditions
+ */
+export type ValidationConditionOperator = 'equals' | 'notEquals' | 'isEmpty' | 'isNotEmpty';
+
+/**
+ * Condition that determines when a validation rule applies
+ */
+export interface ValidationCondition {
+  /**
+   * Field/column to evaluate.
+   * - For standalone fields: field name (e.g., "tenure")
+   * - For table columns: column name for same-row (e.g., "tenure")
+   *   or "$form.fieldName" for form-level fields (e.g., "$form.employmentType")
+   */
+  field: string;
+  operator: ValidationConditionOperator;
+  /**
+   * Value to compare against. Required for 'equals' and 'notEquals'.
+   * Ignored for 'isEmpty' and 'isNotEmpty'.
+   */
+  value?: any;
+}
+
+/**
  * Validation rule configuration
  */
 export interface ValidationRule {
@@ -260,6 +284,11 @@ export interface ValidationRule {
    * Parameters to pass to the custom validator
    */
   customValidatorParams?: Record<string, any>;
+  /**
+   * Optional condition that must be met for this validation to apply.
+   * If not specified, validation always applies.
+   */
+  condition?: ValidationCondition;
 }
 
 /**

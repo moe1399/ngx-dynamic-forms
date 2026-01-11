@@ -162,4 +162,5 @@ src/styles/
 
 ## Documentation Maintenance
 
-Update CLAUDE.md and README.md when changing architecture, commands, or workflow.
+- **Always update README.md** when adding new features or changing existing functionality
+- Update CLAUDE.md when changing architecture, commands, or workflow
