@@ -134,13 +134,18 @@ export class MyComponent {
 
 ### Styling
 
-Import the default theme in your `styles.scss`:
+Both components are headless with optional default themes. Import themes in your `styles.scss`:
 
 ```scss
-@use '@moe1399/ngx-dynamic-forms/src/styles/themes/default';
+// Import both themes (dynamic form + form builder)
+@use '@moe1399/ngx-dynamic-forms/src/styles/ngx-dynamic-forms';
+
+// Or import individually
+@use '@moe1399/ngx-dynamic-forms/src/styles/themes/default';              // Dynamic Form (.ngx-df)
+@use '@moe1399/ngx-dynamic-forms/src/styles/themes/form-builder-default'; // Form Builder (.ngx-fb)
 ```
 
-#### Theme Customization with CSS Variables
+#### Dynamic Form Theme Customization
 
 The default theme uses CSS custom properties (design tokens) for easy customization. Override these variables on `.ngx-df` to customize colors, typography, spacing, and more:
 
@@ -208,6 +213,46 @@ Or create custom styles using `data-*` attribute selectors:
   // Style specific field types
 }
 ```
+
+#### Form Builder Theme Customization
+
+The form builder uses `.ngx-fb` wrapper class with its own CSS variables:
+
+```scss
+.ngx-fb {
+  // Primary colors
+  --fb-color-primary: #0066cc;
+  --fb-color-primary-dark: #004d99;
+
+  // Backgrounds
+  --fb-color-background: #f0f4f8;
+  --fb-color-surface: #ffffff;
+
+  // Typography
+  --fb-font-family: 'Roboto', sans-serif;
+  --fb-font-size-base: 14px;
+
+  // Spacing
+  --fb-spacing-md: 8px;
+  --fb-spacing-lg: 12px;
+
+  // Layout
+  --fb-left-panel-width: 350px;
+}
+```
+
+**Available Form Builder CSS Variables:**
+
+| Category | Variables |
+|----------|-----------|
+| Primary Colors | `--fb-color-primary`, `--fb-color-primary-dark`, `--fb-color-primary-light` |
+| Backgrounds | `--fb-color-background`, `--fb-color-background-light`, `--fb-color-surface`, `--fb-color-surface-alt` |
+| Borders | `--fb-color-border`, `--fb-color-border-dark`, `--fb-color-border-light` |
+| Text | `--fb-color-text`, `--fb-color-text-muted`, `--fb-color-text-inverse` |
+| State | `--fb-color-error`, `--fb-color-error-bg`, `--fb-color-success-bg` |
+| Typography | `--fb-font-family`, `--fb-font-size-base`, `--fb-font-size-sm`, `--fb-font-size-xs`, `--fb-font-size-lg` |
+| Spacing | `--fb-spacing-xs` through `--fb-spacing-2xl` |
+| Layout | `--fb-left-panel-width`, `--fb-min-height`, `--fb-max-panel-height` |
 
 ## API
 

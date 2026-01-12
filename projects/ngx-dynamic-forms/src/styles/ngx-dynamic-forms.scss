@@ -1,5 +1,10 @@
-// ngx-dynamic-forms default theme
-// Import this file in your styles.scss to use the default theme:
+// ngx-dynamic-forms default themes
+// Import this file in your styles.scss to use both default themes:
 // @import 'ngx-dynamic-forms/styles/ngx-dynamic-forms';
+//
+// Or import them individually:
+// @import 'ngx-dynamic-forms/styles/themes/default';           // Dynamic Form theme
+// @import 'ngx-dynamic-forms/styles/themes/form-builder-default'; // Form Builder theme
 
 @import './themes/default';
+@import './themes/form-builder-default';

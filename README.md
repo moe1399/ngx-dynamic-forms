@@ -147,6 +147,46 @@ condition: {
 }
 ```
 
+## Theming
+
+Both components are headless with optional default themes. Import themes in your global styles:
+
+```scss
+// Import both themes (dynamic form + form builder)
+@import '@moe1399/ngx-dynamic-forms/src/styles/ngx-dynamic-forms';
+
+// Or import individually
+@import '@moe1399/ngx-dynamic-forms/src/styles/themes/default';              // Dynamic Form
+@import '@moe1399/ngx-dynamic-forms/src/styles/themes/form-builder-default'; // Form Builder
+```
+
+### Customizing Themes
+
+Override CSS variables to customize:
+
+```scss
+// Dynamic Form - uses .ngx-df wrapper
+.ngx-df {
+  --df-color-primary: #0066cc;
+  --df-color-background: #f5f5f5;
+  --df-font-family: 'Roboto', sans-serif;
+}
+
+// Form Builder - uses .ngx-fb wrapper
+.ngx-fb {
+  --fb-color-primary: #0066cc;
+  --fb-color-background: #f0f4f8;
+  --fb-font-family: 'Roboto', sans-serif;
+}
+```
+
+Style via data attributes for complete control:
+
+```scss
+[data-field-valid="false"] { border-color: red; }
+[data-field-type="email"] input { /* email-specific styles */ }
+```
+
 ## Development
 
 ```bash

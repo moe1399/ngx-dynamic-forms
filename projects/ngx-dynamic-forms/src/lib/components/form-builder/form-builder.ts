@@ -44,6 +44,9 @@ export interface ToolbarConfig {
   imports: [CommonModule, FormsModule],
   templateUrl: './form-builder.html',
   styleUrl: './form-builder.scss',
+  host: {
+    class: 'ngx-fb',
+  },
 })
 export class NgxFormBuilder {
   // Inject services using inject()

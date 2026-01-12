@@ -5,3 +5,6 @@
 
 // Import default form theme - global to work across component boundaries
 @import './styles/form-themes/default.scss';
+
+// Import form builder theme
+@import '../../../projects/ngx-dynamic-forms/src/styles/themes/form-builder-default.scss';
