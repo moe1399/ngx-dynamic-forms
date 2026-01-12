@@ -1,3 +1,21 @@
+# [0.0.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.5.4...v0.0.0) (2026-01-12)
+
+
+### Features
+
+* add named async validators with loading indicator ([435be5d](https://github.com/moe1399/ngx-dynamic-forms/commit/435be5d4bfba1c6b00a435524ee7ff97af363b81))
+
+
+
+# [0.0.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.5.4...v0.0.0) (2026-01-12)
+
+
+### Features
+
+* add named async validators with loading indicator ([435be5d](https://github.com/moe1399/ngx-dynamic-forms/commit/435be5d4bfba1c6b00a435524ee7ff97af363b81))
+
+
+
 # 0.0.0 (2026-01-11)
 
 

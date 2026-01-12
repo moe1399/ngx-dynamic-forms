@@ -31,54 +31,79 @@ echo "========================================"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-# 1. Bump version in Angular library
+# 1. Calculate new version first (without modifying files yet)
 echo ""
-echo ">>> Bumping Angular library version..."
+echo ">>> Calculating new version..."
 cd "$ROOT_DIR/projects/ngx-dynamic-forms"
-npm version "$VERSION_TYPE" --no-git-tag-version
-NEW_VERSION=$(node -p "require('./package.json').version")
-echo "New version: $NEW_VERSION"
+CURRENT_VERSION=$(node -p "require('./package.json').version")
+IFS='.' read -r V_MAJOR V_MINOR V_PATCH <<< "$CURRENT_VERSION"
+case $VERSION_TYPE in
+  major)
+    V_MAJOR=$((V_MAJOR + 1))
+    V_MINOR=0
+    V_PATCH=0
+    ;;
+  minor)
+    V_MINOR=$((V_MINOR + 1))
+    V_PATCH=0
+    ;;
+  patch)
+    V_PATCH=$((V_PATCH + 1))
+    ;;
+esac
+NEW_VERSION="$V_MAJOR.$V_MINOR.$V_PATCH"
+echo "New version will be: $NEW_VERSION"
 
-# 2. Bump version in TypeScript validation package
+# 2. Update peer dependency in Angular library BEFORE version bumps
+echo ""
+echo ">>> Updating peer dependency version..."
+cd "$ROOT_DIR/projects/ngx-dynamic-forms"
+# Update the peer dependency to use the new major.minor range
+NEW_PEER_RANGE="^$V_MAJOR.$V_MINOR.0"
+node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+pkg.peerDependencies['@moe1399/ngx-dynamic-forms-validation'] = '$NEW_PEER_RANGE';
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
+echo "Updated peer dependency to: $NEW_PEER_RANGE"
+
+# 3. Bump version in TypeScript validation package first
 echo ""
 echo ">>> Bumping TypeScript validation package version..."
 cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation"
-npm version "$VERSION_TYPE" --no-git-tag-version
+npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
 
-# 3. Bump version in .NET validation package
+# 4. Reinstall to update lockfile with new versions
+echo ""
+echo ">>> Updating npm lockfile..."
+cd "$ROOT_DIR"
+npm install
+
+# 5. Bump version in Angular library
+echo ""
+echo ">>> Bumping Angular library version..."
+cd "$ROOT_DIR/projects/ngx-dynamic-forms"
+npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+
+# 6. Bump version in .NET validation package
 if [ -z "$NPM_ONLY" ]; then
   echo ""
   echo ">>> Bumping .NET validation package version..."
-  cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation-dotnet"
-  # Extract current version and bump it
-  CURRENT_DOTNET_VERSION=$(grep -oP '(?<=<Version>)[^<]+' DynamicForms.FormValidation.csproj)
-  IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_DOTNET_VERSION"
-  case $VERSION_TYPE in
-    major)
-      MAJOR=$((MAJOR + 1))
-      MINOR=0
-      PATCH=0
-      ;;
-    minor)
-      MINOR=$((MINOR + 1))
-      PATCH=0
-      ;;
-    patch)
-      PATCH=$((PATCH + 1))
-      ;;
-  esac
-  NEW_DOTNET_VERSION="$MAJOR.$MINOR.$PATCH"
-  sed -i '' "s|<Version>$CURRENT_DOTNET_VERSION</Version>|<Version>$NEW_DOTNET_VERSION</Version>|" DynamicForms.FormValidation.csproj
-  echo "New .NET version: $NEW_DOTNET_VERSION"
+  cd "$ROOT_DIR/packages/form-validation-dotnet"
+  # Use the same version as the npm packages
+  CURRENT_DOTNET_VERSION=$(grep -oP '(?<=<Version>)[^<]+' DynamicForms.FormValidation.csproj || echo "0.0.0")
+  sed -i '' "s|<Version>$CURRENT_DOTNET_VERSION</Version>|<Version>$NEW_VERSION</Version>|" DynamicForms.FormValidation.csproj
+  echo "New .NET version: $NEW_VERSION"
 fi
 
-# 4. Update changelog
+# 7. Update changelog
 echo ""
 echo ">>> Updating changelog..."
 cd "$ROOT_DIR"
 npm run changelog
 
-# 5. Build all packages
+# 8. Build all packages
 echo ""
 echo ">>> Building all packages..."
 cd "$ROOT_DIR"
@@ -88,7 +113,7 @@ if [ -z "$NPM_ONLY" ]; then
   npm run build:validation-dotnet
 fi
 
-# 6. Publish Angular library
+# 9. Publish Angular library
 echo ""
 echo ">>> Publishing Angular library..."
 cd "$ROOT_DIR/dist/ngx-dynamic-forms"
@@ -98,7 +123,7 @@ else
   npm publish --access public
 fi
 
-# 7. Publish TypeScript validation package
+# 10. Publish TypeScript validation package
 echo ""
 echo ">>> Publishing TypeScript validation package..."
 cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation"
@@ -108,11 +133,11 @@ else
   npm publish --access public
 fi
 
-# 8. Publish .NET validation package
+# 11. Publish .NET validation package
 if [ -z "$NPM_ONLY" ] && [ -z "$DRY_RUN" ]; then
   echo ""
   echo ">>> Publishing .NET validation package..."
-  cd "$ROOT_DIR/packages/ngx-dynamic-forms-validation-dotnet"
+  cd "$ROOT_DIR/packages/form-validation-dotnet"
   dotnet pack -c Release
   if [ -n "$NUGET_API_KEY" ]; then
     dotnet nuget push bin/Release/DynamicForms.FormValidation.*.nupkg \
@@ -124,7 +149,7 @@ if [ -z "$NPM_ONLY" ] && [ -z "$DRY_RUN" ]; then
   fi
 fi
 
-# 9. Commit and push changes
+# 12. Commit and push changes
 if [ -z "$DRY_RUN" ]; then
   echo ""
   echo ">>> Committing version changes..."
