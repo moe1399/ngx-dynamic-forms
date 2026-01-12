@@ -577,6 +577,22 @@ $text-muted: #666;
   .theme-content {
     max-width: 1000px;
 
+    .theme-section {
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid $lavender;
+
+      &:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      h2 {
+        margin-top: 0;
+      }
+    }
+
     .theme-actions {
       display: flex;
       align-items: center;
@@ -585,6 +601,7 @@ $text-muted: #666;
       padding: 0.75rem 1rem;
       background: $lavender;
       border: 1px solid $border-color;
+      flex-wrap: wrap;
 
       .copy-btn {
         padding: 0.5rem 1rem;
@@ -599,11 +616,40 @@ $text-muted: #666;
         &:hover {
           background: $purple-dark;
         }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
       }
 
-      .theme-note {
+      .raw-link,
+      .download-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        text-decoration: none;
+        border: 1px solid $border-color;
+        background: white;
+        color: $purple;
+
+        &:hover {
+          background: $lavender-light;
+          text-decoration: none;
+        }
+      }
+    }
+
+    .theme-note {
+      font-size: 0.8125rem;
+      color: $text-muted;
+      margin: 0.5rem 0 1rem 0;
+
+      code {
+        background: $lavender;
+        padding: 0.125rem 0.375rem;
+        border: 1px solid $border-color;
         font-size: 0.8125rem;
-        color: $text-muted;
+        color: $purple-dark;
       }
     }
 
@@ -698,11 +744,14 @@ $text-muted: #666;
 
     .theme-content .theme-actions {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
       gap: 0.5rem;
 
-      .copy-btn {
+      .copy-btn,
+      .raw-link,
+      .download-link {
         width: 100%;
+        text-align: center;
       }
     }
   }

@@ -87,6 +87,11 @@ export class App implements OnInit {
   themeCss = signal<string>('');
   themeCssLoading = signal<boolean>(false);
 
+  // Form Builder Theme CSS content
+  formBuilderThemeCss = signal<string>('');
+  formBuilderThemeCssLoading = signal<boolean>(false);
+  formBuilderThemeCopied = signal<boolean>(false);
+
   // Changelog content (parsed from CHANGELOG.md)
   changelogHtml = signal<string>('');
   changelogLoading = signal<boolean>(false);
@@ -95,6 +100,7 @@ export class App implements OnInit {
     this.loadSchemaFromUrl();
     this.loadDocumentation();
     this.loadThemeCss();
+    this.loadFormBuilderThemeCss();
     this.loadChangelog();
   }
 
@@ -126,6 +132,21 @@ export class App implements OnInit {
       console.error('Failed to load theme CSS:', error);
     } finally {
       this.themeCssLoading.set(false);
+    }
+  }
+
+  private async loadFormBuilderThemeCss(): Promise<void> {
+    this.formBuilderThemeCssLoading.set(true);
+    try {
+      const response = await fetch('form-builder-theme.scss');
+      if (response.ok) {
+        const css = await response.text();
+        this.formBuilderThemeCss.set(css);
+      }
+    } catch (error) {
+      console.error('Failed to load form builder theme CSS:', error);
+    } finally {
+      this.formBuilderThemeCssLoading.set(false);
     }
   }
 
@@ -275,6 +296,21 @@ export class App implements OnInit {
         }, 2000);
       } catch {
         console.error('Failed to copy CSS to clipboard');
+      }
+    }
+  }
+
+  async copyFormBuilderThemeCss(): Promise<void> {
+    const css = this.formBuilderThemeCss();
+    if (css) {
+      try {
+        await navigator.clipboard.writeText(css);
+        this.formBuilderThemeCopied.set(true);
+        setTimeout(() => {
+          this.formBuilderThemeCopied.set(false);
+        }, 2000);
+      } catch {
+        console.error('Failed to copy form builder CSS to clipboard');
       }
     }
   }

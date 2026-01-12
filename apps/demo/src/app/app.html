@@ -167,27 +167,61 @@
   @if (currentView() === 'theme') {
     <div class="view-content theme-view">
       <article class="theme-content">
-        <h2>Default Theme CSS</h2>
-        <p class="lead">Copy this CSS to your project's stylesheet to style the dynamic form component.</p>
+        <!-- Dynamic Form Theme Section -->
+        <section class="theme-section">
+          <h2>Dynamic Form Theme CSS</h2>
+          <p class="lead">Copy this CSS to your project's stylesheet to style the dynamic form component.</p>
 
-        <div class="theme-actions">
-          <button type="button" class="copy-btn" (click)="copyThemeCss()" [disabled]="!themeCss()">
-            @if (themeCopied()) {
-              &#10003; Copied!
-            } @else {
-              Copy SCSS
-            }
-          </button>
-          <span class="theme-note">This is SCSS that compiles to CSS. All styles are scoped to <code>.ngx-df</code> to prevent CSS clashes.</span>
-        </div>
+          <div class="theme-actions">
+            <button type="button" class="copy-btn" (click)="copyThemeCss()" [disabled]="!themeCss()">
+              @if (themeCopied()) {
+                &#10003; Copied!
+              } @else {
+                Copy SCSS
+              }
+            </button>
+            <a href="default-theme.scss" target="_blank" class="raw-link">Open Raw File</a>
+            <a href="default-theme.scss" download="default-theme.scss" class="download-link">Download</a>
+          </div>
+          <p class="theme-note">This is SCSS scoped to <code>.ngx-df</code>. Add this class to your form container.</p>
 
-        @if (themeCssLoading()) {
-          <p>Loading theme CSS...</p>
-        } @else if (themeCss()) {
-          <pre><code>{{ themeCss() }}</code></pre>
-        } @else {
-          <p>Failed to load theme CSS.</p>
-        }
+          @if (themeCssLoading()) {
+            <p>Loading theme CSS...</p>
+          } @else if (themeCss()) {
+            <pre><code>{{ themeCss() }}</code></pre>
+          } @else {
+            <p>Failed to load theme CSS.</p>
+          }
+        </section>
+
+        <!-- Form Builder Theme Section -->
+        <section class="theme-section">
+          <h2>Form Builder Theme CSS</h2>
+          <p class="lead">Copy this CSS to your project's stylesheet to style the form builder component.</p>
+
+          <div class="theme-actions">
+            <button type="button" class="copy-btn" (click)="copyFormBuilderThemeCss()" [disabled]="!formBuilderThemeCss()">
+              @if (formBuilderThemeCopied()) {
+                &#10003; Copied!
+              } @else {
+                Copy SCSS
+              }
+            </button>
+            <a href="form-builder-theme.scss" target="_blank" class="raw-link">Open Raw File</a>
+            <a href="form-builder-theme.scss" download="form-builder-theme.scss" class="download-link">Download</a>
+          </div>
+          <p class="theme-note">This is SCSS scoped to <code>.ngx-fb</code>. Add this class to your form builder container.</p>
+
+          @if (formBuilderThemeCssLoading()) {
+            <p>Loading form builder theme CSS...</p>
+          } @else if (formBuilderThemeCss()) {
+            <pre><code>{{ formBuilderThemeCss() }}</code></pre>
+          } @else {
+            <p>Failed to load form builder theme CSS.</p>
+          }
+        </section>
+
+        <!-- Data Attributes Reference -->
         <section class="theme-info">
           <h3>Data Attributes Reference</h3>
           <p>The form component exposes these data attributes for styling:</p>
