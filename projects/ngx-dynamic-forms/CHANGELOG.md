@@ -1,3 +1,18 @@
+# [0.0.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.9.0...v0.0.0) (2026-01-12)
+
+
+### Bug Fixes
+
+* improve select field UX and readonly mode behavior ([d5987e5](https://github.com/moe1399/ngx-dynamic-forms/commit/d5987e57b07b95a3956453a924cd2d0cd956bf6d))
+
+
+### Features
+
+* add conditional visibility for sections and fields ([0ba7290](https://github.com/moe1399/ngx-dynamic-forms/commit/0ba72909df8ba0183efc64ffcf57ab34ad3faac3))
+* **demo:** add form builder theme CSS section to Theme CSS page ([b22e567](https://github.com/moe1399/ngx-dynamic-forms/commit/b22e5672c691952ced81f8927b64bb923f03f225))
+
+
+
 # [0.0.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.5.4...v0.0.0) (2026-01-12)
 
 
