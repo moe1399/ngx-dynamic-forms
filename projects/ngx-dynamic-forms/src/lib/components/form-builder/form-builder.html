@@ -211,6 +211,59 @@
             />
             <small class="form-hint">Custom anchor for navigation links (e.g., #school-info)</small>
           </div>
+
+          <!-- Section Visibility Condition -->
+          <div class="condition-section">
+            <h4>Visibility Condition</h4>
+            <div class="form-group condition-toggle">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="!!section.condition"
+                  (change)="toggleSectionCondition(section.id)"
+                />
+                Show conditionally
+              </label>
+            </div>
+
+            @if (section.condition) {
+              <div class="condition-config">
+                <div class="form-group">
+                  <label>When field</label>
+                  <select
+                    [ngModel]="section.condition.field"
+                    (ngModelChange)="updateSectionConditionField(section.id, $event)">
+                    @for (f of getAvailableSectionConditionFields(); track f.value) {
+                      <option [value]="f.value">{{ f.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Operator</label>
+                  <select
+                    [ngModel]="section.condition.operator"
+                    (ngModelChange)="updateSectionConditionOperator(section.id, $event)">
+                    @for (op of conditionOperators; track op) {
+                      <option [value]="op">{{ op }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (section.condition.operator === 'equals' || section.condition.operator === 'notEquals') {
+                  <div class="form-group">
+                    <label>Value</label>
+                    <input
+                      type="text"
+                      [ngModel]="section.condition.value"
+                      (ngModelChange)="updateSectionConditionValue(section.id, $event)"
+                      placeholder="Enter value"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
         </div>
       }
       <!-- Field Editor -->
@@ -333,6 +386,59 @@
               />
               Disabled
             </label>
+          </div>
+
+          <!-- Field Visibility Condition -->
+          <div class="condition-section">
+            <h4>Visibility Condition</h4>
+            <div class="form-group condition-toggle">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="!!field.condition"
+                  (change)="toggleFieldCondition(fieldIndex)"
+                />
+                Show conditionally
+              </label>
+            </div>
+
+            @if (field.condition) {
+              <div class="condition-config">
+                <div class="form-group">
+                  <label>When field</label>
+                  <select
+                    [ngModel]="field.condition.field"
+                    (ngModelChange)="updateFieldConditionField(fieldIndex, $event)">
+                    @for (f of getAvailableFieldConditionFields(fieldIndex); track f.value) {
+                      <option [value]="f.value">{{ f.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Operator</label>
+                  <select
+                    [ngModel]="field.condition.operator"
+                    (ngModelChange)="updateFieldConditionOperator(fieldIndex, $event)">
+                    @for (op of conditionOperators; track op) {
+                      <option [value]="op">{{ op }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (field.condition.operator === 'equals' || field.condition.operator === 'notEquals') {
+                  <div class="form-group">
+                    <label>Value</label>
+                    <input
+                      type="text"
+                      [ngModel]="field.condition.value"
+                      (ngModelChange)="updateFieldConditionValue(fieldIndex, $event)"
+                      placeholder="Enter value"
+                    />
+                  </div>
+                }
+              </div>
+            }
           </div>
 
           <!-- Options (for select, radio, checkbox fields) -->

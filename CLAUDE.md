@@ -109,7 +109,7 @@ GitHub Actions auto-deploys to GitHub Pages on push to `main` (`.github/workflow
 - Auto-save, local storage, real-time validation
 - **Input**: `config: FormConfig`
 - **Outputs**: `formSubmit`, `formSave`, `validationErrors`
-- **Data attrs**: `data-form-id`, `data-form-valid`, `data-form-dirty`, `data-form-touched`, `data-section-id`, `data-section-header`, `data-section-description`, `data-field-name`, `data-field-type`, `data-field-valid`, `data-field-touched`, `data-field-dirty`, `data-field-disabled`, `data-field-required`, `data-validation-error`, `data-action`
+- **Data attrs**: `data-form-id`, `data-form-valid`, `data-form-dirty`, `data-form-touched`, `data-section-id`, `data-section-header`, `data-section-description`, `data-section-hidden`, `data-field-name`, `data-field-type`, `data-field-valid`, `data-field-touched`, `data-field-dirty`, `data-field-disabled`, `data-field-required`, `data-field-hidden`, `data-validation-error`, `data-action`
 
 **2. Form Builder** (`src/app/components/form-builder/`)
 - Visual builder UI: sections, fields, validations, drag-drop ordering
@@ -172,7 +172,7 @@ Style via attribute selectors: `form[data-form-id]`, `[data-field-row]`, `[data-
 
 ### Sections
 
-Group fields with headers/descriptions.
+Group fields with headers/descriptions. Sections and fields can be conditionally shown/hidden.
 ```typescript
 interface FormSection {
   id: string;
@@ -180,9 +180,18 @@ interface FormSection {
   description?: string;
   anchorId?: string;  // Auto-generated from title if not set
   order?: number;
+  condition?: ValidationCondition;  // Visibility condition - section hidden when condition is not met
 }
 ```
-Fields link via `sectionId`. Sections render as `<section id="anchorId">`. Data attrs: `data-section-id`, `data-section-header`, `data-section-description`.
+Fields link via `sectionId`. Sections render as `<section id="anchorId">`. Data attrs: `data-section-id`, `data-section-header`, `data-section-description`, `data-section-hidden`.
+
+### Conditional Visibility
+
+Fields and sections support `condition?: ValidationCondition` for conditional visibility:
+- Condition operators: `equals`, `notEquals`, `isEmpty`, `isNotEmpty`
+- Hidden field/section values are preserved but excluded from submission
+- Validation is skipped for hidden fields
+- Data attrs: `data-field-hidden`, `data-section-hidden`
 
 ### File Structure
 
@@ -223,6 +232,30 @@ When making changes to form validation (ValidationRule, validation types, condit
   - `src/FormValidator.cs` - Validation logic
 
 Both packages must stay in sync with the Angular library's validation features.
+
+## Issue Tracking
+
+The `ISSUES/` folder contains markdown files for tracking bugs, features, and improvements.
+
+### Creating Issues
+
+1. Create a new markdown file in `ISSUES/` with a descriptive filename (e.g., `checkbox-radio-readonly-bug.md`)
+2. Include the following sections:
+   - **Description**: Clear summary of the issue
+   - **Affected Components**: Which parts of the codebase are impacted
+   - **Root Cause Analysis**: Detailed investigation of the problem
+   - **Affected Code Locations**: Specific files and line numbers
+   - **Recommended Fix**: Proposed solution
+
+### Archiving Completed Issues
+
+When an issue is resolved:
+1. Move the file from `ISSUES/` to `ISSUES/done/`
+2. Optionally add a `## Resolution` section documenting what was changed
+
+### Example Issue Filename
+
+- `checkbox-radio-readonly-bug.md` - Descriptive, kebab-case filenames
 
 ## Documentation Maintenance
 

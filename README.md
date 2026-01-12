@@ -147,6 +147,42 @@ condition: {
 }
 ```
 
+### Conditional Visibility
+
+Fields and sections can be shown/hidden based on other field values using the same condition syntax:
+
+```typescript
+// Conditional field - only shows when employmentType is 'contractor'
+{
+  name: 'contractorDetails',
+  label: 'Contractor Details',
+  type: 'textarea',
+  condition: {
+    field: 'employmentType',
+    operator: 'equals',
+    value: 'contractor'
+  }
+}
+
+// Conditional section - all fields in section are hidden when condition is not met
+const section: FormSection = {
+  id: 'advanced-options',
+  title: 'Advanced Options',
+  condition: {
+    field: 'showAdvanced',
+    operator: 'equals',
+    value: true
+  }
+}
+```
+
+When a field or section is hidden:
+- Values are **preserved** in form state
+- Values are **excluded** from submission
+- Validation is **skipped** for hidden fields
+
+Condition operators: `equals`, `notEquals`, `isEmpty`, `isNotEmpty`
+
 ## Theming
 
 Both components are headless with optional default themes. Import themes in your global styles:

@@ -176,6 +176,7 @@ export interface FormSection {
     description?: string;
     anchorId?: string;
     order?: number;
+    condition?: ValidationCondition;
 }
 /**
  * Comparison operators for validation conditions
@@ -254,6 +255,7 @@ export interface FormFieldConfig {
     daterangeConfig?: DateRangeConfig;
     formrefConfig?: FormRefConfig;
     fileuploadConfig?: FileUploadConfig;
+    condition?: ValidationCondition;
 }
 /**
  * Complete form configuration

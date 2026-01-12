@@ -66,6 +66,10 @@ export class DynamicForm implements OnInit, OnDestroy {
   // Signal tracking which fields have active drag-over
   dragActiveFields = signal<Set<string>>(new Set());
 
+  // Visibility tracking for conditional fields and sections
+  private visibleFields = signal<Set<string>>(new Set());
+  private visibleSections = signal<Set<string>>(new Set());
+
   // Async validation state
   private validatingFields = new Set<string>();
   private externalErrors = new Map<string, string>();
@@ -222,8 +226,9 @@ export class DynamicForm implements OnInit, OnDestroy {
 
     this.form = new FormGroup(group);
 
-    // Listen to value changes for validation and emit changes
+    // Listen to value changes for validation, visibility, and emit changes
     this.form.valueChanges.subscribe(() => {
+      this.updateVisibility();
       this.updateErrors();
       this.valueChanges.emit(this.getCleanedFormValue());
     });
@@ -237,6 +242,9 @@ export class DynamicForm implements OnInit, OnDestroy {
     // Trigger initial validation for fields with conditional validations
     // (they may have skipped validation during FormControl creation)
     this.triggerInitialConditionalValidation();
+
+    // Calculate initial visibility state based on default values
+    this.updateVisibility();
   }
 
   /**
@@ -793,6 +801,53 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
+   * Check if a field is currently visible based on its condition
+   * Fields without conditions are always visible
+   */
+  isFieldVisible(fieldName: string): boolean {
+    return this.visibleFields().has(fieldName);
+  }
+
+  /**
+   * Check if a section is currently visible based on its condition
+   * Sections without conditions are always visible
+   */
+  isSectionVisible(sectionId: string): boolean {
+    return this.visibleSections().has(sectionId);
+  }
+
+  /**
+   * Update visibility state for all fields and sections based on their conditions
+   */
+  private updateVisibility(): void {
+    const formData = this.form.value;
+    const currentConfig = this.config();
+
+    // Evaluate field visibility
+    const visibleFieldsSet = new Set<string>();
+    for (const field of currentConfig.fields) {
+      // Info fields don't have form controls but are still rendered
+      if (field.type === 'info') {
+        if (!field.condition || this.evaluateCondition(field.condition, formData)) {
+          visibleFieldsSet.add(field.name);
+        }
+      } else if (!field.condition || this.evaluateCondition(field.condition, formData)) {
+        visibleFieldsSet.add(field.name);
+      }
+    }
+    this.visibleFields.set(visibleFieldsSet);
+
+    // Evaluate section visibility
+    const visibleSectionsSet = new Set<string>();
+    for (const section of currentConfig.sections || []) {
+      if (!section.condition || this.evaluateCondition(section.condition, formData)) {
+        visibleSectionsSet.add(section.id);
+      }
+    }
+    this.visibleSections.set(visibleSectionsSet);
+  }
+
+  /**
    * Create a base validator function from a validation rule
    */
   private createBaseValidator(rule: ValidationRule): ValidatorFn | null {
@@ -1312,7 +1367,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
-   * Check if form is valid for submission (excludes empty table rows)
+   * Check if form is valid for submission (excludes empty table rows and hidden fields)
    */
   isFormValidForSubmit(): boolean {
     const currentConfig = this.config();
@@ -1320,6 +1375,12 @@ export class DynamicForm implements OnInit, OnDestroy {
     for (const field of currentConfig.fields) {
       // Skip archived fields - they don't participate in validation
       if (field.archived) continue;
+
+      // Skip hidden fields - they don't participate in validation
+      if (!this.isFieldVisible(field.name)) continue;
+
+      // Skip fields in hidden sections - they don't participate in validation
+      if (field.sectionId && !this.isSectionVisible(field.sectionId)) continue;
 
       if (field.type === 'table') {
         if (!this.isTableValid(field.name)) {
@@ -1758,13 +1819,26 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
-   * Get form value with empty table rows filtered out
+   * Get form value with empty table rows filtered out and hidden fields excluded
    */
   private getCleanedFormValue(): { [key: string]: any } {
     const value = { ...this.form.value };
     const currentConfig = this.config();
 
     currentConfig.fields.forEach((field) => {
+      // Exclude hidden fields from submission
+      if (!this.isFieldVisible(field.name)) {
+        delete value[field.name];
+        return;
+      }
+
+      // Exclude fields in hidden sections from submission
+      if (field.sectionId && !this.isSectionVisible(field.sectionId)) {
+        delete value[field.name];
+        return;
+      }
+
+      // Filter empty table rows
       if (field.type === 'table' && Array.isArray(value[field.name])) {
         value[field.name] = value[field.name].filter((row: any) => {
           return Object.values(row).some((v) => v !== '' && v !== null && v !== undefined);

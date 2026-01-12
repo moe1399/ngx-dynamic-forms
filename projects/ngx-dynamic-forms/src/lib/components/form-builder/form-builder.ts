@@ -912,6 +912,88 @@ export class NgxFormBuilder {
   }
 
   // ============================================
+  // Field Visibility Condition Methods
+  // ============================================
+
+  /**
+   * Toggle visibility condition on/off for a field
+   */
+  toggleFieldCondition(fieldIndex: number): void {
+    const field = { ...this.currentConfig().fields[fieldIndex] };
+    if (field.condition) {
+      delete field.condition;
+    } else {
+      const availableFields = this.getAvailableFieldConditionFields(fieldIndex);
+      const firstField = availableFields.length > 0 ? availableFields[0].value : '';
+      field.condition = {
+        field: firstField,
+        operator: 'equals',
+        value: '',
+      };
+    }
+    this.updateField(fieldIndex, field);
+  }
+
+  /**
+   * Update the field reference for a field visibility condition
+   */
+  updateFieldConditionField(fieldIndex: number, conditionField: string): void {
+    const field = { ...this.currentConfig().fields[fieldIndex] };
+    if (field.condition) {
+      field.condition = { ...field.condition, field: conditionField };
+      this.updateField(fieldIndex, field);
+    }
+  }
+
+  /**
+   * Update the operator for a field visibility condition
+   */
+  updateFieldConditionOperator(fieldIndex: number, operator: ValidationConditionOperator): void {
+    const field = { ...this.currentConfig().fields[fieldIndex] };
+    if (field.condition) {
+      field.condition = { ...field.condition, operator };
+      // Clear value for isEmpty/isNotEmpty operators
+      if (operator === 'isEmpty' || operator === 'isNotEmpty') {
+        delete field.condition.value;
+      }
+      this.updateField(fieldIndex, field);
+    }
+  }
+
+  /**
+   * Update the value for a field visibility condition
+   */
+  updateFieldConditionValue(fieldIndex: number, value: any): void {
+    const field = { ...this.currentConfig().fields[fieldIndex] };
+    if (field.condition) {
+      field.condition = { ...field.condition, value };
+      this.updateField(fieldIndex, field);
+    }
+  }
+
+  /**
+   * Get available fields for field visibility condition dropdown
+   */
+  getAvailableFieldConditionFields(fieldIndex: number): { value: string; label: string }[] {
+    const config = this.currentConfig();
+    const currentField = config.fields[fieldIndex];
+    const result: { value: string; label: string }[] = [];
+
+    config.fields.forEach((field) => {
+      // Skip the current field and non-value fields
+      if (field.name === currentField.name || field.type === 'info' || field.type === 'formref') {
+        return;
+      }
+      result.push({
+        value: field.name,
+        label: field.label || field.name,
+      });
+    });
+
+    return result;
+  }
+
+  // ============================================
   // Section Management Methods
   // ============================================
 
@@ -1029,6 +1111,96 @@ export class NgxFormBuilder {
 
     this.updateConfig(config);
     this.selectedSectionId.set(newId);
+  }
+
+  // ============================================
+  // Section Visibility Condition Methods
+  // ============================================
+
+  /**
+   * Toggle visibility condition on/off for a section
+   */
+  toggleSectionCondition(sectionId: string): void {
+    const config = { ...this.currentConfig() };
+    const sections = [...(config.sections || [])];
+    const index = sections.findIndex((s) => s.id === sectionId);
+    if (index === -1) return;
+
+    const section = { ...sections[index] };
+    if (section.condition) {
+      delete section.condition;
+    } else {
+      const availableFields = this.getAvailableSectionConditionFields();
+      const firstField = availableFields.length > 0 ? availableFields[0].value : '';
+      section.condition = {
+        field: firstField,
+        operator: 'equals',
+        value: '',
+      };
+    }
+    sections[index] = section;
+    config.sections = sections;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update the field reference for a section visibility condition
+   */
+  updateSectionConditionField(sectionId: string, conditionField: string): void {
+    const section = this.getSelectedSection();
+    if (section?.condition) {
+      this.updateSection(sectionId, {
+        condition: { ...section.condition, field: conditionField },
+      });
+    }
+  }
+
+  /**
+   * Update the operator for a section visibility condition
+   */
+  updateSectionConditionOperator(sectionId: string, operator: ValidationConditionOperator): void {
+    const section = this.getSelectedSection();
+    if (section?.condition) {
+      const updatedCondition = { ...section.condition, operator };
+      // Clear value for isEmpty/isNotEmpty operators
+      if (operator === 'isEmpty' || operator === 'isNotEmpty') {
+        delete updatedCondition.value;
+      }
+      this.updateSection(sectionId, { condition: updatedCondition });
+    }
+  }
+
+  /**
+   * Update the value for a section visibility condition
+   */
+  updateSectionConditionValue(sectionId: string, value: any): void {
+    const section = this.getSelectedSection();
+    if (section?.condition) {
+      this.updateSection(sectionId, {
+        condition: { ...section.condition, value },
+      });
+    }
+  }
+
+  /**
+   * Get available fields for section visibility condition dropdown
+   */
+  getAvailableSectionConditionFields(): { value: string; label: string }[] {
+    const config = this.currentConfig();
+    const result: { value: string; label: string }[] = [];
+
+    config.fields.forEach((field) => {
+      // Skip non-value fields
+      if (field.type === 'info' || field.type === 'formref') {
+        return;
+      }
+      result.push({
+        value: field.name,
+        label: field.label || field.name,
+      });
+    });
+
+    return result;
   }
 
   // ============================================

@@ -24,6 +24,19 @@ public static class FormValidator
     {
         var errors = new List<FieldValidationError>();
 
+        // Pre-compute visible sections for performance
+        var visibleSections = new HashSet<string>();
+        if (config.Sections != null)
+        {
+            foreach (var section in config.Sections)
+            {
+                if (section.Condition == null || EvaluateCondition(section.Condition, data, null))
+                {
+                    visibleSections.Add(section.Id);
+                }
+            }
+        }
+
         foreach (var field in config.Fields)
         {
             // Skip archived fields
@@ -31,6 +44,12 @@ public static class FormValidator
 
             // Skip non-input field types
             if (field.Type == FieldType.Info || field.Type == FieldType.FormRef) continue;
+
+            // Skip fields with visibility conditions that evaluate to false
+            if (field.Condition != null && !EvaluateCondition(field.Condition, data, null)) continue;
+
+            // Skip fields in hidden sections
+            if (field.SectionId is not null && !visibleSections.Contains(field.SectionId)) continue;
 
             data.TryGetValue(field.Name, out var value);
 

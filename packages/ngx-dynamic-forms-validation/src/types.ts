@@ -205,6 +205,7 @@ export interface FormSection {
   description?: string;
   anchorId?: string; // Custom anchor ID (auto-generated from title if not provided)
   order?: number;
+  condition?: ValidationCondition; // Visibility condition - section hidden when condition is not met
 }
 
 /**
@@ -285,6 +286,7 @@ export interface FormFieldConfig {
   daterangeConfig?: DateRangeConfig; // Configuration for daterange field type
   formrefConfig?: FormRefConfig; // Configuration for formref field type
   fileuploadConfig?: FileUploadConfig; // Configuration for fileupload field type
+  condition?: ValidationCondition; // Visibility condition - field hidden when condition is not met
 }
 
 /**

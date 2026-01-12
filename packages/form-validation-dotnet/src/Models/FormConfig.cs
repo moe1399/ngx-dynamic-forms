@@ -220,6 +220,12 @@ public class FormFieldConfig
 
     [JsonPropertyName("daterangeConfig")]
     public DateRangeConfig? DateRangeConfig { get; set; }
+
+    /// <summary>
+    /// Visibility condition - field hidden when condition is not met
+    /// </summary>
+    [JsonPropertyName("condition")]
+    public ValidationCondition? Condition { get; set; }
 }
 
 /// <summary>
@@ -235,6 +241,12 @@ public class FormSection
 
     [JsonPropertyName("description")]
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Visibility condition - section hidden when condition is not met
+    /// </summary>
+    [JsonPropertyName("condition")]
+    public ValidationCondition? Condition { get; set; }
 }
 
 /// <summary>

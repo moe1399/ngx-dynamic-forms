@@ -17,6 +17,7 @@
         [attr.data-field-name]="field.name"
         [attr.data-field-type]="field.type"
         [attr.data-field-archived]="field.archived || false"
+        [attr.data-field-hidden]="false"
         data-info-block
         [ngClass]="field.cssClass">
         <div
@@ -30,6 +31,7 @@
         [attr.data-field-name]="field.name"
         [attr.data-field-type]="field.type"
         [attr.data-field-archived]="field.archived || false"
+        [attr.data-field-hidden]="false"
         [attr.data-field-valid]="!hasError(field.name)"
         [attr.data-field-touched]="form.get(field.name)?.touched"
         [attr.data-field-dirty]="form.get(field.name)?.dirty"
@@ -1267,7 +1269,7 @@
         data-field-row
         [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
         @for (field of group; track field.name) {
-          @if (!field.archived || isArchivedFieldVisible(field)) {
+          @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
             <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
           }
         }
@@ -1276,25 +1278,28 @@
 
     <!-- Sectioned fields -->
     @for (section of getSections(); track section.id) {
-      <section
-        [id]="getSectionAnchorId(section)"
-        [attr.data-section-id]="section.id">
-        <header data-section-header>{{ section.title }}</header>
-        @if (section.description) {
-          <div data-section-description>{{ section.description }}</div>
-        }
-        @for (group of getFieldsForSection(section.id); track $index) {
-          <div
-            data-field-row
-            [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
-            @for (field of group; track field.name) {
-              @if (!field.archived || isArchivedFieldVisible(field)) {
-                <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+      @if (isSectionVisible(section.id)) {
+        <section
+          [id]="getSectionAnchorId(section)"
+          [attr.data-section-id]="section.id"
+          [attr.data-section-hidden]="false">
+          <header data-section-header>{{ section.title }}</header>
+          @if (section.description) {
+            <div data-section-description>{{ section.description }}</div>
+          }
+          @for (group of getFieldsForSection(section.id); track $index) {
+            <div
+              data-field-row
+              [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
+              @for (field of group; track field.name) {
+                @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
+                  <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+                }
               }
-            }
-          </div>
-        }
-      </section>
+            </div>
+          }
+        </section>
+      }
     }
 
     <!-- Fallback: if no sections defined, use original grouped fields approach -->
@@ -1304,7 +1309,7 @@
           data-field-row
           [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
           @for (field of group; track field.name) {
-            @if (!field.archived || isArchivedFieldVisible(field)) {
+            @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
               <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
             }
           }

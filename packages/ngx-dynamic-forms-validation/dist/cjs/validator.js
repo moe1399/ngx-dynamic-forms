@@ -309,12 +309,25 @@ function validateDateRangeField(field, dateRangeData, formData) {
  */
 function validateForm(config, data) {
     const errors = [];
+    // Pre-compute visible sections for performance
+    const visibleSections = new Set();
+    for (const section of config.sections || []) {
+        if (!section.condition || evaluateCondition(section.condition, data)) {
+            visibleSections.add(section.id);
+        }
+    }
     for (const field of config.fields) {
         // Skip archived fields
         if (field.archived)
             continue;
         // Skip non-input field types
         if (field.type === 'info' || field.type === 'formref')
+            continue;
+        // Skip fields with visibility conditions that evaluate to false
+        if (field.condition && !evaluateCondition(field.condition, data))
+            continue;
+        // Skip fields in hidden sections
+        if (field.sectionId && !visibleSections.has(field.sectionId))
             continue;
         const value = data[field.name];
         // Handle special field types
