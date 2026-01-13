@@ -167,10 +167,6 @@ export interface FormConfig {
   sections?: FormSection[];
   /** Wizard mode configuration - splits form into multi-page wizard */
   wizard?: WizardConfig;
-  submitLabel?: string;
-  saveLabel?: string;
-  autoSave?: boolean;
-  autoSaveInterval?: number;
 }
 
 /**

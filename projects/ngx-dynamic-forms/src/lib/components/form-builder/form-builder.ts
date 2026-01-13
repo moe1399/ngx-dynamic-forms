@@ -63,6 +63,7 @@ export class NgxFormBuilder {
   // Feature visibility inputs
   showToolbar = input<boolean>(true);
   showSavedConfigs = input<boolean>(true);
+  showFormSettings = input<boolean>(true);
   toolbarConfig = input<ToolbarConfig>({
     showNewForm: true,
     showSave: true,

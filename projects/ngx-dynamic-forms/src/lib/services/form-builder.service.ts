@@ -84,10 +84,6 @@ export class FormBuilderService {
     return {
       id: `form-${Date.now()}`,
       fields: [],
-      submitLabel: 'Submit',
-      saveLabel: 'Save Draft',
-      autoSave: false,
-      autoSaveInterval: 5000,
     };
   }
 

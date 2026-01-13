@@ -214,7 +214,6 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   activePopover: string | null = null;
   activeCellTooltip: { field: string; row: number; col: string } | null = null;
-  private autoSaveTimer?: number;
 
   // Cache for resolved form references (fieldName -> FormConfig)
   resolvedFormRefs: Map<string, FormConfig> = new Map();
@@ -244,11 +243,9 @@ export class DynamicForm implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForm();
     this.loadSavedForm();
-    this.setupAutoSave();
   }
 
   ngOnDestroy(): void {
-    this.clearAutoSave();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -1079,28 +1076,6 @@ export class DynamicForm implements OnInit, OnDestroy {
     const saved = this.formStorage.loadForm(currentConfig.id);
     if (saved && !saved.isComplete) {
       this.form.patchValue(saved.data);
-    }
-  }
-
-  /**
-   * Setup auto-save if enabled
-   */
-  private setupAutoSave(): void {
-    const currentConfig = this.config();
-    if (currentConfig.autoSave) {
-      const interval = currentConfig.autoSaveInterval || 5000;
-      this.autoSaveTimer = window.setInterval(() => {
-        this.saveForm();
-      }, interval);
-    }
-  }
-
-  /**
-   * Clear auto-save timer
-   */
-  private clearAutoSave(): void {
-    if (this.autoSaveTimer) {
-      clearInterval(this.autoSaveTimer);
     }
   }
 

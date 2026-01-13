@@ -37,57 +37,20 @@
     <!-- Left Panel: Form Settings & Fields List -->
     <div class="left-panel">
       <!-- Form Settings -->
-      <div class="panel-section">
-        <h3>Form Settings</h3>
-        <div class="form-group">
-          <label>Form ID</label>
-          <input
-            type="text"
-            [ngModel]="currentConfig().id"
-            (ngModelChange)="updateFormSettings({ id: $event })"
-            placeholder="form-id"
-          />
-        </div>
-        <div class="form-group">
-          <label>Submit Label</label>
-          <input
-            type="text"
-            [ngModel]="currentConfig().submitLabel"
-            (ngModelChange)="updateFormSettings({ submitLabel: $event })"
-            placeholder="Submit"
-          />
-        </div>
-        <div class="form-group">
-          <label>Save Label (optional)</label>
-          <input
-            type="text"
-            [ngModel]="currentConfig().saveLabel"
-            (ngModelChange)="updateFormSettings({ saveLabel: $event })"
-            placeholder="Save Draft"
-          />
-        </div>
-        <div class="form-group">
-          <label>
-            <input
-              type="checkbox"
-              [ngModel]="currentConfig().autoSave"
-              (ngModelChange)="updateFormSettings({ autoSave: $event })"
-            />
-            Enable Auto-Save
-          </label>
-        </div>
-        @if (currentConfig().autoSave) {
+      @if (showFormSettings()) {
+        <div class="panel-section">
+          <h3>Form Settings</h3>
           <div class="form-group">
-            <label>Auto-Save Interval (ms)</label>
+            <label>Form ID</label>
             <input
-              type="number"
-              [ngModel]="currentConfig().autoSaveInterval"
-              (ngModelChange)="updateFormSettings({ autoSaveInterval: $event })"
-              placeholder="5000"
+              type="text"
+              [ngModel]="currentConfig().id"
+              (ngModelChange)="updateFormSettings({ id: $event })"
+              placeholder="form-id"
             />
           </div>
-        }
-      </div>
+        </div>
+      }
 
       <!-- Sections List -->
       <div class="panel-section">

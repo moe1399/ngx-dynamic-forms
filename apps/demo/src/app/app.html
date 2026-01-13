@@ -95,20 +95,18 @@
           <!-- Custom buttons rendered by consuming application -->
           <div data-form-actions>
             @if (!formSubmitted()) {
-              @if (currentConfig()!.saveLabel) {
-                <button
-                  type="button"
-                  data-action="save"
-                  (click)="dynamicForm.saveForm()">
-                  {{ currentConfig()!.saveLabel }}
-                </button>
-              }
+              <button
+                type="button"
+                data-action="save"
+                (click)="dynamicForm.saveForm()">
+                Save Draft
+              </button>
               <button
                 type="button"
                 data-action="submit"
                 [attr.data-can-submit]="dynamicForm.valid"
                 (click)="dynamicForm.submitForm()">
-                {{ currentConfig()!.submitLabel || 'Submit' }}
+                Submit
               </button>
             } @else {
               <span data-form-status>Form submitted - read only</span>

@@ -106,7 +106,7 @@ GitHub Actions auto-deploys to GitHub Pages on push to `main` (`.github/workflow
 
 **1. Dynamic Form** (`src/app/components/dynamic-form/`)
 - Headless form renderer, JSON-driven config
-- Auto-save, local storage, real-time validation
+- Local storage persistence, real-time validation
 - **Input**: `config: FormConfig`
 - **Outputs**: `formSubmit`, `formSave`, `validationErrors`
 - **Data attrs**: `data-form-id`, `data-form-valid`, `data-form-dirty`, `data-form-touched`, `data-section-id`, `data-section-header`, `data-section-description`, `data-section-hidden`, `data-field-name`, `data-field-type`, `data-field-valid`, `data-field-touched`, `data-field-dirty`, `data-field-disabled`, `data-field-required`, `data-field-hidden`, `data-validation-error`, `data-action`
@@ -115,6 +115,7 @@ GitHub Actions auto-deploys to GitHub Pages on push to `main` (`.github/workflow
 - Visual builder UI: sections, fields, validations, drag-drop ordering
 - Save/load, JSON import/export, URL sharing (compressed)
 - Uses helper methods (no spread in templates), signals for state
+- **Inputs**: `showToolbar`, `showSavedConfigs`, `showFormSettings` (all default `true`)
 - **Output**: `configChanged: FormConfig`
 
 **3. Services**:
