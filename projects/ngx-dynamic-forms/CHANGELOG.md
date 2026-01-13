@@ -1,3 +1,28 @@
+# [0.0.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.0...v0.0.0) (2026-01-13)
+
+
+* feat!: remove UI properties from FormConfig, add showFormSettings input ([2c04a5f](https://github.com/moe1399/ngx-dynamic-forms/commit/2c04a5fd67a7e70ad57c0dbcf86fb6a8600e25fc))
+
+
+### Bug Fixes
+
+* improve wizard progress indicator styling and responsiveness ([f91efc8](https://github.com/moe1399/ngx-dynamic-forms/commit/f91efc8751a92b682d13960af488d93d5799234f))
+
+
+### Features
+
+* add autocomplete field type with API search ([0754db9](https://github.com/moe1399/ngx-dynamic-forms/commit/0754db9e0c51b5e6871af434ee6ccdb3eea8a2b2))
+* add wizard mode for multi-page forms ([2e55caf](https://github.com/moe1399/ngx-dynamic-forms/commit/2e55caff2b9ed9b2a9dabb0e73c3d2bbcaca822e))
+
+
+### BREAKING CHANGES
+
+* FormConfig no longer includes submitLabel, saveLabel,
+autoSave, or autoSaveInterval properties. Consumers must now define
+button labels in their templates and implement auto-save manually.
+
+
+
 # [0.0.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.9.0...v0.0.0) (2026-01-12)
 
 
