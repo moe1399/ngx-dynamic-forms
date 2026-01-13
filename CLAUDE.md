@@ -165,6 +165,12 @@ Style via attribute selectors: `form[data-form-id]`, `[data-field-row]`, `[data-
   - Storage: Object keyed by row ID (computed/totals not stored)
   - Data attrs: `data-datagrid-container`, `data-datagrid-name`, `data-datagrid-valid`, `data-datagrid`, `data-datagrid-header`, `data-column-group`, `data-column-group-id`, `data-row-label-header`, `data-datagrid-header-cell`, `data-column-computed`, `data-datagrid-body`, `data-datagrid-row`, `data-row-id`, `data-row-label-cell`, `data-datagrid-cell`, `data-datagrid-input`, `data-datagrid-computed-value`, `data-cell-valid`, `data-is-total-row`, `data-is-total-column`, `data-is-grand-total`, `data-datagrid-total-value`, `data-column-label`, `data-column-group-label`, `data-total-label`
   - Responsive: Same as table, card headers show row label + row label header
+- `autocomplete`: Search-as-you-type field with async API fetching
+  - Config: `autocompleteConfig: {fetchHandlerName, minSearchLength?, debounceMs?, noResultsMessage?, loadingMessage?, placeholder?, params?}`
+  - Storage: `{value: any, label: string}` or `null`
+  - Fetch handler: Register via `autocompleteFetchRegistry.register(name, handler)`. Handler signature: `(searchText, params?, fieldConfig?, formData?) => Promise<{value, label}[]>`
+  - Server validation: Use custom validator to check if `value.value` is valid against server data
+  - Data attrs: `data-autocomplete-container`, `data-autocomplete-name`, `data-autocomplete-open`, `data-autocomplete-loading`, `data-autocomplete-has-selection`, `data-autocomplete-input`, `data-autocomplete-clear`, `data-autocomplete-dropdown`, `data-autocomplete-option`, `data-option-value`, `data-option-highlighted`, `data-option-selected`, `data-autocomplete-loading-message`, `data-autocomplete-no-results`
 
 ### Validation Types
 

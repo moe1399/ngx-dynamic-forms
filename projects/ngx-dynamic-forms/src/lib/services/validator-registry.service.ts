@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { FormFieldConfig, AsyncValidationResult } from '../models';
+import { FormFieldConfig, AsyncValidationResult, AutocompleteOption } from '../models';
 
 /**
  * Custom validator function signature for named validators.
@@ -23,10 +23,31 @@ export type AsyncValidatorFn = (
   formData?: Record<string, any>
 ) => Promise<AsyncValidationResult>;
 
+/**
+ * Autocomplete fetch handler function signature.
+ * Returns a promise that resolves to an array of options.
+ *
+ * @example
+ * ```typescript
+ * autocompleteFetchRegistry.register('searchUsers', async (searchText, params) => {
+ *   const response = await fetch(`/api/users?q=${encodeURIComponent(searchText)}`);
+ *   const users = await response.json();
+ *   return users.map(u => ({ value: u.id, label: u.name }));
+ * });
+ * ```
+ */
+export type AutocompleteFetchHandler = (
+  searchText: string,
+  params?: Record<string, any>,
+  fieldConfig?: FormFieldConfig,
+  formData?: Record<string, any>
+) => Promise<AutocompleteOption[]>;
+
 // Shared storage maps - used by both Angular DI instances and global singletons
 // This ensures validators registered on the global singleton are visible to Angular components
 const sharedValidatorMap = new Map<string, CustomValidatorFn>();
 const sharedAsyncValidatorMap = new Map<string, AsyncValidatorFn>();
+const sharedFetchHandlerMap = new Map<string, AutocompleteFetchHandler>();
 
 /**
  * Registry for custom validators that can be referenced by name.
@@ -205,3 +226,94 @@ export const validatorRegistry = new ValidatorRegistry();
  * @deprecated Use AsyncValidatorRegistry as a service injected via constructor
  */
 export const asyncValidatorRegistry = new AsyncValidatorRegistry();
+
+/**
+ * Registry for autocomplete fetch handlers that can be referenced by name.
+ * Register fetch handlers here to use them in AutocompleteConfig.fetchHandlerName.
+ *
+ * @example
+ * ```typescript
+ * // Register at app startup
+ * autocompleteFetchRegistry.register('searchUsers', async (searchText) => {
+ *   const response = await fetch(`/api/users?q=${encodeURIComponent(searchText)}`);
+ *   const users = await response.json();
+ *   return users.map(u => ({ value: u.id, label: u.name }));
+ * });
+ *
+ * // Use in form config
+ * {
+ *   name: 'assignee',
+ *   type: 'autocomplete',
+ *   autocompleteConfig: {
+ *     fetchHandlerName: 'searchUsers',
+ *     minSearchLength: 2
+ *   }
+ * }
+ * ```
+ */
+@Injectable({
+  providedIn: 'root',
+})
+export class AutocompleteFetchRegistry {
+  private handlers = sharedFetchHandlerMap;
+
+  /**
+   * Register a fetch handler by name
+   */
+  register(name: string, handler: AutocompleteFetchHandler): void {
+    if (this.handlers.has(name)) {
+      console.warn(`AutocompleteFetchRegistry: Handler "${name}" is being overwritten`);
+    }
+    this.handlers.set(name, handler);
+  }
+
+  /**
+   * Register multiple handlers at once
+   */
+  registerAll(handlers: Record<string, AutocompleteFetchHandler>): void {
+    for (const [name, handler] of Object.entries(handlers)) {
+      this.register(name, handler);
+    }
+  }
+
+  /**
+   * Get a handler by name
+   */
+  get(name: string): AutocompleteFetchHandler | undefined {
+    return this.handlers.get(name);
+  }
+
+  /**
+   * Check if a handler exists
+   */
+  has(name: string): boolean {
+    return this.handlers.has(name);
+  }
+
+  /**
+   * List all registered handler names
+   */
+  list(): string[] {
+    return Array.from(this.handlers.keys());
+  }
+
+  /**
+   * Remove a handler
+   */
+  unregister(name: string): boolean {
+    return this.handlers.delete(name);
+  }
+
+  /**
+   * Clear all handlers
+   */
+  clear(): void {
+    this.handlers.clear();
+  }
+}
+
+/**
+ * Global autocomplete fetch registry instance
+ * @deprecated Use AutocompleteFetchRegistry as a service injected via constructor
+ */
+export const autocompleteFetchRegistry = new AutocompleteFetchRegistry();

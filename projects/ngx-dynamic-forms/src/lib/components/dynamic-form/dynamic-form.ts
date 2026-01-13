@@ -22,10 +22,12 @@ import {
   FileUploadState,
   FileUploadValue,
   FileUploadConfig,
+  AutocompleteOption,
+  AutocompleteConfig,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage.service';
 import { FormBuilderService } from '../../services/form-builder.service';
-import { ValidatorRegistry, AsyncValidatorRegistry } from '../../services/validator-registry.service';
+import { ValidatorRegistry, AsyncValidatorRegistry, AutocompleteFetchRegistry } from '../../services/validator-registry.service';
 
 @Component({
   selector: 'ngx-dynamic-form',
@@ -43,6 +45,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   private formBuilderService = inject(FormBuilderService);
   private validatorRegistry = inject(ValidatorRegistry);
   private asyncValidatorRegistry = inject(AsyncValidatorRegistry);
+  private autocompleteFetchRegistry = inject(AutocompleteFetchRegistry);
   private cdr = inject(ChangeDetectorRef);
 
   // Inputs using signals
@@ -80,6 +83,14 @@ export class DynamicForm implements OnInit, OnDestroy {
   private uploadAbortControllers = new Map<string, Map<string, AbortController>>();
   // Signal tracking which fields have active drag-over
   dragActiveFields = signal<Set<string>>(new Set());
+
+  // Autocomplete state
+  private autocompleteSearchText = signal<Map<string, string>>(new Map());
+  private autocompleteOptions = signal<Map<string, AutocompleteOption[]>>(new Map());
+  private autocompleteLoading = signal<Set<string>>(new Set());
+  private autocompleteDropdownOpen = signal<Set<string>>(new Set());
+  private autocompleteHighlightedIndex = signal<Map<string, number>>(new Map());
+  private autocompleteSearchSubjects = new Map<string, Subject<string>>();
 
   // Visibility tracking for conditional fields and sections
   private visibleFields = signal<Set<string>>(new Set());
@@ -281,6 +292,9 @@ export class DynamicForm implements OnInit, OnDestroy {
       } else if (field.type === 'fileupload') {
         // Create FormArray for file upload field
         group[field.name] = this.createFileUploadFormArray(field);
+      } else if (field.type === 'autocomplete') {
+        // Create FormControl for autocomplete field (stores { value, label } or null)
+        group[field.name] = this.createAutocompleteFormControl(field);
       } else {
         // Skip validators for archived fields
         const validators = field.archived ? [] : this.buildValidators(field.validations || []);
@@ -305,6 +319,9 @@ export class DynamicForm implements OnInit, OnDestroy {
 
     // Set up async validation for fields that have it configured
     this.setupAsyncValidation();
+
+    // Set up autocomplete search for fields that have it configured
+    this.setupAutocompleteFields();
 
     // Set up cross-field validation triggers for conditional validations
     this.setupConditionalValidationTriggers();
@@ -1895,9 +1912,15 @@ export class DynamicForm implements OnInit, OnDestroy {
    * Handle document clicks to close popover when clicking outside
    */
   onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+
+    // Close any open autocomplete dropdowns when clicking outside
+    if (!target.closest('[data-autocomplete-container]')) {
+      this.autocompleteDropdownOpen.set(new Set());
+    }
+
     if (!this.activePopover) return;
 
-    const target = event.target as HTMLElement;
     // Check if click is on the popover or info icon
     const isPopoverClick = target.closest('[data-popover]') !== null;
     const isInfoIconClick = target.closest('[data-info-icon]') !== null;
@@ -3591,5 +3614,303 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  // ============================================
+  // Autocomplete Methods
+  // ============================================
+
+  /**
+   * Create FormControl for an autocomplete field
+   * Value is stored as { value: any, label: string } or null
+   */
+  private createAutocompleteFormControl(field: FormFieldConfig): FormControl {
+    const validators = field.archived ? [] : this.buildValidators(field.validations || []);
+    const defaultValue = field.value ?? null;
+
+    return new FormControl(
+      { value: defaultValue, disabled: field.disabled ?? field.archived ?? false },
+      validators
+    );
+  }
+
+  /**
+   * Set up autocomplete search subscriptions for all autocomplete fields
+   */
+  private setupAutocompleteFields(): void {
+    const currentConfig = this.config();
+
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'autocomplete' && field.autocompleteConfig) {
+        this.setupAutocompleteSearch(field);
+      }
+    });
+  }
+
+  /**
+   * Set up search subscription for a single autocomplete field
+   */
+  private setupAutocompleteSearch(field: FormFieldConfig): void {
+    const config = field.autocompleteConfig!;
+    const handler = this.autocompleteFetchRegistry.get(config.fetchHandlerName);
+
+    if (!handler) {
+      console.warn(`DynamicForm: Autocomplete fetch handler "${config.fetchHandlerName}" not registered for field "${field.name}"`);
+      return;
+    }
+
+    const searchSubject = new Subject<string>();
+    this.autocompleteSearchSubjects.set(field.name, searchSubject);
+
+    const debounceMs = config.debounceMs ?? 300;
+    const minSearchLength = config.minSearchLength ?? 2;
+
+    searchSubject
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(debounceMs),
+        distinctUntilChanged(),
+        filter((searchText) => searchText.length >= minSearchLength),
+        switchMap(async (searchText) => {
+          // Mark as loading
+          const loadingSet = new Set(this.autocompleteLoading());
+          loadingSet.add(field.name);
+          this.autocompleteLoading.set(loadingSet);
+          this.cdr.markForCheck();
+
+          try {
+            const results = await handler(searchText, config.params, field, this.form.value);
+            return { fieldName: field.name, results, error: null };
+          } catch (error) {
+            console.error(`DynamicForm: Autocomplete fetch error for "${field.name}":`, error);
+            return { fieldName: field.name, results: [], error };
+          }
+        })
+      )
+      .subscribe(({ fieldName, results }) => {
+        // Update options
+        const optionsMap = new Map(this.autocompleteOptions());
+        optionsMap.set(fieldName, results);
+        this.autocompleteOptions.set(optionsMap);
+
+        // Remove loading state
+        const loadingSet = new Set(this.autocompleteLoading());
+        loadingSet.delete(fieldName);
+        this.autocompleteLoading.set(loadingSet);
+
+        // Reset highlighted index
+        const highlightMap = new Map(this.autocompleteHighlightedIndex());
+        highlightMap.set(fieldName, 0);
+        this.autocompleteHighlightedIndex.set(highlightMap);
+
+        this.cdr.markForCheck();
+      });
+  }
+
+  /**
+   * Handle autocomplete input changes
+   */
+  onAutocompleteInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const searchText = input.value;
+
+    // Update search text
+    const searchMap = new Map(this.autocompleteSearchText());
+    searchMap.set(fieldName, searchText);
+    this.autocompleteSearchText.set(searchMap);
+
+    // Clear current selection if text changes
+    const control = this.form.get(fieldName);
+    if (control?.value && searchText !== control.value.label) {
+      control.setValue(null);
+    }
+
+    // Get field config for min search length
+    const field = this.config().fields.find(f => f.name === fieldName);
+    const minSearchLength = field?.autocompleteConfig?.minSearchLength ?? 2;
+
+    // Trigger search if minimum length met
+    const subject = this.autocompleteSearchSubjects.get(fieldName);
+    if (subject) {
+      if (searchText.length >= minSearchLength) {
+        this.openAutocompleteDropdown(fieldName);
+        subject.next(searchText);
+      } else {
+        this.closeAutocompleteDropdown(fieldName);
+        // Clear options when below min length
+        const optionsMap = new Map(this.autocompleteOptions());
+        optionsMap.delete(fieldName);
+        this.autocompleteOptions.set(optionsMap);
+      }
+    }
+  }
+
+  /**
+   * Handle autocomplete option selection
+   */
+  selectAutocompleteOption(fieldName: string, option: AutocompleteOption): void {
+    const control = this.form.get(fieldName);
+    if (control) {
+      control.setValue({ value: option.value, label: option.label });
+      control.markAsTouched();
+      control.markAsDirty();
+    }
+
+    // Update search text to show selected label
+    const searchMap = new Map(this.autocompleteSearchText());
+    searchMap.set(fieldName, option.label);
+    this.autocompleteSearchText.set(searchMap);
+
+    this.closeAutocompleteDropdown(fieldName);
+  }
+
+  /**
+   * Clear autocomplete selection
+   */
+  clearAutocompleteSelection(fieldName: string): void {
+    const control = this.form.get(fieldName);
+    if (control) {
+      control.setValue(null);
+      control.markAsTouched();
+      control.markAsDirty();
+    }
+
+    const searchMap = new Map(this.autocompleteSearchText());
+    searchMap.set(fieldName, '');
+    this.autocompleteSearchText.set(searchMap);
+
+    // Clear options
+    const optionsMap = new Map(this.autocompleteOptions());
+    optionsMap.delete(fieldName);
+    this.autocompleteOptions.set(optionsMap);
+  }
+
+  /**
+   * Handle keyboard navigation in autocomplete dropdown
+   */
+  onAutocompleteKeydown(event: KeyboardEvent, fieldName: string): void {
+    const options = this.getAutocompleteOptions(fieldName);
+    const currentIndex = this.getAutocompleteHighlightedIndex(fieldName);
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (!this.isAutocompleteDropdownOpen(fieldName)) {
+          if (options.length > 0) {
+            this.openAutocompleteDropdown(fieldName);
+          }
+        } else if (options.length > 0) {
+          const newIndex = Math.min(currentIndex + 1, options.length - 1);
+          this.setAutocompleteHighlightedIndex(fieldName, newIndex);
+        }
+        break;
+
+      case 'ArrowUp':
+        event.preventDefault();
+        if (options.length > 0) {
+          const newIndex = Math.max(currentIndex - 1, 0);
+          this.setAutocompleteHighlightedIndex(fieldName, newIndex);
+        }
+        break;
+
+      case 'Enter':
+        event.preventDefault();
+        if (this.isAutocompleteDropdownOpen(fieldName) && options.length > 0) {
+          this.selectAutocompleteOption(fieldName, options[currentIndex]);
+        }
+        break;
+
+      case 'Escape':
+        event.preventDefault();
+        this.closeAutocompleteDropdown(fieldName);
+        break;
+
+      case 'Tab':
+        this.closeAutocompleteDropdown(fieldName);
+        break;
+    }
+  }
+
+  /**
+   * Open autocomplete dropdown
+   */
+  openAutocompleteDropdown(fieldName: string): void {
+    const openSet = new Set(this.autocompleteDropdownOpen());
+    openSet.add(fieldName);
+    this.autocompleteDropdownOpen.set(openSet);
+  }
+
+  /**
+   * Close autocomplete dropdown
+   */
+  closeAutocompleteDropdown(fieldName: string): void {
+    const openSet = new Set(this.autocompleteDropdownOpen());
+    openSet.delete(fieldName);
+    this.autocompleteDropdownOpen.set(openSet);
+  }
+
+  /**
+   * Check if autocomplete dropdown is open
+   */
+  isAutocompleteDropdownOpen(fieldName: string): boolean {
+    return this.autocompleteDropdownOpen().has(fieldName);
+  }
+
+  /**
+   * Check if autocomplete is loading
+   */
+  isAutocompleteLoading(fieldName: string): boolean {
+    return this.autocompleteLoading().has(fieldName);
+  }
+
+  /**
+   * Get autocomplete options for a field
+   */
+  getAutocompleteOptions(fieldName: string): AutocompleteOption[] {
+    return this.autocompleteOptions().get(fieldName) || [];
+  }
+
+  /**
+   * Get autocomplete search text for a field
+   */
+  getAutocompleteSearchText(fieldName: string): string {
+    // If there's a selected value, show its label
+    const control = this.form.get(fieldName);
+    if (control?.value?.label) {
+      return control.value.label;
+    }
+    return this.autocompleteSearchText().get(fieldName) || '';
+  }
+
+  /**
+   * Get autocomplete config for a field
+   */
+  getAutocompleteConfig(fieldName: string): AutocompleteConfig | undefined {
+    const field = this.config().fields.find(f => f.name === fieldName);
+    return field?.autocompleteConfig;
+  }
+
+  /**
+   * Get highlighted index for autocomplete
+   */
+  getAutocompleteHighlightedIndex(fieldName: string): number {
+    return this.autocompleteHighlightedIndex().get(fieldName) || 0;
+  }
+
+  /**
+   * Set highlighted index for autocomplete
+   */
+  setAutocompleteHighlightedIndex(fieldName: string, index: number): void {
+    const highlightMap = new Map(this.autocompleteHighlightedIndex());
+    highlightMap.set(fieldName, index);
+    this.autocompleteHighlightedIndex.set(highlightMap);
+  }
+
+  /**
+   * Check if autocomplete has a selected value
+   */
+  hasAutocompleteSelection(fieldName: string): boolean {
+    const control = this.form.get(fieldName);
+    return control?.value !== null && control?.value !== undefined;
   }
 }

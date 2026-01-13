@@ -1185,6 +1185,86 @@
             </div>
           }
 
+          <!-- Autocomplete Configuration (for autocomplete fields) -->
+          @if (field.type === 'autocomplete') {
+            <div class="autocomplete-config-section">
+              <h4>Autocomplete Configuration</h4>
+              <small class="form-hint">Configure search behavior and API fetch handler</small>
+
+              <div class="form-group">
+                <label>Fetch Handler *</label>
+                <select
+                  [ngModel]="field.autocompleteConfig?.fetchHandlerName || ''"
+                  (ngModelChange)="updateAutocompleteFetchHandlerName(fieldIndex, $event)"
+                >
+                  <option value="">-- Select Fetch Handler --</option>
+                  @for (handler of availableFetchHandlers(); track handler) {
+                    <option [value]="handler">{{ handler }}</option>
+                  }
+                </select>
+                <small class="form-hint">Registered autocomplete fetch handlers</small>
+              </div>
+
+              <div class="form-group">
+                <label>Min Search Length</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  [ngModel]="field.autocompleteConfig?.minSearchLength || 2"
+                  (ngModelChange)="updateAutocompleteMinSearchLength(fieldIndex, $event)"
+                />
+                <small class="form-hint">Minimum characters before search triggers</small>
+              </div>
+
+              <div class="form-group">
+                <label>Debounce (ms)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="2000"
+                  step="50"
+                  [ngModel]="field.autocompleteConfig?.debounceMs || 300"
+                  (ngModelChange)="updateAutocompleteDebounceMs(fieldIndex, $event)"
+                />
+                <small class="form-hint">Delay before search triggers after typing stops</small>
+              </div>
+
+              <div class="form-group">
+                <label>Placeholder</label>
+                <input
+                  type="text"
+                  [ngModel]="field.autocompleteConfig?.placeholder || ''"
+                  (ngModelChange)="updateAutocompletePlaceholder(fieldIndex, $event)"
+                  placeholder="Type to search..."
+                />
+                <small class="form-hint">Placeholder text for the input</small>
+              </div>
+
+              <div class="form-group">
+                <label>No Results Message</label>
+                <input
+                  type="text"
+                  [ngModel]="field.autocompleteConfig?.noResultsMessage || ''"
+                  (ngModelChange)="updateAutocompleteNoResultsMessage(fieldIndex, $event)"
+                  placeholder="No results found"
+                />
+                <small class="form-hint">Message shown when search returns no results</small>
+              </div>
+
+              <div class="form-group">
+                <label>Loading Message</label>
+                <input
+                  type="text"
+                  [ngModel]="field.autocompleteConfig?.loadingMessage || ''"
+                  (ngModelChange)="updateAutocompleteLoadingMessage(fieldIndex, $event)"
+                  placeholder="Loading..."
+                />
+                <small class="form-hint">Message shown while fetching results</small>
+              </div>
+            </div>
+          }
+
           <!-- DataGrid Configuration (for datagrid fields) -->
           @if (field.type === 'datagrid') {
             <div class="datagrid-config-section">

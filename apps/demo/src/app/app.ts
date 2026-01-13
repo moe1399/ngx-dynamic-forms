@@ -9,12 +9,14 @@ import {
   FileDownloadHandler,
   FileUploadValue,
   asyncValidatorRegistry,
+  autocompleteFetchRegistry,
 } from 'ngx-dynamic-forms';
 import { marked } from 'marked';
 
-// Register demo async validators at module load time
+// Register demo async validators and fetch handlers at module load time
 // This ensures they're available before any component renders
 registerDemoAsyncValidators();
+registerDemoFetchHandlers();
 
 type ViewType = 'builder' | 'preview' | 'docs' | 'changelog' | 'theme';
 
@@ -46,6 +48,73 @@ function registerDemoAsyncValidators(): void {
       valid: isValid,
       message: isValid ? undefined : `Must be at least ${minLength} characters`,
     };
+  });
+}
+
+/**
+ * Register demo autocomplete fetch handlers for testing purposes
+ * Called at module load time to ensure handlers are registered before components render
+ */
+function registerDemoFetchHandlers(): void {
+  // Mock user data
+  const users = [
+    { id: 1, name: 'Alice Johnson', email: 'alice@example.com' },
+    { id: 2, name: 'Bob Smith', email: 'bob@example.com' },
+    { id: 3, name: 'Charlie Brown', email: 'charlie@example.com' },
+    { id: 4, name: 'Diana Prince', email: 'diana@example.com' },
+    { id: 5, name: 'Edward Norton', email: 'edward@example.com' },
+    { id: 6, name: 'Fiona Apple', email: 'fiona@example.com' },
+    { id: 7, name: 'George Lucas', email: 'george@example.com' },
+    { id: 8, name: 'Hannah Montana', email: 'hannah@example.com' },
+    { id: 9, name: 'Ivan Drago', email: 'ivan@example.com' },
+    { id: 10, name: 'Julia Roberts', email: 'julia@example.com' },
+  ];
+
+  // Mock country data
+  const countries = [
+    { code: 'AU', name: 'Australia' },
+    { code: 'AT', name: 'Austria' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'CA', name: 'Canada' },
+    { code: 'CN', name: 'China' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'FR', name: 'France' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'IN', name: 'India' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'MX', name: 'Mexico' },
+    { code: 'NZ', name: 'New Zealand' },
+    { code: 'US', name: 'United States' },
+    { code: 'ZA', name: 'South Africa' },
+  ];
+
+  // Search users by name
+  autocompleteFetchRegistry.register('searchUsers', async (searchText) => {
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const query = searchText.toLowerCase();
+    return users
+      .filter((user) => user.name.toLowerCase().includes(query))
+      .map((user) => ({
+        value: user.id,
+        label: `${user.name} (${user.email})`,
+      }));
+  });
+
+  // Search countries by name
+  autocompleteFetchRegistry.register('searchCountries', async (searchText) => {
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const query = searchText.toLowerCase();
+    return countries
+      .filter((country) => country.name.toLowerCase().includes(query))
+      .map((country) => ({
+        value: country.code,
+        label: country.name,
+      }));
   });
 }
 

@@ -5,7 +5,7 @@
 /**
  * Supported form field types
  */
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone' | 'formref' | 'fileupload';
+export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone' | 'formref' | 'fileupload' | 'autocomplete';
 /**
  * Country code option for phone field
  */
@@ -68,6 +68,47 @@ export interface FileUploadValue {
     mimeType: string;
     metadata?: Record<string, unknown>;
 }
+/**
+ * Autocomplete option returned by fetch handler
+ */
+export interface AutocompleteOption {
+    value: any;
+    label: string;
+}
+/**
+ * Value stored for an autocomplete field
+ * Stores both value and label to display selection without re-fetching
+ */
+export interface AutocompleteValue {
+    value: any;
+    label: string;
+}
+/**
+ * Autocomplete field configuration
+ */
+export interface AutocompleteConfig {
+    fetchHandlerName: string;
+    minSearchLength?: number;
+    debounceMs?: number;
+    noResultsMessage?: string;
+    loadingMessage?: string;
+    placeholder?: string;
+    params?: Record<string, any>;
+}
+/**
+ * Autocomplete fetch handler function signature.
+ * Returns a promise that resolves to an array of options.
+ *
+ * @example
+ * ```typescript
+ * const searchUsers: AutocompleteFetchHandler = async (searchText, params) => {
+ *   const response = await fetch(`/api/users?q=${encodeURIComponent(searchText)}`);
+ *   const users = await response.json();
+ *   return users.map(u => ({ value: u.id, label: u.name }));
+ * };
+ * ```
+ */
+export type AutocompleteFetchHandler = (searchText: string, params?: Record<string, any>, fieldConfig?: FormFieldConfig, formData?: Record<string, any>) => Promise<AutocompleteOption[]>;
 /**
  * Column types supported within tables (subset of FieldType)
  */
@@ -278,6 +319,7 @@ export interface FormFieldConfig {
     daterangeConfig?: DateRangeConfig;
     formrefConfig?: FormRefConfig;
     fileuploadConfig?: FileUploadConfig;
+    autocompleteConfig?: AutocompleteConfig;
     condition?: ValidationCondition;
 }
 /**

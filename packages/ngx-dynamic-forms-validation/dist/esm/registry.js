@@ -135,3 +135,72 @@ export const validatorRegistry = new ValidatorRegistry();
  * Global async validator registry singleton
  */
 export const asyncValidatorRegistry = new AsyncValidatorRegistry();
+/**
+ * Registry for autocomplete fetch handlers that can be referenced by name.
+ * Register fetch handlers here to use them with AutocompleteConfig.fetchHandlerName.
+ *
+ * @example
+ * ```typescript
+ * import { autocompleteFetchRegistry } from '@moe1399/ngx-dynamic-forms-validation';
+ *
+ * autocompleteFetchRegistry.register('searchUsers', async (searchText, params) => {
+ *   const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchText)}`);
+ *   const users = await response.json();
+ *   return users.map(u => ({ value: u.id, label: u.name }));
+ * });
+ * ```
+ */
+class AutocompleteFetchRegistry {
+    handlers = new Map();
+    /**
+     * Register a fetch handler by name
+     */
+    register(name, handler) {
+        if (this.handlers.has(name)) {
+            console.warn(`AutocompleteFetchRegistry: Handler "${name}" is being overwritten`);
+        }
+        this.handlers.set(name, handler);
+    }
+    /**
+     * Register multiple handlers at once
+     */
+    registerAll(handlers) {
+        for (const [name, handler] of Object.entries(handlers)) {
+            this.register(name, handler);
+        }
+    }
+    /**
+     * Get a handler by name
+     */
+    get(name) {
+        return this.handlers.get(name);
+    }
+    /**
+     * Check if a handler exists
+     */
+    has(name) {
+        return this.handlers.has(name);
+    }
+    /**
+     * List all registered handler names
+     */
+    list() {
+        return Array.from(this.handlers.keys());
+    }
+    /**
+     * Remove a handler
+     */
+    unregister(name) {
+        return this.handlers.delete(name);
+    }
+    /**
+     * Clear all handlers
+     */
+    clear() {
+        this.handlers.clear();
+    }
+}
+/**
+ * Global autocomplete fetch registry singleton
+ */
+export const autocompleteFetchRegistry = new AutocompleteFetchRegistry();

@@ -47,7 +47,13 @@ public enum FieldType
     Phone,
 
     [JsonPropertyName("formref")]
-    FormRef
+    FormRef,
+
+    [JsonPropertyName("fileupload")]
+    FileUpload,
+
+    [JsonPropertyName("autocomplete")]
+    Autocomplete
 }
 
 /// <summary>
@@ -171,6 +177,66 @@ public class DateRangeConfig
 }
 
 /// <summary>
+/// Autocomplete option returned by fetch handler
+/// </summary>
+public class AutocompleteOption
+{
+    [JsonPropertyName("value")]
+    public object? Value { get; set; }
+
+    [JsonPropertyName("label")]
+    public string Label { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Autocomplete field configuration
+/// </summary>
+public class AutocompleteConfig
+{
+    /// <summary>
+    /// Name of registered fetch handler (required)
+    /// </summary>
+    [JsonPropertyName("fetchHandlerName")]
+    public string FetchHandlerName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Minimum characters before searching (default: 2)
+    /// </summary>
+    [JsonPropertyName("minSearchLength")]
+    public int? MinSearchLength { get; set; }
+
+    /// <summary>
+    /// Debounce delay in milliseconds (default: 300)
+    /// </summary>
+    [JsonPropertyName("debounceMs")]
+    public int? DebounceMs { get; set; }
+
+    /// <summary>
+    /// Message when no results found (default: 'No results found')
+    /// </summary>
+    [JsonPropertyName("noResultsMessage")]
+    public string? NoResultsMessage { get; set; }
+
+    /// <summary>
+    /// Message while loading (default: 'Loading...')
+    /// </summary>
+    [JsonPropertyName("loadingMessage")]
+    public string? LoadingMessage { get; set; }
+
+    /// <summary>
+    /// Placeholder text for input
+    /// </summary>
+    [JsonPropertyName("placeholder")]
+    public string? Placeholder { get; set; }
+
+    /// <summary>
+    /// Extra parameters passed to fetch handler
+    /// </summary>
+    [JsonPropertyName("params")]
+    public Dictionary<string, object?>? Params { get; set; }
+}
+
+/// <summary>
 /// Form field configuration
 /// </summary>
 public class FormFieldConfig
@@ -220,6 +286,9 @@ public class FormFieldConfig
 
     [JsonPropertyName("daterangeConfig")]
     public DateRangeConfig? DateRangeConfig { get; set; }
+
+    [JsonPropertyName("autocompleteConfig")]
+    public AutocompleteConfig? AutocompleteConfig { get; set; }
 
     /// <summary>
     /// Visibility condition - field hidden when condition is not met

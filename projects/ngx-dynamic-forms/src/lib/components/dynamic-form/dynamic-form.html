@@ -1267,6 +1267,83 @@
               </div>
             }
           }
+          @case ('autocomplete') {
+            <div
+              data-autocomplete-container
+              [attr.data-autocomplete-name]="field.name"
+              [attr.data-autocomplete-open]="isAutocompleteDropdownOpen(field.name)"
+              [attr.data-autocomplete-loading]="isAutocompleteLoading(field.name)"
+              [attr.data-autocomplete-has-selection]="hasAutocompleteSelection(field.name)">
+
+              <div data-autocomplete-input-wrapper>
+                <input
+                  type="text"
+                  [id]="field.name"
+                  [value]="getAutocompleteSearchText(field.name)"
+                  (input)="onAutocompleteInput($event, field.name)"
+                  (keydown)="onAutocompleteKeydown($event, field.name)"
+                  (focus)="getAutocompleteOptions(field.name).length > 0 ? openAutocompleteDropdown(field.name) : null"
+                  [placeholder]="field.autocompleteConfig?.placeholder || field.placeholder || 'Type to search...'"
+                  [readonly]="readOnly"
+                  [disabled]="form.get(field.name)?.disabled"
+                  data-autocomplete-input
+                  [attr.data-input-type]="field.type"
+                  autocomplete="off"
+                  role="combobox"
+                  [attr.aria-expanded]="isAutocompleteDropdownOpen(field.name)"
+                  [attr.aria-controls]="field.name + '-listbox'"
+                  aria-autocomplete="list"
+                />
+
+                @if (!readOnly && hasAutocompleteSelection(field.name)) {
+                  <button
+                    type="button"
+                    data-autocomplete-clear
+                    (click)="clearAutocompleteSelection(field.name); $event.stopPropagation()"
+                    aria-label="Clear selection">
+                    &times;
+                  </button>
+                }
+              </div>
+
+              @if (isAutocompleteDropdownOpen(field.name)) {
+                <div
+                  data-autocomplete-dropdown
+                  [id]="field.name + '-listbox'"
+                  role="listbox"
+                  [attr.aria-label]="field.label">
+
+                  @if (isAutocompleteLoading(field.name)) {
+                    <div data-autocomplete-loading-message>
+                      {{ field.autocompleteConfig?.loadingMessage || 'Loading...' }}
+                    </div>
+                  }
+
+                  @if (!isAutocompleteLoading(field.name) && getAutocompleteOptions(field.name).length === 0) {
+                    <div data-autocomplete-no-results>
+                      {{ field.autocompleteConfig?.noResultsMessage || 'No results found' }}
+                    </div>
+                  }
+
+                  @if (!isAutocompleteLoading(field.name)) {
+                    @for (option of getAutocompleteOptions(field.name); track option.value; let i = $index) {
+                      <div
+                        data-autocomplete-option
+                        [attr.data-option-value]="option.value"
+                        [attr.data-option-highlighted]="i === getAutocompleteHighlightedIndex(field.name)"
+                        [attr.data-option-selected]="form.get(field.name)?.value?.value === option.value"
+                        role="option"
+                        [attr.aria-selected]="form.get(field.name)?.value?.value === option.value"
+                        (click)="selectAutocompleteOption(field.name, option)"
+                        (mouseenter)="setAutocompleteHighlightedIndex(field.name, i)">
+                        {{ option.label }}
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
         }
 
         @if (hasError(field.name)) {

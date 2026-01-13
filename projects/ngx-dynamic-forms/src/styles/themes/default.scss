@@ -1911,6 +1911,136 @@
   }
 
   /* ========================================
+     Autocomplete Field Styles
+     ======================================== */
+
+  [data-autocomplete-container] {
+    position: relative;
+    width: 100%;
+  }
+
+  [data-autocomplete-input-wrapper] {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  [data-autocomplete-input] {
+    width: 100%;
+    padding: var(--df-spacing-md);
+    border: 1px solid var(--df-color-border);
+    font-size: var(--df-font-size-base);
+    font-family: var(--df-font-family);
+    background: var(--df-color-surface);
+
+    &:focus {
+      outline: none;
+      border-color: var(--df-color-primary);
+      box-shadow: var(--df-shadow-focus);
+    }
+
+    &:disabled {
+      background-color: var(--df-color-surface-alt);
+      cursor: not-allowed;
+    }
+
+    &[readonly] {
+      background-color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
+
+  [data-autocomplete-clear] {
+    position: absolute;
+    right: var(--df-spacing-md);
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: var(--df-color-text-muted);
+    cursor: pointer;
+    padding: var(--df-spacing-xs);
+    line-height: 1;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: var(--df-color-text);
+    }
+  }
+
+  [data-autocomplete-dropdown] {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--df-color-surface);
+    border: 1px solid var(--df-color-border);
+    border-top: none;
+    box-shadow: var(--df-shadow-popover);
+    z-index: 1000;
+  }
+
+  [data-autocomplete-option] {
+    padding: var(--df-spacing-md) var(--df-spacing-lg);
+    cursor: pointer;
+    font-size: var(--df-font-size-base);
+
+    &[data-option-highlighted="true"] {
+      background-color: var(--df-color-background);
+    }
+
+    &[data-option-selected="true"] {
+      background-color: var(--df-color-primary);
+      color: var(--df-color-text-inverse);
+    }
+
+    &:hover {
+      background-color: var(--df-color-surface-hover);
+    }
+
+    /* Selected takes precedence over hover */
+    &[data-option-selected="true"]:hover {
+      background-color: var(--df-color-primary-dark);
+    }
+  }
+
+  [data-autocomplete-loading-message],
+  [data-autocomplete-no-results] {
+    padding: var(--df-spacing-md) var(--df-spacing-lg);
+    color: var(--df-color-text-muted);
+    font-style: italic;
+    text-align: center;
+    font-size: var(--df-font-size-sm);
+  }
+
+  /* Loading state indicator on input */
+  [data-autocomplete-container][data-autocomplete-loading="true"] [data-autocomplete-input] {
+    padding-right: 32px;
+  }
+
+  [data-autocomplete-container][data-autocomplete-loading="true"]::after {
+    content: '';
+    position: absolute;
+    right: var(--df-spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--df-color-border);
+    border-top-color: var(--df-color-primary);
+    border-radius: 50%;
+    animation: autocomplete-spin 0.6s linear infinite;
+  }
+
+  @keyframes autocomplete-spin {
+    to {
+      transform: translateY(-50%) rotate(360deg);
+    }
+  }
+
+  /* ========================================
      Wizard Mode Styles
      ======================================== */
 

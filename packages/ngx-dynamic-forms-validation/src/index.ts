@@ -35,8 +35,8 @@ export {
   loadConfigSync,
 } from './config-loader.js';
 
-// Validator registry
-export { validatorRegistry, asyncValidatorRegistry } from './registry.js';
+// Validator registry and autocomplete fetch registry
+export { validatorRegistry, asyncValidatorRegistry, autocompleteFetchRegistry } from './registry.js';
 
 // Types
 export type {
@@ -62,6 +62,11 @@ export type {
   FileUploadTiming,
   FileUploadConfig,
   FileUploadValue,
+  // Autocomplete types
+  AutocompleteOption,
+  AutocompleteValue,
+  AutocompleteConfig,
+  AutocompleteFetchHandler,
   // Table types
   TableColumnType,
   TableRowMode,

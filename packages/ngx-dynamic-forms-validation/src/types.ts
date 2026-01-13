@@ -21,7 +21,8 @@ export type FieldType =
   | 'datagrid'
   | 'phone'
   | 'formref'
-  | 'fileupload';
+  | 'fileupload'
+  | 'autocomplete';
 
 /**
  * Country code option for phone field
@@ -91,6 +92,56 @@ export interface FileUploadValue {
   mimeType: string;            // MIME type
   metadata?: Record<string, unknown>; // Additional metadata
 }
+
+/**
+ * Autocomplete option returned by fetch handler
+ */
+export interface AutocompleteOption {
+  value: any;          // The value to store (e.g., user ID)
+  label: string;       // Display text shown in dropdown
+}
+
+/**
+ * Value stored for an autocomplete field
+ * Stores both value and label to display selection without re-fetching
+ */
+export interface AutocompleteValue {
+  value: any;          // The selected value
+  label: string;       // The display label
+}
+
+/**
+ * Autocomplete field configuration
+ */
+export interface AutocompleteConfig {
+  fetchHandlerName: string;         // Name of registered fetch handler (required)
+  minSearchLength?: number;         // Min chars before searching (default: 2)
+  debounceMs?: number;              // Debounce delay in ms (default: 300)
+  noResultsMessage?: string;        // Message when no results (default: 'No results found')
+  loadingMessage?: string;          // Message while loading (default: 'Loading...')
+  placeholder?: string;             // Placeholder text for input
+  params?: Record<string, any>;     // Extra params passed to fetch handler
+}
+
+/**
+ * Autocomplete fetch handler function signature.
+ * Returns a promise that resolves to an array of options.
+ *
+ * @example
+ * ```typescript
+ * const searchUsers: AutocompleteFetchHandler = async (searchText, params) => {
+ *   const response = await fetch(`/api/users?q=${encodeURIComponent(searchText)}`);
+ *   const users = await response.json();
+ *   return users.map(u => ({ value: u.id, label: u.name }));
+ * };
+ * ```
+ */
+export type AutocompleteFetchHandler = (
+  searchText: string,
+  params?: Record<string, any>,
+  fieldConfig?: FormFieldConfig,
+  formData?: Record<string, any>
+) => Promise<AutocompleteOption[]>;
 
 /**
  * Column types supported within tables (subset of FieldType)
@@ -311,6 +362,7 @@ export interface FormFieldConfig {
   daterangeConfig?: DateRangeConfig; // Configuration for daterange field type
   formrefConfig?: FormRefConfig; // Configuration for formref field type
   fileuploadConfig?: FileUploadConfig; // Configuration for fileupload field type
+  autocompleteConfig?: AutocompleteConfig; // Configuration for autocomplete field type
   condition?: ValidationCondition; // Visibility condition - field hidden when condition is not met
 }
 

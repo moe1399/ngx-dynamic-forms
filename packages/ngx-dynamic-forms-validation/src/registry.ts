@@ -1,4 +1,4 @@
-import { CustomValidatorFn, AsyncValidatorFn } from './types.js';
+import { CustomValidatorFn, AsyncValidatorFn, AutocompleteFetchHandler } from './types.js';
 
 /**
  * Registry for custom validators that can be referenced by name.
@@ -154,3 +154,81 @@ export const validatorRegistry = new ValidatorRegistry();
  * Global async validator registry singleton
  */
 export const asyncValidatorRegistry = new AsyncValidatorRegistry();
+
+/**
+ * Registry for autocomplete fetch handlers that can be referenced by name.
+ * Register fetch handlers here to use them with AutocompleteConfig.fetchHandlerName.
+ *
+ * @example
+ * ```typescript
+ * import { autocompleteFetchRegistry } from '@moe1399/ngx-dynamic-forms-validation';
+ *
+ * autocompleteFetchRegistry.register('searchUsers', async (searchText, params) => {
+ *   const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchText)}`);
+ *   const users = await response.json();
+ *   return users.map(u => ({ value: u.id, label: u.name }));
+ * });
+ * ```
+ */
+class AutocompleteFetchRegistry {
+  private handlers = new Map<string, AutocompleteFetchHandler>();
+
+  /**
+   * Register a fetch handler by name
+   */
+  register(name: string, handler: AutocompleteFetchHandler): void {
+    if (this.handlers.has(name)) {
+      console.warn(`AutocompleteFetchRegistry: Handler "${name}" is being overwritten`);
+    }
+    this.handlers.set(name, handler);
+  }
+
+  /**
+   * Register multiple handlers at once
+   */
+  registerAll(handlers: Record<string, AutocompleteFetchHandler>): void {
+    for (const [name, handler] of Object.entries(handlers)) {
+      this.register(name, handler);
+    }
+  }
+
+  /**
+   * Get a handler by name
+   */
+  get(name: string): AutocompleteFetchHandler | undefined {
+    return this.handlers.get(name);
+  }
+
+  /**
+   * Check if a handler exists
+   */
+  has(name: string): boolean {
+    return this.handlers.has(name);
+  }
+
+  /**
+   * List all registered handler names
+   */
+  list(): string[] {
+    return Array.from(this.handlers.keys());
+  }
+
+  /**
+   * Remove a handler
+   */
+  unregister(name: string): boolean {
+    return this.handlers.delete(name);
+  }
+
+  /**
+   * Clear all handlers
+   */
+  clear(): void {
+    this.handlers.clear();
+  }
+}
+
+/**
+ * Global autocomplete fetch registry singleton
+ */
+export const autocompleteFetchRegistry = new AutocompleteFetchRegistry();

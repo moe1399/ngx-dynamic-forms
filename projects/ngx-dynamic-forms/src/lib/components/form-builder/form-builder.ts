@@ -26,9 +26,10 @@ import {
   FormRefConfig,
   FileUploadConfig,
   FileUploadTiming,
+  AutocompleteConfig,
 } from '../../models/form-config.interface';
 import { FormBuilderService } from '../../services/form-builder.service';
-import { AsyncValidatorRegistry } from '../../services/validator-registry.service';
+import { AsyncValidatorRegistry, AutocompleteFetchRegistry } from '../../services/validator-registry.service';
 
 /**
  * Configuration options for toolbar buttons
@@ -54,6 +55,7 @@ export class NgxFormBuilder {
   // Inject services using inject()
   private formBuilderService = inject(FormBuilderService);
   private asyncValidatorRegistry = inject(AsyncValidatorRegistry);
+  private autocompleteFetchRegistry = inject(AutocompleteFetchRegistry);
 
   // Two-way binding for config - the primary API for reusable usage
   config = model<FormConfig | null>(null);
@@ -96,7 +98,7 @@ export class NgxFormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref', 'fileupload'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref', 'fileupload', 'autocomplete'];
 
   // Default country codes for phone field
   defaultCountryCodes: CountryCodeOption[] = [
@@ -336,6 +338,13 @@ export class NgxFormBuilder {
    */
   availableAsyncValidators(): string[] {
     return this.asyncValidatorRegistry.list();
+  }
+
+  /**
+   * Get list of available autocomplete fetch handlers from registry
+   */
+  availableFetchHandlers(): string[] {
+    return this.autocompleteFetchRegistry.list();
   }
 
   /**
@@ -717,6 +726,20 @@ export class NgxFormBuilder {
     // Clear fileuploadConfig when switching away from fileupload type
     if (type !== 'fileupload') {
       delete field.fileuploadConfig;
+    }
+
+    // Initialize autocompleteConfig when switching to autocomplete type
+    if (type === 'autocomplete' && !field.autocompleteConfig) {
+      field.autocompleteConfig = {
+        fetchHandlerName: '',
+        minSearchLength: 2,
+        debounceMs: 300,
+      };
+    }
+
+    // Clear autocompleteConfig when switching away from autocomplete type
+    if (type !== 'autocomplete') {
+      delete field.autocompleteConfig;
     }
 
     // Initialize options when switching to select, radio, or checkbox type
@@ -2653,6 +2676,45 @@ export class NgxFormBuilder {
 
   getFileUploadAllowedMimeTypesString(field: FormFieldConfig): string {
     return field.fileuploadConfig?.allowedMimeTypes?.join(', ') ?? '';
+  }
+
+  // ============================================
+  // Autocomplete Config Methods
+  // ============================================
+
+  updateAutocompleteConfig(fieldIndex: number, updates: Partial<AutocompleteConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.autocompleteConfig) return;
+
+    const updatedField = {
+      ...field,
+      autocompleteConfig: { ...field.autocompleteConfig, ...updates },
+    };
+    this.updateField(fieldIndex, updatedField);
+  }
+
+  updateAutocompleteFetchHandlerName(fieldIndex: number, fetchHandlerName: string): void {
+    this.updateAutocompleteConfig(fieldIndex, { fetchHandlerName });
+  }
+
+  updateAutocompleteMinSearchLength(fieldIndex: number, minSearchLength: number): void {
+    this.updateAutocompleteConfig(fieldIndex, { minSearchLength: Number(minSearchLength) || 2 });
+  }
+
+  updateAutocompleteDebounceMs(fieldIndex: number, debounceMs: number): void {
+    this.updateAutocompleteConfig(fieldIndex, { debounceMs: Number(debounceMs) || 300 });
+  }
+
+  updateAutocompleteNoResultsMessage(fieldIndex: number, noResultsMessage: string): void {
+    this.updateAutocompleteConfig(fieldIndex, { noResultsMessage: noResultsMessage || undefined });
+  }
+
+  updateAutocompleteLoadingMessage(fieldIndex: number, loadingMessage: string): void {
+    this.updateAutocompleteConfig(fieldIndex, { loadingMessage: loadingMessage || undefined });
+  }
+
+  updateAutocompletePlaceholder(fieldIndex: number, placeholder: string): void {
+    this.updateAutocompleteConfig(fieldIndex, { placeholder: placeholder || undefined });
   }
 
   // ============================================

@@ -39,6 +39,8 @@ const VALID_FIELD_TYPES: FieldType[] = [
   'datagrid',
   'phone',
   'formref',
+  'fileupload',
+  'autocomplete',
 ];
 
 const VALID_VALIDATION_TYPES = [
@@ -254,6 +256,12 @@ function validateFieldConfig(
   if (field.type === 'formref') {
     if (!field.formrefConfig?.formId) {
       errors.push({ path: `${fieldPath}.formrefConfig.formId`, message: 'FormRef field requires formrefConfig.formId' });
+    }
+  }
+
+  if (field.type === 'autocomplete') {
+    if (!field.autocompleteConfig?.fetchHandlerName) {
+      errors.push({ path: `${fieldPath}.autocompleteConfig.fetchHandlerName`, message: 'Autocomplete field requires autocompleteConfig.fetchHandlerName' });
     }
   }
 
