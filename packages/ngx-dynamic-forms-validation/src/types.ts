@@ -209,6 +209,31 @@ export interface FormSection {
 }
 
 /**
+ * Wizard page configuration - groups sections into navigable pages
+ */
+export interface WizardPage {
+  id: string; // Unique page identifier
+  title: string; // Page title (shown in progress bar)
+  description?: string; // Optional page description
+  sectionIds: string[]; // References to FormSection.id - sections on this page
+  order?: number; // Display order (default: array index)
+  condition?: ValidationCondition; // Visibility condition - page hidden when condition is not met
+}
+
+/**
+ * Wizard configuration settings
+ */
+export interface WizardConfig {
+  pages: WizardPage[];
+  allowFreeNavigation?: boolean; // Allow clicking any step without validation (default: false)
+  showProgressBar?: boolean; // Show progress bar (default: true)
+  showPageNumbers?: boolean; // Show "Step X of Y" indicator (default: true)
+  nextLabel?: string; // Custom "Next" button label
+  prevLabel?: string; // Custom "Previous" button label
+  submitLabel?: string; // Custom submit button label on last page
+}
+
+/**
  * Comparison operators for validation conditions
  */
 export type ValidationConditionOperator = 'equals' | 'notEquals' | 'isEmpty' | 'isNotEmpty';
@@ -296,6 +321,8 @@ export interface FormConfig {
   id: string;
   fields: FormFieldConfig[];
   sections?: FormSection[];
+  /** Wizard mode configuration - splits form into multi-page wizard */
+  wizard?: WizardConfig;
   /** Label for submit button (for use by consuming application) */
   submitLabel?: string;
   /** Label for save button (for use by consuming application) */

@@ -179,6 +179,29 @@ export interface FormSection {
     condition?: ValidationCondition;
 }
 /**
+ * Wizard page configuration - groups sections into navigable pages
+ */
+export interface WizardPage {
+    id: string;
+    title: string;
+    description?: string;
+    sectionIds: string[];
+    order?: number;
+    condition?: ValidationCondition;
+}
+/**
+ * Wizard configuration settings
+ */
+export interface WizardConfig {
+    pages: WizardPage[];
+    allowFreeNavigation?: boolean;
+    showProgressBar?: boolean;
+    showPageNumbers?: boolean;
+    nextLabel?: string;
+    prevLabel?: string;
+    submitLabel?: string;
+}
+/**
  * Comparison operators for validation conditions
  */
 export type ValidationConditionOperator = 'equals' | 'notEquals' | 'isEmpty' | 'isNotEmpty';
@@ -264,6 +287,8 @@ export interface FormConfig {
     id: string;
     fields: FormFieldConfig[];
     sections?: FormSection[];
+    /** Wizard mode configuration - splits form into multi-page wizard */
+    wizard?: WizardConfig;
     /** Label for submit button (for use by consuming application) */
     submitLabel?: string;
     /** Label for save button (for use by consuming application) */

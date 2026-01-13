@@ -100,7 +100,7 @@
               [class.selected]="selectedSectionId() === section.id"
               (click)="selectSection(section.id)">
               <div class="section-info">
-                <strong>{{ section.title }}</strong>
+                <strong>{{ section.id }}</strong>
               </div>
               <div class="section-actions">
                 <button class="btn-icon" (click)="moveSectionUp(section.id); $event.stopPropagation()" title="Move Up">↑</button>
@@ -113,6 +113,116 @@
             <p class="empty-state">No sections. Fields will render ungrouped.</p>
           }
         </div>
+      </div>
+
+      <!-- Wizard Mode -->
+      <div class="panel-section">
+        <h3>Wizard Mode</h3>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [checked]="isWizardModeEnabled()"
+              (change)="toggleWizardMode($event)">
+            Enable Wizard Mode
+          </label>
+          <small class="form-hint">Split form into multiple pages with step navigation</small>
+        </div>
+
+        @if (isWizardModeEnabled()) {
+          <div class="wizard-settings">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="currentConfig().wizard?.allowFreeNavigation || false"
+                  (change)="updateWizardAllowFreeNavigation($event)">
+                Allow Free Navigation
+              </label>
+              <small class="form-hint">Users can click any step without validation</small>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="currentConfig().wizard?.showProgressBar !== false"
+                  (change)="updateWizardShowProgressBar($event)">
+                Show Progress Bar
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="currentConfig().wizard?.showPageNumbers !== false"
+                  (change)="updateWizardShowPageNumbers($event)">
+                Show Page Numbers
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label>Next Button Label</label>
+              <input
+                type="text"
+                [ngModel]="currentConfig().wizard?.nextLabel || ''"
+                (ngModelChange)="updateWizardNextLabel($event)"
+                placeholder="Next">
+            </div>
+
+            <div class="form-group">
+              <label>Previous Button Label</label>
+              <input
+                type="text"
+                [ngModel]="currentConfig().wizard?.prevLabel || ''"
+                (ngModelChange)="updateWizardPrevLabel($event)"
+                placeholder="Previous">
+            </div>
+
+            <div class="form-group">
+              <label>Submit Button Label</label>
+              <input
+                type="text"
+                [ngModel]="currentConfig().wizard?.submitLabel || ''"
+                (ngModelChange)="updateWizardSubmitLabel($event)"
+                placeholder="Submit">
+            </div>
+          </div>
+
+          <!-- Wizard Pages List -->
+          <div class="wizard-pages">
+            <h4>Wizard Pages</h4>
+            <button class="btn btn-sm btn-primary" (click)="addWizardPage()">+ Add Page</button>
+
+            @for (page of getWizardPages(); track page.id) {
+              <div
+                class="wizard-page-item"
+                [class.selected]="selectedWizardPageId() === page.id"
+                (click)="selectWizardPage(page.id)">
+                <div class="page-info">
+                  <strong>{{ page.title }}</strong>
+                  <small>{{ page.sectionIds.length }} sections</small>
+                </div>
+                <div class="page-actions">
+                  <button class="btn-icon" (click)="moveWizardPageUp(page.id); $event.stopPropagation()" title="Move Up">↑</button>
+                  <button class="btn-icon" (click)="moveWizardPageDown(page.id); $event.stopPropagation()" title="Move Down">↓</button>
+                  <button class="btn-icon btn-danger" (click)="removeWizardPage(page.id); $event.stopPropagation()" title="Delete">×</button>
+                </div>
+              </div>
+            }
+
+            @if (getWizardPages().length === 0) {
+              <p class="empty-state">No pages. Add pages and assign sections to them.</p>
+            }
+
+            @if (getUnassignedSections().length > 0) {
+              <div class="warning-message">
+                <strong>Warning:</strong> {{ getUnassignedSections().length }} section(s) not assigned to any page
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <!-- Fields List -->
@@ -257,6 +367,116 @@
                       type="text"
                       [ngModel]="section.condition.value"
                       (ngModelChange)="updateSectionConditionValue(section.id, $event)"
+                      placeholder="Enter value"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+      <!-- Wizard Page Editor -->
+      @else if (selectedWizardPageId() !== null && getSelectedWizardPage()) {
+        <div class="wizard-page-editor">
+          <h3>Edit Wizard Page</h3>
+          @let page = getSelectedWizardPage()!;
+
+          <div class="form-group">
+            <label>Page ID</label>
+            <input
+              type="text"
+              [ngModel]="page.id"
+              (ngModelChange)="updateWizardPageId(page.id, $event)"
+            />
+            <small class="form-hint">Unique identifier for the page</small>
+          </div>
+
+          <div class="form-group">
+            <label>Page Title</label>
+            <input
+              type="text"
+              [ngModel]="page.title"
+              (ngModelChange)="updateWizardPageTitle(page.id, $event)"
+            />
+            <small class="form-hint">Shown in the progress bar</small>
+          </div>
+
+          <div class="form-group">
+            <label>Page Description (optional)</label>
+            <textarea
+              rows="3"
+              [ngModel]="page.description"
+              (ngModelChange)="updateWizardPageDescription(page.id, $event)"
+              placeholder="Description shown at the top of the page"
+            ></textarea>
+          </div>
+
+          <!-- Section Assignment -->
+          <div class="form-group">
+            <label>Sections on This Page</label>
+            <div class="section-checkboxes">
+              @for (section of getSortedSections(); track section.id) {
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    [checked]="isSectionInPage(page.id, section.id)"
+                    (change)="toggleSectionInPage(page.id, section.id)">
+                  {{ section.title }}
+                </label>
+              }
+              @if (getSortedSections().length === 0) {
+                <p class="empty-state">No sections defined. Create sections first.</p>
+              }
+            </div>
+            <small class="form-hint">Select which sections appear on this page</small>
+          </div>
+
+          <!-- Page Visibility Condition -->
+          <div class="condition-section">
+            <h4>Visibility Condition</h4>
+            <div class="form-group condition-toggle">
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="!!page.condition"
+                  (change)="toggleWizardPageCondition(page.id)"
+                />
+                Show conditionally
+              </label>
+            </div>
+
+            @if (page.condition) {
+              <div class="condition-config">
+                <div class="form-group">
+                  <label>When field</label>
+                  <select
+                    [ngModel]="page.condition.field"
+                    (ngModelChange)="updateWizardPageConditionField(page.id, $event)">
+                    @for (f of getAvailableSectionConditionFields(); track f.value) {
+                      <option [value]="f.value">{{ f.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Operator</label>
+                  <select
+                    [ngModel]="page.condition.operator"
+                    (ngModelChange)="updateWizardPageConditionOperator(page.id, $event)">
+                    @for (op of conditionOperators; track op) {
+                      <option [value]="op">{{ op }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (page.condition.operator === 'equals' || page.condition.operator === 'notEquals') {
+                  <div class="form-group">
+                    <label>Value</label>
+                    <input
+                      type="text"
+                      [ngModel]="page.condition.value"
+                      (ngModelChange)="updateWizardPageConditionValue(page.id, $event)"
                       placeholder="Enter value"
                     />
                   </div>

@@ -5,6 +5,8 @@ import {
   FormConfig,
   FormFieldConfig,
   FormSection,
+  WizardPage,
+  WizardConfig,
   ValidationRule,
   ValidationCondition,
   ValidationConditionOperator,
@@ -86,6 +88,7 @@ export class NgxFormBuilder {
   // UI state
   selectedFieldIndex = signal<number | null>(null);
   selectedSectionId = signal<string | null>(null);
+  selectedWizardPageId = signal<string | null>(null);
   showJsonEditor = signal(false);
   jsonEditorMode = signal<'import' | 'export'>('import');
   jsonEditorContent = signal('');
@@ -586,6 +589,7 @@ export class NgxFormBuilder {
   selectField(index: number): void {
     this.selectedFieldIndex.set(index);
     this.selectedSectionId.set(null);
+    this.selectedWizardPageId.set(null);
   }
 
   /**
@@ -1056,6 +1060,7 @@ export class NgxFormBuilder {
   selectSection(id: string | null): void {
     this.selectedSectionId.set(id);
     this.selectedFieldIndex.set(null);
+    this.selectedWizardPageId.set(null);
   }
 
   getSelectedSection(): FormSection | null {
@@ -1201,6 +1206,368 @@ export class NgxFormBuilder {
     });
 
     return result;
+  }
+
+  // ============================================
+  // Wizard Mode Management Methods
+  // ============================================
+
+  /**
+   * Check if wizard mode is enabled
+   */
+  isWizardModeEnabled(): boolean {
+    return !!this.currentConfig().wizard;
+  }
+
+  /**
+   * Toggle wizard mode on/off
+   */
+  toggleWizardMode(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const config = { ...this.currentConfig() };
+
+    if (checkbox.checked) {
+      config.wizard = {
+        pages: [],
+        showProgressBar: true,
+        showPageNumbers: true,
+      };
+    } else {
+      delete config.wizard;
+      this.selectedWizardPageId.set(null);
+    }
+
+    this.updateConfig(config);
+  }
+
+  /**
+   * Add a new wizard page
+   */
+  addWizardPage(): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    const newPage: WizardPage = {
+      id: `page_${Date.now()}`,
+      title: 'New Page',
+      sectionIds: [],
+      order: config.wizard.pages.length,
+    };
+
+    config.wizard = {
+      ...config.wizard,
+      pages: [...config.wizard.pages, newPage],
+    };
+
+    this.updateConfig(config);
+    this.selectedWizardPageId.set(newPage.id);
+  }
+
+  /**
+   * Update a wizard page
+   */
+  updateWizardPage(id: string, updates: Partial<WizardPage>): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = {
+      ...config.wizard,
+      pages: config.wizard.pages.map((page: WizardPage) =>
+        page.id === id ? { ...page, ...updates } : page
+      ),
+    };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Remove a wizard page
+   */
+  removeWizardPage(id: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = {
+      ...config.wizard,
+      pages: config.wizard.pages.filter((p: WizardPage) => p.id !== id),
+    };
+
+    // Reorder remaining pages
+    config.wizard.pages.forEach((page: WizardPage, i: number) => (page.order = i));
+
+    this.updateConfig(config);
+    if (this.selectedWizardPageId() === id) {
+      this.selectedWizardPageId.set(null);
+    }
+  }
+
+  /**
+   * Move a wizard page up in order
+   */
+  moveWizardPageUp(id: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    const pages = [...config.wizard.pages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const index = pages.findIndex((p) => p.id === id);
+    if (index <= 0) return;
+
+    [pages[index - 1], pages[index]] = [pages[index], pages[index - 1]];
+    pages.forEach((page, i) => (page.order = i));
+    config.wizard = { ...config.wizard, pages };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Move a wizard page down in order
+   */
+  moveWizardPageDown(id: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    const pages = [...config.wizard.pages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const index = pages.findIndex((p) => p.id === id);
+    if (index < 0 || index >= pages.length - 1) return;
+
+    [pages[index], pages[index + 1]] = [pages[index + 1], pages[index]];
+    pages.forEach((page, i) => (page.order = i));
+    config.wizard = { ...config.wizard, pages };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Select a wizard page for editing
+   */
+  selectWizardPage(id: string | null): void {
+    this.selectedWizardPageId.set(id);
+    this.selectedFieldIndex.set(null);
+    this.selectedSectionId.set(null);
+  }
+
+  /**
+   * Get the currently selected wizard page
+   */
+  getSelectedWizardPage(): WizardPage | null {
+    const id = this.selectedWizardPageId();
+    if (!id) return null;
+    return this.currentConfig().wizard?.pages.find((p: WizardPage) => p.id === id) || null;
+  }
+
+  /**
+   * Get wizard pages sorted by order
+   */
+  getWizardPages(): WizardPage[] {
+    const wizard = this.currentConfig().wizard;
+    if (!wizard) return [];
+    return [...wizard.pages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  /**
+   * Toggle a section's inclusion in a wizard page
+   */
+  toggleSectionInPage(pageId: string, sectionId: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = {
+      ...config.wizard,
+      pages: config.wizard.pages.map((page: WizardPage) => {
+        if (page.id !== pageId) return page;
+
+        const sectionIds = [...page.sectionIds];
+        const index = sectionIds.indexOf(sectionId);
+
+        if (index >= 0) {
+          sectionIds.splice(index, 1);
+        } else {
+          sectionIds.push(sectionId);
+        }
+
+        return { ...page, sectionIds };
+      }),
+    };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Check if a section is assigned to a specific wizard page
+   */
+  isSectionInPage(pageId: string, sectionId: string): boolean {
+    const page = this.currentConfig().wizard?.pages.find((p: WizardPage) => p.id === pageId);
+    return page?.sectionIds.includes(sectionId) ?? false;
+  }
+
+  /**
+   * Get sections not assigned to any wizard page
+   */
+  getUnassignedSections(): FormSection[] {
+    const config = this.currentConfig();
+    if (!config.wizard) return [];
+
+    const assignedSectionIds = new Set<string>();
+    config.wizard.pages.forEach((page: WizardPage) => {
+      page.sectionIds.forEach((id: string) => assignedSectionIds.add(id));
+    });
+
+    return (config.sections || []).filter((s) => !assignedSectionIds.has(s.id));
+  }
+
+  /**
+   * Update wizard page title
+   */
+  updateWizardPageTitle(id: string, title: string): void {
+    this.updateWizardPage(id, { title });
+  }
+
+  /**
+   * Update wizard page description
+   */
+  updateWizardPageDescription(id: string, description: string): void {
+    this.updateWizardPage(id, { description: description || undefined });
+  }
+
+  /**
+   * Update wizard page ID
+   */
+  updateWizardPageId(oldId: string, newId: string): void {
+    if (!newId || newId === oldId) return;
+
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    // Check for duplicate
+    if (config.wizard.pages.some((p: WizardPage) => p.id === newId)) {
+      return;
+    }
+
+    config.wizard = {
+      ...config.wizard,
+      pages: config.wizard.pages.map((page: WizardPage) =>
+        page.id === oldId ? { ...page, id: newId } : page
+      ),
+    };
+    this.updateConfig(config);
+    this.selectedWizardPageId.set(newId);
+  }
+
+  /**
+   * Toggle wizard page visibility condition
+   */
+  toggleWizardPageCondition(pageId: string): void {
+    const page = this.getSelectedWizardPage();
+    if (!page) return;
+
+    if (page.condition) {
+      this.updateWizardPage(pageId, { condition: undefined });
+    } else {
+      this.updateWizardPage(pageId, {
+        condition: { field: '', operator: 'equals', value: '' },
+      });
+    }
+  }
+
+  /**
+   * Update wizard page condition field
+   */
+  updateWizardPageConditionField(pageId: string, field: string): void {
+    const page = this.getSelectedWizardPage();
+    if (page?.condition) {
+      this.updateWizardPage(pageId, {
+        condition: { ...page.condition, field },
+      });
+    }
+  }
+
+  /**
+   * Update wizard page condition operator
+   */
+  updateWizardPageConditionOperator(pageId: string, operator: ValidationConditionOperator): void {
+    const page = this.getSelectedWizardPage();
+    if (page?.condition) {
+      this.updateWizardPage(pageId, {
+        condition: { ...page.condition, operator },
+      });
+    }
+  }
+
+  /**
+   * Update wizard page condition value
+   */
+  updateWizardPageConditionValue(pageId: string, value: any): void {
+    const page = this.getSelectedWizardPage();
+    if (page?.condition) {
+      this.updateWizardPage(pageId, {
+        condition: { ...page.condition, value },
+      });
+    }
+  }
+
+  /**
+   * Update wizard config allow free navigation
+   */
+  updateWizardAllowFreeNavigation(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = { ...config.wizard, allowFreeNavigation: checkbox.checked };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update wizard config show progress bar
+   */
+  updateWizardShowProgressBar(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = { ...config.wizard, showProgressBar: checkbox.checked };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update wizard config show page numbers
+   */
+  updateWizardShowPageNumbers(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = { ...config.wizard, showPageNumbers: checkbox.checked };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update wizard next button label
+   */
+  updateWizardNextLabel(label: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = { ...config.wizard, nextLabel: label || undefined };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update wizard previous button label
+   */
+  updateWizardPrevLabel(label: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = { ...config.wizard, prevLabel: label || undefined };
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update wizard submit button label
+   */
+  updateWizardSubmitLabel(label: string): void {
+    const config = { ...this.currentConfig() };
+    if (!config.wizard) return;
+
+    config.wizard = { ...config.wizard, submitLabel: label || undefined };
+    this.updateConfig(config);
   }
 
   // ============================================

@@ -250,6 +250,60 @@ public class FormSection
 }
 
 /// <summary>
+/// Wizard page configuration - groups sections into navigable pages
+/// </summary>
+public class WizardPage
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("sectionIds")]
+    public List<string> SectionIds { get; set; } = new();
+
+    [JsonPropertyName("order")]
+    public int? Order { get; set; }
+
+    /// <summary>
+    /// Visibility condition - page hidden when condition is not met
+    /// </summary>
+    [JsonPropertyName("condition")]
+    public ValidationCondition? Condition { get; set; }
+}
+
+/// <summary>
+/// Wizard configuration settings
+/// </summary>
+public class WizardConfig
+{
+    [JsonPropertyName("pages")]
+    public List<WizardPage> Pages { get; set; } = new();
+
+    [JsonPropertyName("allowFreeNavigation")]
+    public bool? AllowFreeNavigation { get; set; }
+
+    [JsonPropertyName("showProgressBar")]
+    public bool? ShowProgressBar { get; set; }
+
+    [JsonPropertyName("showPageNumbers")]
+    public bool? ShowPageNumbers { get; set; }
+
+    [JsonPropertyName("nextLabel")]
+    public string? NextLabel { get; set; }
+
+    [JsonPropertyName("prevLabel")]
+    public string? PrevLabel { get; set; }
+
+    [JsonPropertyName("submitLabel")]
+    public string? SubmitLabel { get; set; }
+}
+
+/// <summary>
 /// Complete form configuration
 /// </summary>
 public class FormConfig
@@ -262,4 +316,10 @@ public class FormConfig
 
     [JsonPropertyName("sections")]
     public List<FormSection>? Sections { get; set; }
+
+    /// <summary>
+    /// Wizard mode configuration - splits form into multi-page wizard
+    /// </summary>
+    [JsonPropertyName("wizard")]
+    public WizardConfig? Wizard { get; set; }
 }

@@ -1911,6 +1911,212 @@
   }
 
   /* ========================================
+     Wizard Mode Styles
+     ======================================== */
+
+  /* Wizard Progress Bar */
+  [data-wizard-progress] {
+    padding: var(--df-spacing-2xl);
+    background: var(--df-color-background);
+    border-bottom: 1px solid var(--df-color-border);
+  }
+
+  [data-wizard-steps] {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+  }
+
+  [data-wizard-step] {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  [data-wizard-step-button] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--df-spacing-xs);
+    padding: var(--df-spacing-md);
+    background: var(--df-color-surface);
+    border: 2px solid var(--df-color-border);
+    border-radius: var(--df-border-radius-md);
+    cursor: pointer;
+    min-width: 60px;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+
+  [data-wizard-step-button]:hover:not(:disabled) {
+    border-color: var(--df-color-primary);
+    background: var(--df-color-background-light);
+  }
+
+  [data-wizard-step-button]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  [data-wizard-step-number] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--df-color-border);
+    color: var(--df-color-text);
+    font-size: var(--df-font-size-sm);
+    font-weight: bold;
+    transition: all 0.15s ease;
+  }
+
+  [data-wizard-step-title] {
+    font-size: var(--df-font-size-xs);
+    color: var(--df-color-text-muted);
+    text-align: center;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  [data-wizard-step-connector] {
+    flex: 1;
+    height: 2px;
+    background: var(--df-color-border);
+    margin: 0 var(--df-spacing-md);
+    margin-top: 14px; /* Align with step number center */
+    align-self: flex-start;
+  }
+
+  /* Current step */
+  [data-wizard-step][data-step-current="true"] [data-wizard-step-button] {
+    border-color: var(--df-color-primary);
+    background: var(--df-color-surface);
+  }
+
+  [data-wizard-step][data-step-current="true"] [data-wizard-step-number] {
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+  }
+
+  [data-wizard-step][data-step-current="true"] [data-wizard-step-title] {
+    color: var(--df-color-primary);
+    font-weight: bold;
+  }
+
+  /* Completed steps */
+  [data-wizard-step][data-step-completed="true"] [data-wizard-step-number] {
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+  }
+
+  [data-wizard-step][data-step-completed="true"] [data-wizard-step-connector] {
+    background: var(--df-color-primary);
+  }
+
+  /* Visited steps */
+  [data-wizard-step][data-step-visited="true"] [data-wizard-step-button] {
+    border-color: var(--df-color-primary-light);
+  }
+
+  /* Steps with errors */
+  [data-wizard-step][data-step-error="true"] [data-wizard-step-number] {
+    background: var(--df-color-error);
+    color: var(--df-color-text-inverse);
+  }
+
+  [data-wizard-step][data-step-error="true"] [data-wizard-step-button] {
+    border-color: var(--df-color-error);
+  }
+
+  /* Non-clickable steps */
+  [data-wizard-step][data-step-clickable="false"] [data-wizard-step-button] {
+    cursor: not-allowed;
+  }
+
+  /* Page indicator */
+  [data-wizard-page-indicator] {
+    text-align: center;
+    margin-top: var(--df-spacing-lg);
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text-muted);
+  }
+
+  /* Wizard Page Container */
+  [data-wizard-page-container] {
+    /* Page container doesn't need special styling */
+  }
+
+  [data-wizard-page] {
+    /* Individual page wrapper */
+  }
+
+  [data-wizard-page-description] {
+    padding: var(--df-spacing-xl) var(--df-spacing-2xl);
+    background: var(--df-color-background-light);
+    color: var(--df-color-text-muted);
+    font-size: var(--df-font-size-sm);
+    line-height: 1.5;
+    border-bottom: 1px solid var(--df-color-border);
+  }
+
+  /* Wizard Navigation Buttons */
+  [data-wizard-navigation] {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--df-spacing-lg);
+    padding: var(--df-spacing-2xl);
+    background: var(--df-color-background);
+    border-top: 1px solid var(--df-color-border);
+  }
+
+  [data-wizard-prev],
+  [data-wizard-next],
+  [data-wizard-submit] {
+    padding: var(--df-button-padding);
+    font-size: var(--df-font-size-sm);
+    font-weight: normal;
+    border: 1px solid var(--df-color-border-dark);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+
+  [data-wizard-prev] {
+    background: var(--df-color-surface-hover);
+    color: var(--df-color-text);
+  }
+
+  [data-wizard-prev]:hover:not(:disabled) {
+    background: #e8e8e8;
+  }
+
+  [data-wizard-prev]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  [data-wizard-next],
+  [data-wizard-submit] {
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+    border-color: var(--df-color-primary);
+  }
+
+  [data-wizard-next]:hover,
+  [data-wizard-submit]:hover {
+    background: var(--df-color-primary-dark);
+  }
+
+  /* ========================================
      Responsive Styles
      ======================================== */
   @media (max-width: 640px) {

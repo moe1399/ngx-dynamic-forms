@@ -44,6 +44,8 @@ export type {
   FormConfig,
   FormFieldConfig,
   FormSection,
+  WizardPage,
+  WizardConfig,
   FieldType,
   ValidationRule,
   ValidationRuleType,

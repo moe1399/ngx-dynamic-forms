@@ -269,6 +269,134 @@
   }
 
   /* ========================================
+     Wizard Mode Section
+     ======================================== */
+
+  .wizard-settings {
+    margin-top: var(--fb-spacing-lg);
+    padding: var(--fb-spacing-lg);
+    background: var(--fb-color-background-light);
+    border: 1px solid var(--fb-color-border);
+
+    .form-group {
+      margin-bottom: var(--fb-spacing-md);
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .checkbox-label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--fb-spacing-md);
+        cursor: pointer;
+
+        input[type='checkbox'] {
+          width: auto;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .wizard-pages {
+    margin-top: var(--fb-spacing-xl);
+
+    h4 {
+      margin: 0 0 var(--fb-spacing-lg) 0;
+      padding: var(--fb-spacing-md) var(--fb-spacing-lg);
+      font-size: var(--fb-font-size-base);
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--fb-color-text-inverse);
+      background: var(--fb-color-primary);
+    }
+  }
+
+  .wizard-page-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--fb-spacing-lg);
+    margin-top: var(--fb-spacing-md);
+    border: 1px solid var(--fb-color-border);
+    background: var(--fb-color-background-light);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--fb-color-background);
+    }
+
+    &.selected {
+      background: var(--fb-color-background);
+      border-color: var(--fb-color-primary);
+    }
+  }
+
+  .page-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fb-spacing-xs);
+
+    small {
+      color: var(--fb-color-text-muted);
+    }
+  }
+
+  .page-actions {
+    display: flex;
+    gap: var(--fb-spacing-xs);
+  }
+
+  .wizard-page-editor {
+    h3 {
+      margin: 0 0 var(--fb-spacing-xl) 0;
+      padding: var(--fb-spacing-md) var(--fb-spacing-lg);
+      font-size: var(--fb-font-size-lg);
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--fb-color-text-inverse);
+      background: var(--fb-color-primary);
+    }
+  }
+
+  .warning-message {
+    margin-top: var(--fb-spacing-lg);
+    padding: var(--fb-spacing-md) var(--fb-spacing-lg);
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    font-size: var(--fb-font-size-sm);
+  }
+
+  .section-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fb-spacing-sm);
+    margin-top: var(--fb-spacing-md);
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: var(--fb-spacing-md);
+      padding: var(--fb-spacing-sm) var(--fb-spacing-md);
+      background: var(--fb-color-surface);
+      border: 1px solid var(--fb-color-border);
+      cursor: pointer;
+      font-size: var(--fb-font-size-sm);
+
+      &:hover {
+        background: var(--fb-color-background);
+      }
+
+      input[type='checkbox'] {
+        width: auto;
+        margin: 0;
+      }
+    }
+  }
+
+  /* ========================================
      Fields List
      ======================================== */
 

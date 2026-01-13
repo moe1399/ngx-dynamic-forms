@@ -193,6 +193,64 @@ Fields and sections support `condition?: ValidationCondition` for conditional vi
 - Validation is skipped for hidden fields
 - Data attrs: `data-field-hidden`, `data-section-hidden`
 
+### Wizard Mode
+
+Split forms into multi-page wizards with step navigation and progress bar.
+
+```typescript
+interface WizardPage {
+  id: string;                      // Unique page identifier
+  title: string;                   // Page title (shown in progress bar)
+  description?: string;            // Optional page description
+  sectionIds: string[];            // References to FormSection.id
+  order?: number;                  // Display order
+  condition?: ValidationCondition; // Visibility condition
+}
+
+interface WizardConfig {
+  pages: WizardPage[];
+  allowFreeNavigation?: boolean;   // Allow clicking any step (default: false)
+  showProgressBar?: boolean;       // Show progress bar (default: true)
+  showPageNumbers?: boolean;       // Show "Step X of Y" (default: true)
+  nextLabel?: string;              // Custom "Next" button label
+  prevLabel?: string;              // Custom "Previous" button label
+  submitLabel?: string;            // Custom submit button on last page
+}
+```
+
+**Config**: Add `wizard?: WizardConfig` to FormConfig to enable wizard mode.
+
+**Behavior**:
+- Pages group sections; a page can contain multiple sections via `sectionIds`
+- Ungrouped fields (no `sectionId`) appear on first page only
+- Validation occurs on "Next" click - prevents advancing if current page invalid
+- Free navigation: Click any step to jump (if `allowFreeNavigation: true`)
+- Conditional pages: Pages with `condition` are hidden when condition not met
+- Form submission only available on last page
+
+**Outputs**:
+- `wizardPageChange`: Emits `{ previousPage: number; currentPage: number }` on navigation
+- `wizardComplete`: Emits when form submitted on last page
+
+**Data attrs**:
+- Form: `data-wizard-mode`
+- Progress bar: `data-wizard-progress`, `data-wizard-steps`
+- Steps: `data-wizard-step`, `data-step-index`, `data-step-current`, `data-step-visited`, `data-step-completed`, `data-step-error`, `data-step-clickable`
+- Step elements: `data-wizard-step-button`, `data-wizard-step-number`, `data-wizard-step-title`, `data-wizard-step-connector`
+- Page indicator: `data-wizard-page-indicator`
+- Page content: `data-wizard-page`, `data-wizard-page-description`
+- Navigation: `data-wizard-navigation`, `data-wizard-prev`, `data-wizard-next`, `data-wizard-submit`
+
+**Public methods** (on DynamicFormComponent):
+- `getVisiblePages()`: Returns pages respecting conditions
+- `getCurrentPageSections()`: Sections for current page
+- `getCurrentPageFields()`: Fields for current page
+- `validateCurrentPage()`: Validates current page, returns `{ valid, errors }`
+- `nextPage()`: Validates and advances (returns success boolean)
+- `prevPage()`: Goes back without validation
+- `goToPage(index)`: Jump to page (validates if advancing forward)
+- `resetWizard()`: Reset to first page
+
 ### File Structure
 
 ```

@@ -7,6 +7,8 @@ import {
   FormConfig,
   FormFieldConfig,
   FormSection,
+  WizardPage,
+  WizardConfig,
   ValidationRule,
   ValidationCondition,
   FieldError,
@@ -63,6 +65,10 @@ export class DynamicForm implements OnInit, OnDestroy {
   validationErrors = output<FieldError[]>();
   valueChanges = output<{ [key: string]: any }>();
 
+  // Wizard outputs
+  wizardPageChange = output<{ previousPage: number; currentPage: number }>();
+  wizardComplete = output<void>();
+
   // Component state
   form: FormGroup = new FormGroup({});
   errors: FieldError[] = [];
@@ -78,6 +84,11 @@ export class DynamicForm implements OnInit, OnDestroy {
   // Visibility tracking for conditional fields and sections
   private visibleFields = signal<Set<string>>(new Set());
   private visibleSections = signal<Set<string>>(new Set());
+
+  // Wizard mode state
+  private wizardCurrentPage = signal<number>(0);
+  private wizardVisitedPages = signal<Set<number>>(new Set([0]));
+  private wizardPageErrors = signal<Map<number, FieldError[]>>(new Map());
 
   // Async validation state
   private validatingFields = new Set<string>();
@@ -148,6 +159,46 @@ export class DynamicForm implements OnInit, OnDestroy {
   setReadOnly(value: boolean): void {
     this.readOnlyOverride.set(value);
     this.cdr.markForCheck();
+  }
+
+  // ============================================
+  // Wizard Mode Getters
+  // ============================================
+
+  /**
+   * Check if form is in wizard mode
+   */
+  get isWizardMode(): boolean {
+    return !!this.config().wizard;
+  }
+
+  /**
+   * Get current wizard page index (0-based)
+   */
+  get currentPage(): number {
+    return this.wizardCurrentPage();
+  }
+
+  /**
+   * Get total number of visible wizard pages
+   */
+  get totalPages(): number {
+    return this.getVisiblePages().length;
+  }
+
+  /**
+   * Check if on first wizard page
+   */
+  get isFirstPage(): boolean {
+    return this.wizardCurrentPage() === 0;
+  }
+
+  /**
+   * Check if on last wizard page
+   */
+  get isLastPage(): boolean {
+    const pages = this.getVisiblePages();
+    return this.wizardCurrentPage() === pages.length - 1;
   }
 
   activePopover: string | null = null;
@@ -264,6 +315,11 @@ export class DynamicForm implements OnInit, OnDestroy {
 
     // Calculate initial visibility state based on default values
     this.updateVisibility();
+
+    // Reset wizard state when form is reinitialized
+    if (this.config().wizard) {
+      this.resetWizard();
+    }
   }
 
   /**
@@ -1376,6 +1432,319 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   getSectionAnchorId(section: FormSection): string {
     return section.anchorId || this.generateAnchorId(section.title);
+  }
+
+  // ============================================
+  // Wizard Mode Methods
+  // ============================================
+
+  /**
+   * Get visible wizard pages (respecting conditions)
+   */
+  getVisiblePages(): WizardPage[] {
+    const wizard = this.config().wizard;
+    if (!wizard) return [];
+
+    const formData = this.form.value;
+    return wizard.pages
+      .filter((page: WizardPage) => !page.condition || this.evaluateCondition(page.condition, formData))
+      .sort((a: WizardPage, b: WizardPage) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  /**
+   * Get current wizard page configuration
+   */
+  getCurrentPageConfig(): WizardPage | null {
+    const pages = this.getVisiblePages();
+    return pages[this.wizardCurrentPage()] || null;
+  }
+
+  /**
+   * Get sections for the current wizard page
+   */
+  getCurrentPageSections(): FormSection[] {
+    const currentPage = this.getCurrentPageConfig();
+    if (!currentPage) return [];
+
+    const currentSectionIds = new Set(currentPage.sectionIds);
+    return this.getSections().filter((s) => currentSectionIds.has(s.id) && this.isSectionVisible(s.id));
+  }
+
+  /**
+   * Get all fields for the current wizard page
+   */
+  getCurrentPageFields(): FormFieldConfig[] {
+    const currentPage = this.getCurrentPageConfig();
+    if (!currentPage) return [];
+
+    const currentSectionIds = new Set(currentPage.sectionIds);
+
+    return this.getSortedFields().filter((f) => {
+      // Fields in the current page's sections
+      if (f.sectionId && currentSectionIds.has(f.sectionId)) {
+        return true;
+      }
+      // Ungrouped fields appear on first page only
+      if (!f.sectionId && this.wizardCurrentPage() === 0) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  /**
+   * Validate current wizard page fields only
+   * Returns validation result with errors
+   */
+  validateCurrentPage(): { valid: boolean; errors: FieldError[] } {
+    const fields = this.getCurrentPageFields();
+    const errors: FieldError[] = [];
+
+    for (const field of fields) {
+      if (field.archived) continue;
+      if (field.type === 'info') continue;
+      if (!this.isFieldVisible(field.name)) continue;
+      if (field.sectionId && !this.isSectionVisible(field.sectionId)) continue;
+
+      // Mark field as touched to show validation errors
+      this.markFieldAsTouched(field);
+
+      // Collect validation errors based on field type
+      const fieldErrors = this.getFieldValidationErrors(field);
+      errors.push(...fieldErrors);
+    }
+
+    // Store errors for this page
+    this.wizardPageErrors.update((m) => {
+      const newMap = new Map(m);
+      newMap.set(this.wizardCurrentPage(), errors);
+      return newMap;
+    });
+
+    this.updateErrors();
+    return { valid: errors.length === 0, errors };
+  }
+
+  /**
+   * Navigate to next wizard page with validation
+   * Returns true if navigation succeeded
+   */
+  nextPage(): boolean {
+    if (this.isLastPage) return false;
+
+    // Wait for any pending async validations
+    if (this.validating) return false;
+
+    const { valid } = this.validateCurrentPage();
+    if (!valid) return false;
+
+    const previousPage = this.wizardCurrentPage();
+    this.wizardCurrentPage.update((p) => p + 1);
+
+    // Mark new page as visited
+    this.wizardVisitedPages.update((s) => {
+      const newSet = new Set(s);
+      newSet.add(this.wizardCurrentPage());
+      return newSet;
+    });
+
+    this.wizardPageChange.emit({ previousPage, currentPage: this.wizardCurrentPage() });
+    return true;
+  }
+
+  /**
+   * Navigate to previous wizard page (no validation needed)
+   * Returns true if navigation succeeded
+   */
+  prevPage(): boolean {
+    if (this.isFirstPage) return false;
+
+    const previousPage = this.wizardCurrentPage();
+    this.wizardCurrentPage.update((p) => p - 1);
+    this.wizardPageChange.emit({ previousPage, currentPage: this.wizardCurrentPage() });
+    return true;
+  }
+
+  /**
+   * Navigate to a specific wizard page
+   * If going forward, validates all pages in between unless allowFreeNavigation is true
+   * Returns true if navigation succeeded
+   */
+  goToPage(pageIndex: number): boolean {
+    const wizard = this.config().wizard;
+    if (!wizard) return false;
+
+    const pages = this.getVisiblePages();
+    if (pageIndex < 0 || pageIndex >= pages.length) return false;
+
+    // Same page - no action needed
+    if (pageIndex === this.wizardCurrentPage()) return true;
+
+    // Going backward is always allowed
+    if (pageIndex < this.wizardCurrentPage()) {
+      const previousPage = this.wizardCurrentPage();
+      this.wizardCurrentPage.set(pageIndex);
+      this.wizardPageChange.emit({ previousPage, currentPage: pageIndex });
+      return true;
+    }
+
+    // Going forward
+    if (wizard.allowFreeNavigation) {
+      // Free navigation - jump directly
+      const previousPage = this.wizardCurrentPage();
+      this.wizardCurrentPage.set(pageIndex);
+      this.wizardVisitedPages.update((s) => {
+        const newSet = new Set(s);
+        newSet.add(pageIndex);
+        return newSet;
+      });
+      this.wizardPageChange.emit({ previousPage, currentPage: pageIndex });
+      return true;
+    }
+
+    // Must validate current page to advance
+    const { valid } = this.validateCurrentPage();
+    if (!valid) return false;
+
+    const previousPage = this.wizardCurrentPage();
+    this.wizardCurrentPage.set(pageIndex);
+    this.wizardVisitedPages.update((s) => {
+      const newSet = new Set(s);
+      newSet.add(pageIndex);
+      return newSet;
+    });
+    this.wizardPageChange.emit({ previousPage, currentPage: pageIndex });
+    return true;
+  }
+
+  /**
+   * Check if a wizard page has been visited
+   */
+  isPageVisited(pageIndex: number): boolean {
+    return this.wizardVisitedPages().has(pageIndex);
+  }
+
+  /**
+   * Check if a wizard page has validation errors
+   */
+  hasPageErrors(pageIndex: number): boolean {
+    const errors = this.wizardPageErrors().get(pageIndex);
+    return errors ? errors.length > 0 : false;
+  }
+
+  /**
+   * Reset wizard to first page (used when config changes)
+   */
+  resetWizard(): void {
+    this.wizardCurrentPage.set(0);
+    this.wizardVisitedPages.set(new Set([0]));
+    this.wizardPageErrors.set(new Map());
+  }
+
+  /**
+   * Mark a field as touched for validation display
+   */
+  private markFieldAsTouched(field: FormFieldConfig): void {
+    if (field.type === 'table') {
+      const formArray = this.getTableFormArray(field.name);
+      if (formArray) {
+        formArray.controls.forEach((rowGroup) => {
+          if (rowGroup instanceof FormGroup) {
+            Object.keys(rowGroup.controls).forEach((key) => {
+              rowGroup.get(key)?.markAsTouched();
+            });
+          }
+        });
+      }
+    } else if (field.type === 'datagrid') {
+      const formGroup = this.form.get(field.name) as FormGroup;
+      if (formGroup) {
+        Object.keys(formGroup.controls).forEach((rowId) => {
+          const rowGroup = formGroup.get(rowId) as FormGroup;
+          if (rowGroup) {
+            Object.keys(rowGroup.controls).forEach((key) => {
+              rowGroup.get(key)?.markAsTouched();
+            });
+          }
+        });
+      }
+    } else if (field.type === 'phone') {
+      const phoneGroup = this.getPhoneFormGroup(field.name);
+      if (phoneGroup) {
+        phoneGroup.get('countryCode')?.markAsTouched();
+        phoneGroup.get('number')?.markAsTouched();
+      }
+    } else if (field.type === 'daterange') {
+      const dateRangeGroup = this.form.get(field.name) as FormGroup;
+      if (dateRangeGroup) {
+        dateRangeGroup.get('fromDate')?.markAsTouched();
+        dateRangeGroup.get('toDate')?.markAsTouched();
+      }
+    } else if (field.type === 'formref') {
+      const formRefGroup = this.form.get(field.name) as FormGroup;
+      if (formRefGroup) {
+        Object.keys(formRefGroup.controls).forEach((key) => {
+          formRefGroup.get(key)?.markAsTouched();
+        });
+      }
+    } else if (field.type === 'fileupload') {
+      const formArray = this.form.get(field.name) as FormArray;
+      formArray?.markAsTouched();
+    } else {
+      const control = this.form.get(field.name);
+      control?.markAsTouched();
+    }
+  }
+
+  /**
+   * Get validation errors for a specific field
+   */
+  private getFieldValidationErrors(field: FormFieldConfig): FieldError[] {
+    const errors: FieldError[] = [];
+
+    if (field.type === 'table') {
+      if (!this.isTableValid(field.name)) {
+        errors.push({ field: field.name, message: 'Please correct the errors in the table' });
+      }
+    } else if (field.type === 'datagrid') {
+      if (!this.isDataGridValid(field.name)) {
+        errors.push({ field: field.name, message: 'Please correct the errors in the data grid' });
+      }
+    } else if (field.type === 'phone') {
+      if (!this.isPhoneValid(field.name)) {
+        const errorMsg = this.getPhoneErrorMessage(field.name);
+        errors.push({ field: field.name, message: errorMsg || 'Invalid phone number' });
+      }
+    } else if (field.type === 'daterange') {
+      if (!this.isDateRangeValid(field.name)) {
+        const errorMsg = this.getDateRangeErrorMessage(field.name);
+        errors.push({ field: field.name, message: errorMsg || 'Invalid date range' });
+      }
+    } else if (field.type === 'formref') {
+      if (!this.isFormRefValid(field.name)) {
+        errors.push({ field: field.name, message: 'Please correct the errors in the embedded form' });
+      }
+    } else if (field.type === 'fileupload') {
+      if (!this.isFileUploadValid(field.name)) {
+        errors.push({ field: field.name, message: 'Please upload the required files' });
+      }
+    } else {
+      const control = this.form.get(field.name);
+      if (control?.invalid) {
+        const errorMsg = this.getErrorMessage(field.name);
+        if (errorMsg) {
+          errors.push({ field: field.name, message: errorMsg });
+        }
+      }
+    }
+
+    // Check for external/async errors
+    const externalError = this.externalErrors.get(field.name);
+    if (externalError) {
+      errors.push({ field: field.name, message: externalError });
+    }
+
+    return errors;
   }
 
   /**

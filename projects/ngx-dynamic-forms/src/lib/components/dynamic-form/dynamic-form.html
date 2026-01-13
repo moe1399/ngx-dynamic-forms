@@ -8,7 +8,8 @@
   [attr.data-form-touched]="form.touched"
   [attr.data-form-validating]="validating"
   [attr.data-form-readonly]="readOnly"
-  [attr.data-form-disabled]="disabled">
+  [attr.data-form-disabled]="disabled"
+  [attr.data-wizard-mode]="isWizardMode">
 
   <!-- Field template defined inside form for formControlName to work -->
   <ng-template #fieldTemplate let-field>
@@ -1280,49 +1281,150 @@
     }
   </ng-template>
 
-  <div data-form-section="fields">
-    <!-- Ungrouped fields (not assigned to any section) -->
-    @for (group of getUngroupedFields(); track $index) {
-      <div
-        data-field-row
-        [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
-        @for (field of group; track field.name) {
-          @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
-            <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+  <!-- Wizard Mode -->
+  @if (isWizardMode) {
+    <!-- Wizard Progress Bar -->
+    @if (config().wizard?.showProgressBar !== false) {
+      <nav
+        data-wizard-progress
+        [attr.data-wizard-total-pages]="totalPages"
+        [attr.data-wizard-current-page]="currentPage"
+        role="navigation"
+        aria-label="Form progress">
+
+        <ol data-wizard-steps>
+          @for (page of getVisiblePages(); track page.id; let i = $index) {
+            <li
+              data-wizard-step
+              [attr.data-step-index]="i"
+              [attr.data-step-id]="page.id"
+              [attr.data-step-current]="i === currentPage"
+              [attr.data-step-visited]="isPageVisited(i)"
+              [attr.data-step-completed]="i < currentPage"
+              [attr.data-step-error]="hasPageErrors(i)"
+              [attr.data-step-clickable]="i <= currentPage || config().wizard?.allowFreeNavigation">
+
+              <button
+                type="button"
+                data-wizard-step-button
+                (click)="goToPage(i)"
+                [disabled]="!(i <= currentPage || config().wizard?.allowFreeNavigation)"
+                [attr.aria-current]="i === currentPage ? 'step' : null">
+                <span data-wizard-step-number>{{ i + 1 }}</span>
+                <span data-wizard-step-title>{{ page.title }}</span>
+              </button>
+
+              @if (i < totalPages - 1) {
+                <span data-wizard-step-connector></span>
+              }
+            </li>
           }
+        </ol>
+
+        @if (config().wizard?.showPageNumbers !== false) {
+          <div data-wizard-page-indicator>
+            Step {{ currentPage + 1 }} of {{ totalPages }}
+          </div>
         }
-      </div>
+      </nav>
     }
 
-    <!-- Sectioned fields -->
-    @for (section of getSections(); track section.id) {
-      @if (isSectionVisible(section.id)) {
-        <section
-          [id]="getSectionAnchorId(section)"
-          [attr.data-section-id]="section.id"
-          [attr.data-section-hidden]="false">
-          <header data-section-header>{{ section.title }}</header>
-          @if (section.description) {
-            <div data-section-description>{{ section.description }}</div>
-          }
-          @for (group of getFieldsForSection(section.id); track $index) {
-            <div
-              data-field-row
-              [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
-              @for (field of group; track field.name) {
-                @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
-                  <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
-                }
-              }
+    <!-- Wizard Page Container -->
+    <div
+      data-wizard-page-container
+      [attr.data-current-page]="currentPage">
+
+      @if (getCurrentPageConfig(); as currentPageConfig) {
+        <div
+          data-wizard-page
+          [attr.data-page-id]="currentPageConfig.id"
+          [attr.data-page-index]="currentPage">
+
+          @if (currentPageConfig.description) {
+            <div data-wizard-page-description>
+              {{ currentPageConfig.description }}
             </div>
           }
-        </section>
-      }
-    }
 
-    <!-- Fallback: if no sections defined, use original grouped fields approach -->
-    @if (!hasSections() && getUngroupedFields().length === 0) {
-      @for (group of getGroupedFields(); track $index) {
+          <!-- Ungrouped fields on first page only -->
+          @if (currentPage === 0) {
+            @for (group of getUngroupedFields(); track $index) {
+              <div
+                data-field-row
+                [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
+                @for (field of group; track field.name) {
+                  @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
+                    <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+                  }
+                }
+              </div>
+            }
+          }
+
+          <!-- Current Page Sections -->
+          @for (section of getCurrentPageSections(); track section.id) {
+            @if (isSectionVisible(section.id)) {
+              <section
+                [id]="getSectionAnchorId(section)"
+                [attr.data-section-id]="section.id"
+                [attr.data-section-hidden]="false">
+                <header data-section-header>{{ section.title }}</header>
+                @if (section.description) {
+                  <div data-section-description>{{ section.description }}</div>
+                }
+                @for (group of getFieldsForSection(section.id); track $index) {
+                  <div
+                    data-field-row
+                    [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
+                    @for (field of group; track field.name) {
+                      @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
+                        <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+                      }
+                    }
+                  </div>
+                }
+              </section>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Wizard Navigation Buttons -->
+    <div
+      data-wizard-navigation
+      [attr.data-is-first-page]="isFirstPage"
+      [attr.data-is-last-page]="isLastPage">
+
+      <button
+        type="button"
+        data-wizard-prev
+        (click)="prevPage()"
+        [disabled]="isFirstPage">
+        {{ config().wizard?.prevLabel || 'Previous' }}
+      </button>
+
+      @if (!isLastPage) {
+        <button
+          type="button"
+          data-wizard-next
+          (click)="nextPage()">
+          {{ config().wizard?.nextLabel || 'Next' }}
+        </button>
+      } @else {
+        <button
+          type="submit"
+          data-wizard-submit
+          (click)="submitForm()">
+          {{ config().wizard?.submitLabel || config().submitLabel || 'Submit' }}
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- Normal Mode (non-wizard) -->
+    <div data-form-section="fields">
+      <!-- Ungrouped fields (not assigned to any section) -->
+      @for (group of getUngroupedFields(); track $index) {
         <div
           data-field-row
           [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
@@ -1333,8 +1435,49 @@
           }
         </div>
       }
-    }
-  </div>
+
+      <!-- Sectioned fields -->
+      @for (section of getSections(); track section.id) {
+        @if (isSectionVisible(section.id)) {
+          <section
+            [id]="getSectionAnchorId(section)"
+            [attr.data-section-id]="section.id"
+            [attr.data-section-hidden]="false">
+            <header data-section-header>{{ section.title }}</header>
+            @if (section.description) {
+              <div data-section-description>{{ section.description }}</div>
+            }
+            @for (group of getFieldsForSection(section.id); track $index) {
+              <div
+                data-field-row
+                [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
+                @for (field of group; track field.name) {
+                  @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
+                    <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+                  }
+                }
+              </div>
+            }
+          </section>
+        }
+      }
+
+      <!-- Fallback: if no sections defined, use original grouped fields approach -->
+      @if (!hasSections() && getUngroupedFields().length === 0) {
+        @for (group of getGroupedFields(); track $index) {
+          <div
+            data-field-row
+            [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
+            @for (field of group; track field.name) {
+              @if (isFieldVisible(field.name) && (!field.archived || isArchivedFieldVisible(field))) {
+                <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+              }
+            }
+          </div>
+        }
+      }
+    </div>
+  }
 
   <!-- Content projection for custom buttons/actions -->
   <ng-content></ng-content>

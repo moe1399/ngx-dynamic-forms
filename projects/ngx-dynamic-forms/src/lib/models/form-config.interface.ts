@@ -23,6 +23,8 @@ export type {
   DataGridTotalsConfig,
   DataGridConfig,
   FormSection,
+  WizardPage,
+  WizardConfig,
   ValidationConditionOperator,
   ValidationCondition,
   ValidationRuleType,
@@ -36,6 +38,7 @@ import type {
   ValidationRule as BaseValidationRule,
   FormFieldConfig as BaseFormFieldConfig,
   FormSection,
+  WizardConfig,
   AsyncValidatorFn,
 } from '@moe1399/ngx-dynamic-forms-validation';
 
@@ -159,6 +162,8 @@ export interface FormConfig {
   id: string;
   fields: FormFieldConfig[];
   sections?: FormSection[];
+  /** Wizard mode configuration - splits form into multi-page wizard */
+  wizard?: WizardConfig;
   submitLabel?: string;
   saveLabel?: string;
   autoSave?: boolean;
