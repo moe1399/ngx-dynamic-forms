@@ -186,3 +186,49 @@ export interface FieldError {
   field: string;
   message: string;
 }
+
+/**
+ * Represents a single version snapshot of a form configuration.
+ * Used to track changes over time for version history.
+ */
+export interface FormConfigVersion {
+  /** Unique version ID (timestamp-based, e.g., 'v_1704067200000') */
+  id: string;
+  /** Complete form config snapshot at this version */
+  config: FormConfig;
+  /** Unix timestamp when version was created */
+  timestamp: number;
+  /** ISO date string for display (e.g., '2024-01-01T00:00:00.000Z') */
+  createdAt: string;
+  /** Optional description/note for this version */
+  description?: string;
+  /** Optional user attribution */
+  createdBy?: string;
+  /** Sequential version number (1, 2, 3...) */
+  versionNumber: number;
+  /** Distinguishes manual saves from auto-saves */
+  isAutoSave?: boolean;
+}
+
+/**
+ * Complete form configuration with version history.
+ * Used by external consumers who manage their own storage (backend/API).
+ */
+export interface FormConfigWithHistory {
+  /** The current/active form configuration */
+  current: FormConfig;
+  /** Array of previous versions, newest first */
+  versions: FormConfigVersion[];
+  /** Maximum versions to retain (default: 50) */
+  maxVersions?: number;
+}
+
+/**
+ * Configuration options for version history behavior.
+ */
+export interface VersionHistoryConfig {
+  /** Enable/disable version history (default: true) */
+  enabled?: boolean;
+  /** Maximum versions to keep (default: 50) */
+  maxVersions?: number;
+}

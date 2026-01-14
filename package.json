@@ -25,8 +25,8 @@
     "publish:dry": "./scripts/publish.sh patch --dry-run",
     "publish:npm": "./scripts/publish.sh patch --npm-only",
     "publish:npm:dry": "./scripts/publish.sh patch --npm-only --dry-run",
-    "changelog": "conventional-changelog -p angular -i projects/ngx-dynamic-forms/CHANGELOG.md -s",
-    "changelog:all": "conventional-changelog -p angular -i projects/ngx-dynamic-forms/CHANGELOG.md -s -r 0"
+    "changelog": "conventional-changelog -p angular -i projects/ngx-dynamic-forms/CHANGELOG.md -s --pkg projects/ngx-dynamic-forms/package.json",
+    "changelog:all": "conventional-changelog -p angular -i projects/ngx-dynamic-forms/CHANGELOG.md -s -r 0 --pkg projects/ngx-dynamic-forms/package.json"
   },
   "prettier": {
     "printWidth": 100,

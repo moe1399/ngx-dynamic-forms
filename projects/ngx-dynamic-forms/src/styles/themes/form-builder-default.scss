@@ -458,6 +458,207 @@
   }
 
   /* ========================================
+     Version History
+     ======================================== */
+
+  .version-history-section {
+    h3 {
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+
+      &:hover {
+        opacity: 0.9;
+      }
+
+      .toggle-indicator {
+        font-size: var(--fb-font-size-sm);
+        margin-left: var(--fb-spacing-md);
+      }
+    }
+  }
+
+  .version-history-content {
+    margin-top: var(--fb-spacing-lg);
+  }
+
+  .version-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .version-item {
+    padding: var(--fb-spacing-lg);
+    margin-bottom: var(--fb-spacing-md);
+    border: 1px solid var(--fb-color-border);
+    background: var(--fb-color-background-light);
+    cursor: default;
+
+    &:hover {
+      background: var(--fb-color-background);
+    }
+
+    &.selected {
+      background: var(--fb-color-background);
+      border-color: var(--fb-color-primary);
+    }
+
+    &[data-current-version] {
+      border-left: 3px solid var(--fb-color-primary);
+    }
+  }
+
+  .version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--fb-spacing-sm);
+  }
+
+  .version-number {
+    font-weight: bold;
+    font-size: var(--fb-font-size-base);
+    color: var(--fb-color-primary);
+  }
+
+  .version-date {
+    font-size: var(--fb-font-size-xs);
+    color: var(--fb-color-text-muted);
+  }
+
+  .version-description {
+    font-size: var(--fb-font-size-sm);
+    color: var(--fb-color-text-muted);
+    font-style: italic;
+    margin-bottom: var(--fb-spacing-md);
+    padding: var(--fb-spacing-sm) var(--fb-spacing-md);
+    background: var(--fb-color-surface);
+    border-left: 2px solid var(--fb-color-border);
+  }
+
+  .version-actions {
+    display: flex;
+    gap: var(--fb-spacing-sm);
+    margin-top: var(--fb-spacing-md);
+  }
+
+  /* ========================================
+     Version Preview Banner
+     ======================================== */
+
+  .version-preview-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--fb-spacing-lg);
+    margin-bottom: var(--fb-spacing-xl);
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fb-spacing-xs);
+
+      strong {
+        font-size: var(--fb-font-size-lg);
+      }
+
+      span {
+        font-size: var(--fb-font-size-sm);
+      }
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: var(--fb-spacing-md);
+    }
+  }
+
+  /* ========================================
+     Version Toolbar Button
+     ======================================== */
+
+  .btn-version {
+    background: var(--fb-color-background);
+    color: var(--fb-color-text);
+    border-color: var(--fb-color-border);
+
+    &:hover:not(:disabled) {
+      background: var(--fb-color-background-light);
+    }
+  }
+
+  /* ========================================
+     Version Preview Content
+     ======================================== */
+
+  .version-preview-content {
+    .preview-section {
+      margin-bottom: var(--fb-spacing-xl);
+      padding-bottom: var(--fb-spacing-xl);
+      border-bottom: 1px solid var(--fb-color-border);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      h4 {
+        margin: 0 0 var(--fb-spacing-lg) 0;
+        padding: var(--fb-spacing-md) var(--fb-spacing-lg);
+        font-size: var(--fb-font-size-base);
+        font-weight: bold;
+        text-transform: uppercase;
+        color: var(--fb-color-text-inverse);
+        background: var(--fb-color-primary);
+      }
+    }
+
+    .preview-item {
+      display: flex;
+      gap: var(--fb-spacing-md);
+      padding: var(--fb-spacing-sm) 0;
+
+      .preview-label {
+        font-weight: bold;
+        color: var(--fb-color-text-muted);
+        min-width: 100px;
+      }
+
+      .preview-value {
+        color: var(--fb-color-text);
+        word-break: break-word;
+      }
+    }
+
+    .preview-item-block {
+      padding: var(--fb-spacing-lg);
+      margin-bottom: var(--fb-spacing-md);
+      background: var(--fb-color-background-light);
+      border: 1px solid var(--fb-color-border);
+
+      .preview-item {
+        padding: var(--fb-spacing-xs) 0;
+
+        &:last-child {
+          padding-bottom: 0;
+        }
+      }
+    }
+  }
+
+  /* ========================================
+     Small Modal Variant
+     ======================================== */
+
+  .modal-sm {
+    max-width: 400px;
+  }
+
+  /* ========================================
      Validation Items
      ======================================== */
 

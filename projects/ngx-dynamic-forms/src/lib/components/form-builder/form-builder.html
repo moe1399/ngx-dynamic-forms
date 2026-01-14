@@ -30,6 +30,14 @@
           Share
         </button>
       }
+      @if (showVersionHistory() && currentConfig().id) {
+        <button
+          class="btn btn-secondary btn-version"
+          (click)="openCreateVersionModal()"
+          title="Create a named version of the current form">
+          Create Version
+        </button>
+      }
     </div>
   }
 
@@ -188,6 +196,58 @@
         }
       </div>
 
+      <!-- Version History -->
+      @if (showVersionHistory()) {
+        <div class="panel-section version-history-section">
+          <h3 (click)="toggleHistoryPanel()">
+            Version History
+            <span class="toggle-indicator">{{ historyPanelOpen() ? '▼' : '▶' }}</span>
+          </h3>
+
+          @if (historyPanelOpen()) {
+            <div class="version-history-content">
+              @if (versions().length === 0) {
+                <p class="empty-state">No version history yet. Versions are created automatically when you save.</p>
+              } @else {
+                <div class="version-list">
+                  @for (version of versions(); track version.id) {
+                    <div
+                      class="version-item"
+                      [class.selected]="selectedVersionId() === version.id"
+                      [attr.data-version-id]="version.id"
+                      [attr.data-current-version]="isLatestVersion(version.id) ? '' : null">
+                      <div class="version-header">
+                        <span class="version-number">{{ getVersionLabel(version) }}</span>
+                        <span class="version-date">{{ formatVersionTimestamp(version.timestamp) }}</span>
+                      </div>
+                      @if (version.description) {
+                        <div class="version-description">{{ version.description }}</div>
+                      }
+                      <div class="version-actions">
+                        <button
+                          class="btn-sm btn-secondary"
+                          (click)="previewVersion(version.id); $event.stopPropagation()"
+                          title="Preview this version">
+                          Preview
+                        </button>
+                        @if (!isLatestVersion(version.id)) {
+                          <button
+                            class="btn-sm btn-primary"
+                            (click)="restoreVersion(version.id); $event.stopPropagation()"
+                            title="Restore this version">
+                            Restore
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <!-- Fields List -->
       <div class="panel-section">
         <h3>Fields</h3>
@@ -234,7 +294,113 @@
 
     <!-- Right Panel: Field/Section Editor -->
     <div class="right-panel">
-      <!-- Section Editor -->
+      <!-- Version Preview Banner -->
+      @if (versionPreviewMode() && previewedVersionConfig()) {
+        <div class="version-preview-banner" data-preview-mode>
+          <div class="preview-info">
+            <strong>Previewing Version</strong>
+            @if (getSelectedVersion(); as previewVersion) {
+              <span>{{ getVersionLabel(previewVersion) }} - {{ formatVersionTimestamp(previewVersion.timestamp) }}</span>
+            }
+          </div>
+          <div class="preview-actions">
+            <button class="btn-sm btn-primary" (click)="restoreVersion(selectedVersionId()!)">
+              Restore This Version
+            </button>
+            <button class="btn-sm btn-secondary" (click)="exitPreviewMode()">
+              Exit Preview
+            </button>
+          </div>
+        </div>
+
+        <!-- Version Preview Content -->
+        <div class="version-preview-content">
+          <div class="preview-section">
+            <h4>Form Settings</h4>
+            <div class="preview-item">
+              <span class="preview-label">Form ID:</span>
+              <span class="preview-value">{{ previewedVersionConfig()!.id }}</span>
+            </div>
+          </div>
+
+          @if (previewedVersionConfig()!.sections?.length) {
+            <div class="preview-section">
+              <h4>Sections ({{ previewedVersionConfig()!.sections!.length }})</h4>
+              @for (section of previewedVersionConfig()!.sections; track section.id) {
+                <div class="preview-item-block">
+                  <div class="preview-item">
+                    <span class="preview-label">ID:</span>
+                    <span class="preview-value">{{ section.id }}</span>
+                  </div>
+                  <div class="preview-item">
+                    <span class="preview-label">Title:</span>
+                    <span class="preview-value">{{ section.title }}</span>
+                  </div>
+                  @if (section.description) {
+                    <div class="preview-item">
+                      <span class="preview-label">Description:</span>
+                      <span class="preview-value">{{ section.description }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          @if (previewedVersionConfig()!.wizard) {
+            <div class="preview-section">
+              <h4>Wizard Pages ({{ previewedVersionConfig()!.wizard!.pages.length }})</h4>
+              @for (page of previewedVersionConfig()!.wizard!.pages; track page.id) {
+                <div class="preview-item-block">
+                  <div class="preview-item">
+                    <span class="preview-label">Title:</span>
+                    <span class="preview-value">{{ page.title }}</span>
+                  </div>
+                  <div class="preview-item">
+                    <span class="preview-label">Sections:</span>
+                    <span class="preview-value">{{ page.sectionIds.join(', ') }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="preview-section">
+            <h4>Fields ({{ previewedVersionConfig()!.fields.length }})</h4>
+            @for (field of previewedVersionConfig()!.fields; track field.name) {
+              <div class="preview-item-block">
+                <div class="preview-item">
+                  <span class="preview-label">Name:</span>
+                  <span class="preview-value">{{ field.name }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Type:</span>
+                  <span class="preview-value">{{ field.type }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">Label:</span>
+                  <span class="preview-value">{{ field.label }}</span>
+                </div>
+                @if (field.sectionId) {
+                  <div class="preview-item">
+                    <span class="preview-label">Section:</span>
+                    <span class="preview-value">{{ field.sectionId }}</span>
+                  </div>
+                }
+                @if (field.validations?.length) {
+                  <div class="preview-item">
+                    <span class="preview-label">Validations:</span>
+                    <span class="preview-value">{{ getFieldValidationSummary(field) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Section Editor (hidden in preview mode) -->
+      @if (!versionPreviewMode()) {
       @if (selectedSectionId() !== null && getSelectedSection()) {
         <div class="section-editor">
           <h3>Edit Section</h3>
@@ -1830,6 +1996,7 @@
           <p>Select a section or field to edit, or add new ones to get started</p>
         </div>
       }
+      } <!-- end @if (!versionPreviewMode()) -->
     </div>
   </div>
 
@@ -1857,6 +2024,33 @@
             <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Cancel</button>
             <button class="btn btn-primary" (click)="importJson()">Import</button>
           }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Version Description Modal -->
+  @if (showVersionDescriptionModal()) {
+    <div class="modal-overlay" (click)="cancelCreateVersion()">
+      <div class="modal modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Create Version</h3>
+          <button class="btn-close" (click)="cancelCreateVersion()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <textarea
+              rows="3"
+              [(ngModel)]="versionDescriptionInput"
+              placeholder="Enter a description for this version..."
+            ></textarea>
+            <small class="form-hint">Add a note to help identify this version later</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cancelCreateVersion()">Cancel</button>
+          <button class="btn btn-primary" (click)="createVersionWithNote()">Create Version</button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   FormConfig,
+  FormConfigVersion,
   FormFieldConfig,
   FormSection,
   WizardPage,
@@ -64,6 +65,7 @@ export class NgxFormBuilder {
   showToolbar = input<boolean>(true);
   showSavedConfigs = input<boolean>(true);
   showFormSettings = input<boolean>(true);
+  showVersionHistory = input<boolean>(true);
   toolbarConfig = input<ToolbarConfig>({
     showNewForm: true,
     showSave: true,
@@ -78,6 +80,10 @@ export class NgxFormBuilder {
   shareRequested = output<void>();
   exportRequested = output<FormConfig>();
   importCompleted = output<FormConfig>();
+
+  // Version history outputs
+  versionCreated = output<FormConfigVersion>();
+  versionRestored = output<{ versionId: string; config: FormConfig }>();
 
   // Internal config signal for component state management
   private internalConfig = signal<FormConfig>(this.formBuilderService.createBlankConfig());
@@ -97,6 +103,15 @@ export class NgxFormBuilder {
   jsonEditorContent = signal('');
   copyButtonText = signal('Copy to Clipboard');
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Version history state
+  versions = signal<FormConfigVersion[]>([]);
+  selectedVersionId = signal<string | null>(null);
+  historyPanelOpen = signal<boolean>(false);
+  showVersionDescriptionModal = signal<boolean>(false);
+  versionDescriptionInput = signal<string>('');
+  versionPreviewMode = signal<boolean>(false);
+  previewedVersionConfig = signal<FormConfig | null>(null);
 
   // Field types for dropdown
   fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref', 'fileupload', 'autocomplete'];
@@ -501,6 +516,11 @@ export class NgxFormBuilder {
     this.formBuilderService.saveConfig(config);
     this.saveRequested.emit(config);
     this.showMessage('success', 'Configuration saved successfully');
+
+    // Refresh version history if panel is open
+    if (this.historyPanelOpen()) {
+      this.loadVersionHistory();
+    }
   }
 
   /**
@@ -512,6 +532,11 @@ export class NgxFormBuilder {
       this.updateConfig(config);
       this.selectedFieldIndex.set(null);
       this.showMessage('success', 'Configuration loaded');
+
+      // Refresh version history if panel is open
+      if (this.historyPanelOpen()) {
+        this.loadVersionHistory();
+      }
     }
   }
 
@@ -2724,5 +2749,164 @@ export class NgxFormBuilder {
 
   getFieldJson(field: FormFieldConfig): string {
     return JSON.stringify(field, null, 2);
+  }
+
+  // ============================================
+  // Version History Methods
+  // ============================================
+
+  /**
+   * Load version history for the current form
+   */
+  loadVersionHistory(): void {
+    const formId = this.currentConfig().id;
+    if (formId) {
+      const history = this.formBuilderService.getVersionHistory(formId);
+      this.versions.set(history);
+    }
+  }
+
+  /**
+   * Toggle the version history panel visibility
+   */
+  toggleHistoryPanel(): void {
+    const isOpen = !this.historyPanelOpen();
+    this.historyPanelOpen.set(isOpen);
+
+    if (isOpen) {
+      this.loadVersionHistory();
+    }
+  }
+
+  /**
+   * Open modal for creating a manual version with description
+   */
+  openCreateVersionModal(): void {
+    this.versionDescriptionInput.set('');
+    this.showVersionDescriptionModal.set(true);
+  }
+
+  /**
+   * Create a manual version with optional description
+   */
+  createVersionWithNote(): void {
+    const config = this.currentConfig();
+    const description = this.versionDescriptionInput().trim() || undefined;
+
+    const versionId = this.formBuilderService.saveVersion(
+      config.id,
+      config,
+      description,
+      false // isAutoSave = false for manual versions
+    );
+
+    this.showVersionDescriptionModal.set(false);
+    this.loadVersionHistory();
+    this.showMessage('success', 'Version created successfully');
+
+    // Emit event for external consumers
+    const version = this.versions().find((v) => v.id === versionId);
+    if (version) {
+      this.versionCreated.emit(version);
+    }
+  }
+
+  /**
+   * Cancel version creation modal
+   */
+  cancelCreateVersion(): void {
+    this.showVersionDescriptionModal.set(false);
+    this.versionDescriptionInput.set('');
+  }
+
+  /**
+   * Preview a specific version (show in read-only mode)
+   */
+  previewVersion(versionId: string): void {
+    const version = this.versions().find((v) => v.id === versionId);
+    if (version) {
+      this.previewedVersionConfig.set(structuredClone(version.config));
+      this.selectedVersionId.set(versionId);
+      this.versionPreviewMode.set(true);
+    }
+  }
+
+  /**
+   * Exit preview mode
+   */
+  exitPreviewMode(): void {
+    this.versionPreviewMode.set(false);
+    this.previewedVersionConfig.set(null);
+    this.selectedVersionId.set(null);
+  }
+
+  /**
+   * Restore a previous version as the current configuration
+   */
+  restoreVersion(versionId: string): void {
+    const restoredConfig = this.formBuilderService.restoreVersion(
+      this.currentConfig().id,
+      versionId
+    );
+
+    if (restoredConfig) {
+      // Exit preview mode if active
+      this.exitPreviewMode();
+
+      // Update current config
+      this.updateConfig(restoredConfig);
+      this.selectedFieldIndex.set(null);
+      this.selectedSectionId.set(null);
+      this.selectedWizardPageId.set(null);
+
+      this.showMessage('success', 'Version restored successfully');
+
+      // Emit event for external consumers
+      this.versionRestored.emit({ versionId, config: restoredConfig });
+    } else {
+      this.showMessage('error', 'Failed to restore version');
+    }
+  }
+
+  /**
+   * Format timestamp for display
+   */
+  formatVersionTimestamp(timestamp: number): string {
+    return new Date(timestamp).toLocaleString();
+  }
+
+  /**
+   * Get display label for a version
+   */
+  getVersionLabel(version: FormConfigVersion): string {
+    const typeLabel = version.isAutoSave ? 'Auto' : 'Manual';
+    return `v${version.versionNumber} (${typeLabel})`;
+  }
+
+  /**
+   * Check if a version is the most recent
+   */
+  isLatestVersion(versionId: string): boolean {
+    const versions = this.versions();
+    return versions.length > 0 && versions[0].id === versionId;
+  }
+
+  /**
+   * Get the currently selected version (for preview banner)
+   */
+  getSelectedVersion(): FormConfigVersion | null {
+    const versionId = this.selectedVersionId();
+    if (!versionId) return null;
+    return this.versions().find((v) => v.id === versionId) ?? null;
+  }
+
+  /**
+   * Get a summary of field validations for preview display
+   */
+  getFieldValidationSummary(field: FormFieldConfig): string {
+    if (!field.validations || field.validations.length === 0) {
+      return 'None';
+    }
+    return field.validations.map((v) => v.type).join(', ');
   }
 }

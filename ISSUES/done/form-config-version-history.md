@@ -210,17 +210,16 @@ The form builder emits the current config via `configChanged`. External consumer
 Location: New panel in form builder (accordion or tab)
 
 ```html
-<div class="panel-section" data-version-history-panel>
+<div class="version-history-panel panel-section">
   <h3>Version History</h3>
 
   <!-- Version List -->
-  <div class="version-list" data-version-list>
+  <div class="version-list">
     @for (version of versions(); track version.id) {
       <div class="version-item"
-           [class.current-version]="version.id === currentVersionId()"
-           [class.selected-version]="version.id === selectedVersionId()"
-           data-version-item
-           data-version-id="{{ version.id }}">
+           [class.current]="version.id === currentVersionId()"
+           [class.selected]="version.id === selectedVersionId()"
+           [attr.data-version-id]="version.id">
         <div class="version-header">
           <span class="version-number">v{{ version.versionNumber }}</span>
           <span class="version-date">{{ formatTimestamp(version.timestamp) }}</span>
@@ -229,13 +228,11 @@ Location: New panel in form builder (accordion or tab)
           <div class="version-description">{{ version.description }}</div>
         }
         <div class="version-actions">
-          <button (click)="previewVersion(version.id)"
-                  data-preview-version-btn>
+          <button class="btn-preview" (click)="previewVersion(version.id)">
             Preview
           </button>
           @if (!version.isCurrent) {
-            <button (click)="restoreVersion(version.id)"
-                    data-restore-version-btn>
+            <button class="btn-restore" (click)="restoreVersion(version.id)">
               Restore
             </button>
           }
@@ -246,7 +243,7 @@ Location: New panel in form builder (accordion or tab)
 
   <!-- Version Comparison (when two versions selected) -->
   @if (compareMode()) {
-    <div class="version-comparison" data-version-comparison>
+    <div class="version-comparison">
       <!-- Side-by-side diff view -->
     </div>
   }
@@ -268,10 +265,9 @@ New toolbar buttons:
 - **Create Version**: Manually create a version with description
 
 ```html
-<button (click)="createVersionWithNote()"
-        data-create-version-btn
+<button class="btn-create-version" (click)="createVersionWithNote()"
         title="Save current state as a named version">
-  <span data-icon>bookmark</span>
+  <span class="icon">bookmark</span>
   Create Version
 </button>
 ```
@@ -356,12 +352,18 @@ historyPanelOpen = signal<boolean>(false);
 ### 5. Form Builder Styles
 **File**: `projects/ngx-dynamic-forms/src/lib/components/form-builder/form-builder.scss`
 
-**Add styles**:
+**Add classes**:
+- `.version-history-panel` - Main panel container
 - `.version-list` - Scrollable list container
 - `.version-item` - Individual version row
-- `.version-item.current-version` - Highlight current version
-- `.version-item.selected-version` - Highlight selected version
-- `.version-comparison` - Side-by-side diff view
+- `.version-item.current` - Highlight current version
+- `.version-item.selected` - Highlight selected version
+- `.version-header` - Version metadata row
+- `.version-number` - Version number badge
+- `.version-date` - Timestamp display
+- `.version-description` - Optional description text
+- `.version-actions` - Action button container
+- `.version-comparison` - Side-by-side diff view (Phase 2)
 
 ## Implementation Checklist
 
@@ -385,23 +387,22 @@ historyPanelOpen = signal<boolean>(false);
 12. Update demo app to showcase version history feature
 13. Add documentation example for external storage consumer pattern
 
-## Data Attributes
+## Data Attributes (State Only)
 
-For consistent styling and testing:
+Data attributes are used for element state, not general styling:
 
-- `data-version-history-panel` - Main panel container
-- `data-version-list` - Version list container
-- `data-version-item` - Individual version row
-- `data-version-id` - Version ID attribute
-- `data-version-number` - Version number display
-- `data-version-date` - Version timestamp display
-- `data-version-description` - Version note/description
-- `data-preview-version-btn` - Preview version button
-- `data-restore-version-btn` - Restore version button
-- `data-delete-version-btn` - Delete version button
-- `data-create-version-btn` - Create manual version button
-- `data-version-comparison` - Diff view container
-- `data-current-version` - Marker for current version
+| Attribute | Purpose | Values |
+|-----------|---------|--------|
+| `data-version-id` | Identifies which version the item represents | version ID string |
+| `data-current-version` | Marks the current/active version | presence = true |
+| `data-selected-version` | Marks the currently selected version | presence = true |
+| `data-panel-open` | Indicates version history panel is open | presence = true |
+| `data-preview-mode` | Indicates preview mode is active | presence = true |
+
+**CSS Classes** are used for styling:
+- `.version-history-panel`, `.version-list`, `.version-item`
+- `.version-item.current`, `.version-item.selected`
+- `.btn-preview`, `.btn-restore`, `.btn-create-version`
 
 ## Open Questions
 
