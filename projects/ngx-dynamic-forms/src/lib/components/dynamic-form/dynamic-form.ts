@@ -1860,9 +1860,21 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   /**
    * Check if field is required
+   * Takes into account conditional validation - only returns true if the required
+   * validation has no condition or if its condition is currently met
    */
   isFieldRequired(field: FormFieldConfig): boolean {
-    return field.validations?.some((v) => v.type === 'required') ?? false;
+    const requiredValidation = field.validations?.find((v) => v.type === 'required');
+    if (!requiredValidation) {
+      return false;
+    }
+    // If required validation has no condition, it's always required
+    if (!requiredValidation.condition) {
+      return true;
+    }
+    // Evaluate the condition against current form values
+    const formData = this.form.value;
+    return this.evaluateCondition(requiredValidation.condition, formData);
   }
 
   /**
@@ -2237,9 +2249,21 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   /**
    * Check if a column has required validation
+   * Evaluates conditions against current form values (rowData is undefined at header level,
+   * so conditions referencing other columns will use form-level lookup).
    */
   hasColumnRequiredValidation(column: TableColumnConfig): boolean {
-    return column.validations?.some((v) => v.type === 'required') ?? false;
+    const requiredValidation = column.validations?.find((v) => v.type === 'required');
+    if (!requiredValidation) {
+      return false;
+    }
+    // If no condition, always required
+    if (!requiredValidation.condition) {
+      return true;
+    }
+    // Evaluate the condition against form values
+    const formData = this.form.value;
+    return this.evaluateCondition(requiredValidation.condition, formData);
   }
 
   // ============================================
@@ -2621,9 +2645,21 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   /**
    * Check if a datagrid column has required validation
+   * Evaluates conditions against current form values (rowData is undefined at header level,
+   * so conditions referencing other columns will use form-level lookup).
    */
   hasDataGridColumnRequiredValidation(column: DataGridColumnConfig): boolean {
-    return column.validations?.some((v) => v.type === 'required') ?? false;
+    const requiredValidation = column.validations?.find((v) => v.type === 'required');
+    if (!requiredValidation) {
+      return false;
+    }
+    // If no condition, always required
+    if (!requiredValidation.condition) {
+      return true;
+    }
+    // Evaluate the condition against form values
+    const formData = this.form.value;
+    return this.evaluateCondition(requiredValidation.condition, formData);
   }
 
   /**
