@@ -3212,6 +3212,7 @@ export class DynamicForm implements OnInit, OnDestroy {
           status: 'failed',
           progress: 0,
           error: validation.error,
+          isValidationError: true,
         };
         this.uploadStates.get(field.name)!.set(fileId, state);
         continue;
@@ -3249,7 +3250,11 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   validateFile(file: File, config: FileUploadConfig): { valid: boolean; error?: string } {
     // Check file size
+    const minSize = config.minFileSize ?? 0;
     const maxSize = config.maxFileSize ?? 10 * 1024 * 1024; // Default 10MB
+    if (file.size < minSize) {
+      return { valid: false, error: `File must be at least ${this.formatFileSize(minSize)}` };
+    }
     if (file.size > maxSize) {
       return { valid: false, error: `File exceeds maximum size of ${this.formatFileSize(maxSize)}` };
     }

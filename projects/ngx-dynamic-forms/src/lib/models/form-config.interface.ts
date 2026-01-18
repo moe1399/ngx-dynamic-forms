@@ -95,6 +95,7 @@ export interface FileUploadState {
   reference?: string;
   error?: string;
   metadata?: Record<string, unknown>;
+  isValidationError?: boolean;
 }
 
 /**

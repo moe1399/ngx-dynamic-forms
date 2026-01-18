@@ -48,6 +48,7 @@ export type FileUploadTiming = 'immediate' | 'manual';
 export interface FileUploadConfig {
     maxFiles?: number;
     minFiles?: number;
+    minFileSize?: number;
     maxFileSize?: number;
     allowedExtensions?: string[];
     allowedMimeTypes?: string[];

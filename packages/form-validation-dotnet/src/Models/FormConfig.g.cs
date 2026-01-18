@@ -510,6 +510,10 @@ namespace DynamicForms.FormValidation.Models
         public double? MaxFileSize { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonPropertyName("minFileSize")]
+        public double? MinFileSize { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [JsonPropertyName("minFiles")]
         public double? MinFiles { get; set; }
 

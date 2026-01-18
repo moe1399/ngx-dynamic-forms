@@ -71,6 +71,7 @@ export type FileUploadTiming = 'immediate' | 'manual';
 export interface FileUploadConfig {
   maxFiles?: number;           // Maximum number of files (default: 1)
   minFiles?: number;           // Minimum number of files (default: 0)
+  minFileSize?: number;        // Minimum file size in bytes (default: 0)
   maxFileSize?: number;        // Maximum file size in bytes (default: 10MB)
   allowedExtensions?: string[]; // Allowed file extensions e.g., ['.pdf', '.doc']
   allowedMimeTypes?: string[]; // Allowed MIME types e.g., ['image/*', 'application/pdf']

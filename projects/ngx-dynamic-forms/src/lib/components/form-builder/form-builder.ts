@@ -2754,8 +2754,12 @@ export class NgxFormBuilder {
     this.updateFileUploadConfig(fieldIndex, { minFiles: Number(minFiles) || 0 });
   }
 
-  updateFileUploadMaxFileSize(fieldIndex: number, maxFileSizeMB: number): void {
-    const sizeInBytes = (Number(maxFileSizeMB) || 10) * 1024 * 1024;
+  updateFileUploadMinFileSize(fieldIndex: number, minFileSizeBytes: number): void {
+    this.updateFileUploadConfig(fieldIndex, { minFileSize: Number(minFileSizeBytes) });
+  }
+
+  updateFileUploadMaxFileSize(fieldIndex: number, maxFileSizeBytes: number): void {
+    const sizeInBytes = Number(maxFileSizeBytes) || (10 * 1024 * 1024);
     this.updateFileUploadConfig(fieldIndex, { maxFileSize: sizeInBytes });
   }
 
@@ -2802,11 +2806,6 @@ export class NgxFormBuilder {
 
   updateFileUploadDragDropLabel(fieldIndex: number, label: string): void {
     this.updateFileUploadConfig(fieldIndex, { dragDropLabel: label || undefined });
-  }
-
-  getFileUploadMaxFileSizeMB(field: FormFieldConfig): number {
-    const bytes = field.fileuploadConfig?.maxFileSize ?? 10 * 1024 * 1024;
-    return Math.round(bytes / (1024 * 1024));
   }
 
   getFileUploadAllowedExtensionsString(field: FormFieldConfig): string {

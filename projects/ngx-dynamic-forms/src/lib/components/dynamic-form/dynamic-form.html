@@ -1209,7 +1209,7 @@
                             </svg>
                           </button>
                         }
-                        @if (fileState.status === 'failed' || fileState.status === 'cancelled') {
+                        @if ((fileState.status === 'failed' || fileState.status === 'cancelled') && !fileState.isValidationError) {
                           <button
                             type="button"
                             class="fileupload-action fileupload-action-retry"

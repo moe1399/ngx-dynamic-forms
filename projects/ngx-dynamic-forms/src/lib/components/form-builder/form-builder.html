@@ -1278,15 +1278,25 @@
               </div>
 
               <div class="form-group">
-                <label>Maximum File Size (MB)</label>
+                <label>Minimum File Size (bytes)</label>
+                <input
+                  type="number"
+                  min="0"
+                  [ngModel]="field.fileuploadConfig?.minFileSize || 0"
+                  (ngModelChange)="updateFileUploadMinFileSize(fieldIndex, $event)"
+                />
+                <small class="form-hint">Minimum size per file in bytes (0 for no minimum)</small>
+              </div>
+
+              <div class="form-group">
+                <label>Maximum File Size (bytes)</label>
                 <input
                   type="number"
                   min="1"
-                  max="1000"
-                  [ngModel]="getFileUploadMaxFileSizeMB(field)"
+                  [ngModel]="field.fileuploadConfig?.maxFileSize || 10 * 1024 * 1024"
                   (ngModelChange)="updateFileUploadMaxFileSize(fieldIndex, $event)"
                 />
-                <small class="form-hint">Maximum size per file in megabytes</small>
+                <small class="form-hint">Maximum size per file in bytes (default: 10MB = 10485760 bytes)</small>
               </div>
 
               <div class="form-group">
