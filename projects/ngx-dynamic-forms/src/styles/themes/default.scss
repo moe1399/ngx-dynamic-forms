@@ -1077,7 +1077,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: var(--df-font-size-sm);
-    table-layout: fixed; /* Enable fixed layout for column width control */
+    table-layout: auto; /* Auto layout allows columns to size naturally */
   }
 
   /* Table Header */
@@ -1101,27 +1101,18 @@
     border-right: none;
   }
 
-  /* Column width proportions (with table-layout: fixed, these set actual widths) */
-  [data-table-header-cell][data-column-width="1"] {
-    width: 15%;
+  /* Data columns expand to fill available space */
+  /* Width attribute provides relative weight when multiple data columns exist */
+  [data-table-header-cell]:not([data-table-actions-column]) {
+    width: auto;
   }
 
-  [data-table-header-cell][data-column-width="2"] {
-    width: 25%;
-  }
-
-  [data-table-header-cell][data-column-width="3"] {
-    width: 35%;
-  }
-
-  [data-table-header-cell][data-column-width="4"] {
-    width: 45%;
-  }
-
-  /* Actions column (narrow) */
+  /* Actions column (narrow, fixed width) */
   [data-table-actions-column] {
-    width: var(--df-table-actions-width);
+    width: 1%;
     min-width: var(--df-table-actions-width);
+    max-width: var(--df-table-actions-width);
+    white-space: nowrap;
     text-align: center;
   }
 
@@ -1156,8 +1147,12 @@
     border-right: none;
   }
 
-  /* Actions cell (centered) */
+  /* Actions cell (centered, constrained width) */
   [data-table-actions-cell] {
+    width: 1%;
+    min-width: var(--df-table-actions-width);
+    max-width: var(--df-table-actions-width);
+    white-space: nowrap;
     text-align: center;
     vertical-align: middle;
   }
