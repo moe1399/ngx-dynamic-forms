@@ -100,17 +100,17 @@
           (formSave)="onFormSave($event)"
           (validationErrors)="onValidationErrors($event)">
           <!-- Custom buttons rendered by consuming application -->
-          <div data-form-actions>
+          <div class="df-form-actions">
             @if (!formSubmitted()) {
               <button
                 type="button"
-                data-action="save"
+                class="df-action df-action-save"
                 (click)="dynamicForm.saveForm()">
                 Save Draft
               </button>
               <button
                 type="button"
-                data-action="submit"
+                class="df-action df-action-submit"
                 [attr.data-can-submit]="dynamicForm.valid"
                 (click)="dynamicForm.submitForm()">
                 Submit
