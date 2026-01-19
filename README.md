@@ -196,6 +196,19 @@ Both components are headless with optional default themes. Import themes in your
 @import '@moe1399/ngx-dynamic-forms/src/styles/themes/form-builder-default'; // Form Builder
 ```
 
+### CUBE CSS Pattern
+
+This library uses the CUBE CSS methodology:
+- **Classes** (`df-*`) → Structural styling (layout, base appearance)
+- **Data attributes** → State/modifiers (valid, dirty, disabled, etc.)
+
+```html
+<!-- Structure via class, state via data attribute -->
+<div class="df-field"
+     [attr.data-field-valid]="!hasError(field.name)"
+     [attr.data-field-disabled]="isDisabled">
+```
+
 ### Customizing Themes
 
 Override CSS variables to customize:
@@ -216,12 +229,43 @@ Override CSS variables to customize:
 }
 ```
 
-Style via data attributes for complete control:
+Style via classes for structure and data attributes for state:
 
 ```scss
-[data-field-valid="false"] { border-color: red; }
-[data-field-type="email"] input { /* email-specific styles */ }
+/* Structure styling via classes */
+.df-field { padding: 8px; }
+.df-input { border: 1px solid var(--df-color-border); }
+
+/* State styling via data attributes */
+.df-field[data-field-valid="false"] .df-input { border-color: red; }
+.df-field[data-field-disabled="true"] { opacity: 0.6; }
 ```
+
+### Key Classes
+
+| Class | Description |
+|-------|-------------|
+| `.df-form` | Form container |
+| `.df-form-fields` | Fields section |
+| `.df-form-actions` | Actions section |
+| `.df-section` | Section container |
+| `.df-field-row` | Row containing fields |
+| `.df-field` | Individual field wrapper |
+| `.df-label` | Field label |
+| `.df-input-container` | Input wrapper |
+| `.df-input` | Input element |
+| `.df-validation-error` | Error message |
+
+### State Attributes
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-form-valid` | `true`/`false` | Form validation state |
+| `data-form-dirty` | `true`/`false` | Form has changes |
+| `data-field-valid` | `true`/`false` | Field validation state |
+| `data-field-touched` | `true`/`false` | Field has been touched |
+| `data-field-disabled` | `true`/`false` | Field is disabled |
+| `data-field-required` | `true`/`false` | Field is required |
 
 ## Form Builder
 
