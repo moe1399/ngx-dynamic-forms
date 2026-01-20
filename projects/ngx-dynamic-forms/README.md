@@ -6,7 +6,7 @@ Dynamic form builder and renderer for Angular with a headless UI pattern.
 
 - **Headless UI Pattern**: Zero default styling, complete styling freedom via `data-*` attributes
 - **No Built-in Buttons**: You render your own submit/save buttons for full control
-- **14 Field Types**: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref
+- **16 Field Types**: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref, fileupload, autocomplete
 - **Visual Form Builder**: Drag-drop field ordering, validation rules, sections
 - **JSON-driven**: Define forms via JSON configuration
 - **Auto-save**: Built-in local storage persistence
@@ -265,6 +265,11 @@ The form builder uses `.ngx-fb` wrapper class with its own CSS variables:
 | Input | Type | Description |
 |-------|------|-------------|
 | `config` | `FormConfig` | Form configuration |
+| `fileUploadHandler` | `FileUploadHandler` | Handler for uploading files to server |
+| `fileDownloadHandler` | `FileDownloadHandler` | Handler for downloading files from server |
+| `fileRemoveHandler` | `FileRemoveHandler` | Handler for deleting files from server (fire-and-forget) |
+| `readOnly` | `boolean` | Make entire form read-only |
+| `disabled` | `boolean` | Disable entire form |
 
 | Output | Type | Description |
 |--------|------|-------------|
@@ -272,6 +277,7 @@ The form builder uses `.ngx-fb` wrapper class with its own CSS variables:
 | `formSave` | `EventEmitter<object>` | Emitted when saveForm() is called |
 | `validationErrors` | `EventEmitter<FieldError[]>` | Emitted on validation changes |
 | `valueChanges` | `EventEmitter<object>` | Emitted when any form value changes |
+| `fileRemoveError` | `EventEmitter<FileRemoveErrorEvent>` | Emitted when file removal fails on server |
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -366,6 +372,8 @@ interface FormFieldConfig {
   daterangeConfig?: DaterangeConfig; // For daterange fields
   formrefConfig?: FormrefConfig;  // For formref fields
   content?: string;               // For info fields (markdown)
+  fileuploadConfig?: FileUploadConfig; // For fileupload fields
+  autocompleteConfig?: AutocompleteConfig; // For autocomplete fields
 }
 ```
 
@@ -387,6 +395,8 @@ interface FormFieldConfig {
 | `phone` | Phone with country code |
 | `info` | Static markdown content |
 | `formref` | Embed another form's fields |
+| `fileupload` | File upload with drag-drop and server integration |
+| `autocomplete` | Search-as-you-type with async API fetching |
 
 ### Validation Types
 

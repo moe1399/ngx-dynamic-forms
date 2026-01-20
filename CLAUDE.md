@@ -107,8 +107,8 @@ GitHub Actions auto-deploys to GitHub Pages on push to `main` (`.github/workflow
 **1. Dynamic Form** (`src/app/components/dynamic-form/`)
 - Headless form renderer, JSON-driven config
 - Local storage persistence, real-time validation
-- **Input**: `config: FormConfig`
-- **Outputs**: `formSubmit`, `formSave`, `validationErrors`
+- **Inputs**: `config: FormConfig`, `fileUploadHandler`, `fileDownloadHandler`, `fileRemoveHandler`, `readOnly`, `disabled`
+- **Outputs**: `formSubmit`, `formSave`, `validationErrors`, `valueChanges`, `wizardPageChange`, `wizardComplete`, `fileRemoveError`
 - **Data attrs**: `data-form-id`, `data-form-valid`, `data-form-dirty`, `data-form-touched`, `data-section-id`, `data-section-header`, `data-section-description`, `data-section-hidden`, `data-field-name`, `data-field-type`, `data-field-valid`, `data-field-touched`, `data-field-dirty`, `data-field-disabled`, `data-field-required`, `data-field-hidden`, `data-validation-error`, `data-action`
 
 **2. Form Builder** (`src/app/components/form-builder/`)
@@ -201,6 +201,15 @@ Default theme (`projects/ngx-dynamic-forms/src/styles/themes/default.scss`): Pur
   - Fetch handler: Register via `autocompleteFetchRegistry.register(name, handler)`. Handler signature: `(searchText, params?, fieldConfig?, formData?) => Promise<{value, label}[]>`
   - Server validation: Use custom validator to check if `value.value` is valid against server data
   - Data attrs: `data-autocomplete-container`, `data-autocomplete-name`, `data-autocomplete-open`, `data-autocomplete-loading`, `data-autocomplete-has-selection`, `data-autocomplete-input`, `data-autocomplete-clear`, `data-autocomplete-dropdown`, `data-autocomplete-option`, `data-option-value`, `data-option-highlighted`, `data-option-selected`, `data-autocomplete-loading-message`, `data-autocomplete-no-results`
+- `fileupload`: File upload with drag-drop, progress tracking, and server integration
+  - Config: `fileuploadConfig: {maxFiles?, minFiles?, maxFileSize?, minFileSize?, allowedExtensions?, allowedMimeTypes?, uploadTiming?: 'immediate'|'onSubmit', allowDownload?}`
+  - Storage: Array of `FileUploadValue`: `{reference, fileName, fileSize, mimeType, uploadedAt?, metadata?}`
+  - Handlers (passed as component inputs):
+    - `fileUploadHandler: (file, onProgress, abortSignal) => Promise<{success, reference?, error?}>` - Uploads file to server
+    - `fileDownloadHandler: (fileValue) => Promise<void>|void` - Downloads file from server
+    - `fileRemoveHandler: (fileValue, context) => Promise<{success, error?}>` - Deletes file from server (fire-and-forget, optimistic update)
+  - Output: `fileRemoveError` emits `{fieldName, fileValue, error}` when remove handler fails
+  - Data attrs: `data-fileupload-container`, `data-fileupload-name`, `data-fileupload-valid`, `data-fileupload-dropzone`, `data-fileupload-drag-active`, `data-fileupload-file`, `data-fileupload-file-id`, `data-fileupload-status`, `data-fileupload-progress`, `data-fileupload-filename`, `data-fileupload-filesize`, `data-fileupload-error`
 
 ### Validation Types
 

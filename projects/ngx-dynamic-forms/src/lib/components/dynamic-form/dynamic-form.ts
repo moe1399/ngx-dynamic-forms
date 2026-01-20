@@ -19,6 +19,8 @@ import {
   AsyncValidationConfig,
   FileUploadHandler,
   FileDownloadHandler,
+  FileRemoveHandler,
+  FileRemoveErrorEvent,
   FileUploadState,
   FileUploadValue,
   FileUploadConfig,
@@ -52,6 +54,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   config = input.required<FormConfig>();
   fileUploadHandler = input<FileUploadHandler | undefined>(undefined);
   fileDownloadHandler = input<FileDownloadHandler | undefined>(undefined);
+  fileRemoveHandler = input<FileRemoveHandler | undefined>(undefined);
 
   /** Read-only state input - form is viewable but not editable */
   readOnlyInput = input(false, { alias: 'readOnly', transform: booleanAttribute });
@@ -71,6 +74,9 @@ export class DynamicForm implements OnInit, OnDestroy {
   // Wizard outputs
   wizardPageChange = output<{ previousPage: number; currentPage: number }>();
   wizardComplete = output<void>();
+
+  // File outputs
+  fileRemoveError = output<FileRemoveErrorEvent>();
 
   // Component state
   form: FormGroup = new FormGroup({});
@@ -3443,7 +3449,7 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.cancelUpload(fieldName, fileId);
     }
 
-    // Remove from form array if completed
+    // Remove from form array if completed and call remove handler
     if (state.status === 'completed' && state.reference) {
       const formArray = this.getFileUploadFormArray(fieldName);
       if (formArray) {
@@ -3451,7 +3457,12 @@ export class DynamicForm implements OnInit, OnDestroy {
           (c) => c.value?.reference === state.reference
         );
         if (index !== -1) {
+          // Capture the file value before removal for the handler
+          const fileValue = formArray.at(index).value as FileUploadValue;
           formArray.removeAt(index);
+
+          // Call remove handler async (fire-and-forget, optimistic update)
+          this.callFileRemoveHandler(fieldName, fileValue);
         }
       }
     }
@@ -3459,6 +3470,36 @@ export class DynamicForm implements OnInit, OnDestroy {
     // Remove from states
     statesMap?.delete(fileId);
     this.cdr.markForCheck();
+  }
+
+  /**
+   * Call the file remove handler asynchronously.
+   * This is fire-and-forget - the file is already removed from the UI.
+   * If the handler fails, emit fileRemoveError for the app to handle.
+   */
+  private async callFileRemoveHandler(fieldName: string, fileValue: FileUploadValue): Promise<void> {
+    const handler = this.fileRemoveHandler();
+    if (!handler) return;
+
+    const field = this.getField(fieldName);
+    if (!field) return;
+
+    try {
+      const result = await handler(fileValue, { fieldName, fieldConfig: field });
+      if (!result.success) {
+        this.fileRemoveError.emit({
+          fieldName,
+          fileValue,
+          error: result.error || 'Failed to remove file from server',
+        });
+      }
+    } catch (error) {
+      this.fileRemoveError.emit({
+        fieldName,
+        fileValue,
+        error: error instanceof Error ? error.message : 'Failed to remove file from server',
+      });
+    }
   }
 
   /**

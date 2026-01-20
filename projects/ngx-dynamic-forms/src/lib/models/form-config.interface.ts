@@ -77,6 +77,41 @@ export type FileDownloadHandler = (
 ) => Promise<void> | void;
 
 /**
+ * Result of a file remove operation
+ */
+export interface FileRemoveResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Context provided to file remove handler
+ */
+export interface FileRemoveContext {
+  fieldName: string;
+  fieldConfig: FormFieldConfig;
+}
+
+/**
+ * File remove handler function type (client-side only)
+ * Called when a completed file is removed from a fileupload field.
+ * This allows the consuming application to delete the file on the server.
+ */
+export type FileRemoveHandler = (
+  fileValue: import('@moe1399/ngx-dynamic-forms-validation').FileUploadValue,
+  context: FileRemoveContext
+) => Promise<FileRemoveResult>;
+
+/**
+ * Event emitted when file removal fails
+ */
+export interface FileRemoveErrorEvent {
+  fieldName: string;
+  fileValue: import('@moe1399/ngx-dynamic-forms-validation').FileUploadValue;
+  error: string;
+}
+
+/**
  * Status of a file in the upload queue
  */
 export type FileUploadStatus = 'pending' | 'uploading' | 'completed' | 'failed' | 'cancelled';
