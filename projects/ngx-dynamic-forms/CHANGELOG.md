@@ -1,3 +1,20 @@
+## [0.11.3](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.2...v0.11.3) (2026-01-20)
+
+
+### Bug Fixes
+
+* required indicator now respects conditional validation rules ([9eb923d](https://github.com/moe1399/ngx-dynamic-forms/commit/9eb923d5068b03df90a083d65620a6ec04b477ea))
+* **table:** prevent actions column from taking excessive width ([c127eb2](https://github.com/moe1399/ngx-dynamic-forms/commit/c127eb2ee24190d8cf518b8171632e9585bd9620))
+
+
+### Features
+
+* add JSON Schema generation and .NET model code generation ([3807740](https://github.com/moe1399/ngx-dynamic-forms/commit/3807740bdd4574b90ec960f23c71757e9a6bc493))
+* **fileupload:** add fileRemoveHandler for server-side file deletion ([3ae8bbe](https://github.com/moe1399/ngx-dynamic-forms/commit/3ae8bbe24a8eecf8f610dcfc1cb2ab64016533d4))
+* **fileupload:** add minimum file size validation and fix retry button ([62f80c8](https://github.com/moe1399/ngx-dynamic-forms/commit/62f80c862a4e2e3c846ab2da5c5ee80f92d62a83))
+
+
+
 ## [0.11.2](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.1...v0.11.2) (2026-01-15)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@moe1399/ngx-dynamic-forms",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "Dynamic form builder and renderer for Angular with headless UI pattern",
   "keywords": [
     "angular",
