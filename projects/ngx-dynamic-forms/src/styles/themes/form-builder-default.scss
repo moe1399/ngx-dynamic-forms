@@ -545,6 +545,81 @@
   }
 
   /* ========================================
+     Live Preview Banner
+     ======================================== */
+
+  .live-preview-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--fb-spacing-lg);
+    margin-bottom: var(--fb-spacing-xl);
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fb-spacing-xs);
+
+      strong {
+        font-size: var(--fb-font-size-lg);
+      }
+
+      span {
+        font-size: var(--fb-font-size-sm);
+      }
+    }
+
+    .preview-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--fb-spacing-lg);
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: var(--fb-spacing-sm);
+        cursor: pointer;
+        font-size: var(--fb-font-size-sm);
+
+        input[type='checkbox'] {
+          width: auto;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .live-preview-content {
+    padding: var(--fb-spacing-lg);
+    background: var(--fb-color-surface);
+    border: 1px solid var(--fb-color-border);
+    min-height: 300px;
+  }
+
+  /* ========================================
+     Preview Toolbar Button
+     ======================================== */
+
+  .btn-preview {
+    background: #28a745;
+    color: var(--fb-color-text-inverse);
+    border-color: #28a745;
+
+    &:hover:not(:disabled) {
+      background: #218838;
+      border-color: #1e7e34;
+    }
+
+    &:disabled {
+      background: #94d3a2;
+      border-color: #94d3a2;
+    }
+  }
+
+  /* ========================================
      Version Preview Banner
      ======================================== */
 

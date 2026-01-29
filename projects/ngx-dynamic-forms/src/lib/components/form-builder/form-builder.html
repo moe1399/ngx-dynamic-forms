@@ -33,6 +33,19 @@
           Share
         </button>
       }
+      @if (isToolbarButtonVisible('showPreview')) {
+        <button
+          class="btn btn-preview"
+          (click)="livePreviewMode() ? exitLivePreviewMode() : enterLivePreviewMode()"
+          [disabled]="currentConfig().fields.length === 0"
+          title="Preview the form">
+          @if (livePreviewMode()) {
+            Exit Preview
+          } @else {
+            Preview
+          }
+        </button>
+      }
       @if (showVersionHistory() && currentConfig().id && !readOnly()) {
         <button
           class="btn btn-secondary btn-version"
@@ -319,8 +332,37 @@
 
     <!-- Right Panel: Field/Section Editor -->
     <div class="right-panel">
-      <!-- Version Preview Banner -->
-      @if (versionPreviewMode() && previewedVersionConfig()) {
+      <!-- Live Preview Mode -->
+      @if (livePreviewMode()) {
+        <div class="live-preview-banner" data-live-preview-mode>
+          <div class="preview-info">
+            <strong>Live Preview</strong>
+            <span>{{ currentConfig().id || 'Untitled Form' }}</span>
+          </div>
+          <div class="preview-controls">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="livePreviewReadOnly()"
+                (change)="toggleLivePreviewReadOnly()" />
+              Read-only
+            </label>
+            <button class="btn-sm btn-secondary" (click)="exitLivePreviewMode()">
+              Exit Preview
+            </button>
+          </div>
+        </div>
+        <div class="live-preview-content">
+          <ngx-dynamic-form
+            [config]="currentConfig()"
+            [readOnly]="livePreviewReadOnly()"
+            [fileUploadHandler]="previewFileUploadHandler"
+            [fileDownloadHandler]="previewFileDownloadHandler"
+            [fileRemoveHandler]="previewFileRemoveHandler"
+          />
+        </div>
+      } @else if (versionPreviewMode() && previewedVersionConfig()) {
+        <!-- Version Preview Banner -->
         <div class="version-preview-banner" data-preview-mode>
           <div class="preview-info">
             <strong>Previewing Version</strong>
@@ -424,10 +466,8 @@
             }
           </div>
         </div>
-      }
-
+      } @else {
       <!-- Section Editor (hidden in preview mode) -->
-      @if (!versionPreviewMode()) {
       @if (selectedSectionId() !== null && getSelectedSection()) {
         <div class="section-editor">
           <h3>Edit Section</h3>
@@ -2074,7 +2114,7 @@
           <p>Select a section or field to edit, or add new ones to get started</p>
         </div>
       }
-      } <!-- end @if (!versionPreviewMode()) -->
+      } <!-- end @else (editors section) -->
     </div>
   </div>
 

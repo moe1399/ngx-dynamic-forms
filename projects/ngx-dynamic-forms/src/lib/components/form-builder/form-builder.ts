@@ -28,9 +28,14 @@ import {
   FileUploadConfig,
   FileUploadTiming,
   AutocompleteConfig,
+  FileUploadHandler,
+  FileDownloadHandler,
+  FileRemoveHandler,
+  FileUploadValue,
 } from '../../models/form-config.interface';
 import { FormBuilderService } from '../../services/form-builder.service';
 import { AsyncValidatorRegistry, AutocompleteFetchRegistry } from '../../services/validator-registry.service';
+import { DynamicForm } from '../dynamic-form/dynamic-form';
 
 /**
  * Configuration options for toolbar buttons
@@ -42,11 +47,12 @@ export interface ToolbarConfig {
   showImport?: boolean;
   showEditJson?: boolean;
   showShare?: boolean;
+  showPreview?: boolean;
 }
 
 @Component({
   selector: 'ngx-form-builder',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DynamicForm],
   templateUrl: './form-builder.html',
   styleUrl: './form-builder.scss',
   host: {
@@ -77,6 +83,7 @@ export class NgxFormBuilder {
     showImport: true,
     showEditJson: true,
     showShare: true,
+    showPreview: true,
   });
 
   // Output events for parent to handle actions
@@ -118,6 +125,10 @@ export class NgxFormBuilder {
   versionDescriptionInput = signal<string>('');
   versionPreviewMode = signal<boolean>(false);
   previewedVersionConfig = signal<FormConfig | null>(null);
+
+  // Live preview state
+  livePreviewMode = signal<boolean>(false);
+  livePreviewReadOnly = signal<boolean>(false);
 
   // Field types for dropdown
   fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref', 'fileupload', 'autocomplete'];
@@ -3021,4 +3032,77 @@ export class NgxFormBuilder {
     }
     return field.validations.map((v) => v.type).join(', ');
   }
+
+  // ============================================
+  // Live Preview Methods
+  // ============================================
+
+  /**
+   * Enter live preview mode to test the form
+   */
+  enterLivePreviewMode(): void {
+    // Exit version preview mode if active
+    if (this.versionPreviewMode()) {
+      this.exitPreviewMode();
+    }
+    this.livePreviewMode.set(true);
+  }
+
+  /**
+   * Exit live preview mode
+   */
+  exitLivePreviewMode(): void {
+    this.livePreviewMode.set(false);
+    this.livePreviewReadOnly.set(false);
+  }
+
+  /**
+   * Toggle the read-only state in live preview
+   */
+  toggleLivePreviewReadOnly(): void {
+    this.livePreviewReadOnly.update((v) => !v);
+  }
+
+  /**
+   * Mock file upload handler for preview mode
+   * Simulates upload with progress updates
+   */
+  previewFileUploadHandler: FileUploadHandler = (
+    file: File,
+    onProgress?: (progress: number) => void,
+    _abortSignal?: AbortSignal
+  ) => {
+    return new Promise((resolve) => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 20;
+        if (onProgress) {
+          onProgress(Math.min(progress, 100));
+        }
+        if (progress >= 100) {
+          clearInterval(interval);
+          resolve({
+            success: true,
+            reference: `preview_${Date.now()}_${file.name}`,
+          });
+        }
+      }, 200);
+    });
+  };
+
+  /**
+   * Mock file download handler for preview mode
+   * Shows an alert since we don't have real files
+   */
+  previewFileDownloadHandler: FileDownloadHandler = (fileValue: FileUploadValue) => {
+    alert(`Preview mode: Download requested for "${fileValue.fileName}"`);
+  };
+
+  /**
+   * Mock file remove handler for preview mode
+   * Always returns success
+   */
+  previewFileRemoveHandler: FileRemoveHandler = () => {
+    return Promise.resolve({ success: true });
+  };
 }
